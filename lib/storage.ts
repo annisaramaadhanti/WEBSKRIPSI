@@ -114,7 +114,7 @@ function migrateProyek(proyek: any): any {
 /* =========================
    PEKERJAAN
 ========================= */
-export const getPekerjaan = () => safeGet<Pekerjaan>(KEYS.pekerjaan).map(migratePekerjaan);
+export const getPekerjaan = () => safeGet<Pekerjaan>(KEYS.pekerjaan).map(migratePekerjaan).filter(item => !item.deleted);
 export const savePekerjaan = (data: Pekerjaan[]) => safeSet(KEYS.pekerjaan, data);
 
 function genPekerjaanId(existing: Pekerjaan[]): string {
@@ -137,7 +137,8 @@ export function updatePekerjaan(id: string, payload: Partial<Pekerjaan>): void {
 }
 
 export function deletePekerjaan(id: string): void {
-  savePekerjaan(getPekerjaan().filter((item) => item.id !== id));
+  const all = safeGet<Pekerjaan>(KEYS.pekerjaan).map(migratePekerjaan);
+  safeSet(KEYS.pekerjaan, all.map(item => item.id === id ? { ...item, deleted: true } : item));
 }
 
 export function getPekerjaanById(id: string): Pekerjaan | null {
@@ -147,7 +148,7 @@ export function getPekerjaanById(id: string): Pekerjaan | null {
 /* =========================
    PROYEK
 ========================= */
-export const getProyek = () => safeGet<Proyek>(KEYS.proyek).map(migrateProyek);
+export const getProyek = () => safeGet<Proyek>(KEYS.proyek).map(migrateProyek).filter(item => !item.deleted);
 export const saveProyek = (data: Proyek[]) => safeSet(KEYS.proyek, data);
 
 function genProyekId(existing: Proyek[]): string {
@@ -170,7 +171,8 @@ export function updateProyek(id: string, payload: Partial<Proyek>): void {
 }
 
 export function deleteProyek(id: string): void {
-  saveProyek(getProyek().filter((item) => item.id !== id));
+  const all = safeGet<Proyek>(KEYS.proyek).map(migrateProyek);
+  safeSet(KEYS.proyek, all.map(item => item.id === id ? { ...item, deleted: true } : item));
 }
 
 export function getProyekById(id: string): Proyek | null {

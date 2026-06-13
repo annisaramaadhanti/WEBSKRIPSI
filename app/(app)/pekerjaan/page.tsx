@@ -338,6 +338,8 @@ export default function PekerjaanPage() {
 
   // Modals
   const [showTambah, setShowTambah] = useState(false);
+  const [showEdit, setShowEdit] = useState<Pekerjaan | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<Pekerjaan | null>(null);
   const [showDisposisi, setShowDisposisi] = useState<Pekerjaan | null>(null);
   const [showTolakModal, setShowTolakModal] = useState<Pekerjaan | null>(null);
   const [showSuratModal, setShowSuratModal] = useState<{ item: Pekerjaan; mode: "buat" | "edit" } | null>(null);
@@ -351,6 +353,16 @@ export default function PekerjaanPage() {
     nomorSurat: "", perihalSurat: "", lokasiSurat: "",
     filePath: "", fileData: "", fileSize: 0,
   });
+
+  // Edit pekerjaan form
+  const [editForm, setEditForm] = useState({
+    namaPekerjaan: "", divisi: [] as string[], deskripsi: "", targetSelesai: "",
+    lokasi: "", unitPeminta: "",
+    nomorSurat: "", perihalSurat: "", lokasiSurat: "",
+    filePath: "", fileData: "", fileSize: 0,
+  });
+  const editFileInputRef = useRef<HTMLInputElement>(null);
+  const [editUploadProgress, setEditUploadProgress] = useState(false);
 
   // Surat form (untuk buat/edit preview)
   const [suratForm, setSuratForm] = useState<SuratDetail>({
@@ -403,6 +415,72 @@ export default function PekerjaanPage() {
       setFormUploadProgress(false);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleEditFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") { alert("Hanya file PDF."); e.target.value = ""; return; }
+    if (file.size > 10 * 1024 * 1024) { alert("Maks 10 MB."); e.target.value = ""; return; }
+    setEditUploadProgress(true);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = (ev.target?.result as string).split(",")[1];
+      setEditForm((prev) => ({ ...prev, filePath: file.name, fileData: base64, fileSize: file.size }));
+      setEditUploadProgress(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const openEdit = (item: Pekerjaan) => {
+    setEditForm({
+      namaPekerjaan: item.namaPekerjaan,
+      divisi: item.divisi,
+      deskripsi: item.deskripsi || "",
+      targetSelesai: item.targetSelesai,
+      lokasi: item.lokasi,
+      unitPeminta: item.unitPeminta,
+      nomorSurat: item.nomorSuratMasuk || "",
+      perihalSurat: item.perihalSuratMasuk || "",
+      lokasiSurat: item.lokasiSuratMasuk || "",
+      filePath: "", fileData: "", fileSize: 0,
+    });
+    if (editFileInputRef.current) editFileInputRef.current.value = "";
+    setShowEdit(item);
+  };
+
+  const handleSaveEdit = () => {
+    if (!showEdit) return;
+    if (!editForm.namaPekerjaan || !editForm.targetSelesai) return alert("Lengkapi field wajib.");
+    if (!editForm.unitPeminta) return alert("Pilih Unit Peminta.");
+    if (!editForm.lokasi) return alert("Isi Lokasi pekerjaan.");
+    if (!editForm.nomorSurat) return alert("Isi Nomor Surat Masuk.");
+    if (!editForm.perihalSurat) return alert("Isi Perihal Surat Masuk.");
+    const payload: Partial<Pekerjaan> = {
+      namaPekerjaan: editForm.namaPekerjaan,
+      divisi: editForm.divisi,
+      deskripsi: editForm.deskripsi || null,
+      targetSelesai: editForm.targetSelesai,
+      lokasi: editForm.lokasi,
+      unitPeminta: editForm.unitPeminta,
+      nomorSuratMasuk: editForm.nomorSurat,
+      perihalSuratMasuk: editForm.perihalSurat,
+      lokasiSuratMasuk: editForm.lokasiSurat,
+    };
+    if (editForm.fileData) {
+      payload.suratMasuk = editForm.filePath;
+      payload.suratMasukData = editForm.fileData;
+    }
+    updatePekerjaan(showEdit.id, payload);
+    setShowEdit(null);
+    load();
+  };
+
+  const handleConfirmDelete = () => {
+    if (!showDeleteConfirm) return;
+    deletePekerjaan(showDeleteConfirm.id);
+    setShowDeleteConfirm(null);
+    load();
   };
 
   const handleTambah = () => {
@@ -731,7 +809,17 @@ export default function PekerjaanPage() {
                         <td className="td-center">{item.suratMasuk ? <button type="button" className="btn-link-pdf" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-muted text-small">-</span>}</td>
                         <td className="td-center">{suratTugasCell("operator")}</td>
                         <td className="td-center">{laporanCell()}</td>
-                        <td className="td-center"><button type="button" className="btn-secondary btn-sm" onClick={() => setShowRingkasan(item)}>Ringkasan</button></td>
+                        <td className="td-center">
+                          <div className="table-actions table-actions--center">
+                            <button type="button" className="btn-secondary btn-sm" onClick={() => setShowRingkasan(item)}>Ringkasan</button>
+                            {item.suratStatus !== "published" && (
+                              <button type="button" className="btn-edit btn-sm" onClick={() => openEdit(item)}>Edit</button>
+                            )}
+                            {item.assignees.length === 0 && item.suratStatus !== "published" && (
+                              <button type="button" className="btn-delete btn-sm" onClick={() => setShowDeleteConfirm(item)}>Hapus</button>
+                            )}
+                          </div>
+                        </td>
                       </>
                     )}
 
@@ -892,6 +980,89 @@ export default function PekerjaanPage() {
                 setShowTambah(false);
                 setForm({ namaPekerjaan: "", divisi: [], deskripsi: "", targetSelesai: "", lokasi: "", unitPeminta: "", nomorSurat: "", perihalSurat: "", lokasiSurat: "", filePath: "", fileData: "", fileSize: 0 });
               }}>Batal</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL EDIT PEKERJAAN ─── */}
+      {showEdit && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <h2>Edit Pekerjaan</h2>
+            <div className="form-group">
+              <label>Nama Pekerjaan *</label>
+              <input value={editForm.namaPekerjaan} onChange={(e) => setEditForm({ ...editForm, namaPekerjaan: e.target.value })} placeholder="Nama pekerjaan" />
+            </div>
+            <div className="form-group">
+              <label>Unit Peminta *</label>
+              <select value={editForm.unitPeminta} onChange={(e) => setEditForm({ ...editForm, unitPeminta: e.target.value })}>
+                <option value="">-- Pilih Unit Peminta --</option>
+                {unitPemintaList.map((u) => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Lokasi *</label>
+              <textarea value={editForm.lokasi} onChange={(e) => setEditForm({ ...editForm, lokasi: e.target.value })} rows={2} />
+            </div>
+            <div className="form-group">
+              <label>Divisi *</label>
+              <div className="checkbox-group">
+                {divisiList.map((d) => (
+                  <label key={d} className="checkbox-item">
+                    <input type="checkbox" checked={editForm.divisi.includes(d)}
+                      onChange={(e) => setEditForm({ ...editForm, divisi: e.target.checked ? [...editForm.divisi, d] : editForm.divisi.filter((x) => x !== d) })} />
+                    {d}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Target Selesai *</label>
+              <input type="date" value={editForm.targetSelesai} onChange={(e) => setEditForm({ ...editForm, targetSelesai: e.target.value })} />
+            </div>
+            <div className="form-divider">Surat Masuk</div>
+            <div className="form-group">
+              <label>Nomor Surat Masuk *</label>
+              <input value={editForm.nomorSurat} onChange={(e) => setEditForm({ ...editForm, nomorSurat: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>Perihal Surat Masuk *</label>
+              <textarea value={editForm.perihalSurat} onChange={(e) => setEditForm({ ...editForm, perihalSurat: e.target.value })} rows={2} />
+            </div>
+            <div className="form-group">
+              <label>Ganti Dokumen Surat Masuk (PDF) <span className="text-muted text-small">— biarkan kosong untuk tetap gunakan file saat ini</span></label>
+              <div className="file-upload-area">
+                <input ref={editFileInputRef} type="file" accept="application/pdf" id="edit-pekerjaan-file" className="hidden-input" onChange={handleEditFile} />
+                <label htmlFor="edit-pekerjaan-file" className="file-upload-btn">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 2v8M4 6l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  {editUploadProgress ? "Membaca file..." : editForm.filePath ? "Ganti File" : "Pilih File PDF Baru"}
+                </label>
+                {editForm.filePath && <div className="file-upload-preview"><span>{editForm.filePath}</span><span className="file-size-label">{fmt(editForm.fileSize)}</span></div>}
+                {!editForm.filePath && showEdit.suratMasuk && <div className="file-upload-preview"><span>{showEdit.suratMasuk}</span><span className="file-size-label text-muted">File saat ini</span></div>}
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button type="button" onClick={handleSaveEdit} disabled={editUploadProgress}>Simpan Perubahan</button>
+              <button type="button" className="btn-secondary" onClick={() => setShowEdit(null)}>Batal</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL KONFIRMASI HAPUS ─── */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <h2>Hapus Pekerjaan</h2>
+            <p>Apakah kamu yakin ingin menghapus pekerjaan <strong>{showDeleteConfirm.namaPekerjaan}</strong>?</p>
+            <p className="text-muted text-small mt-2">Data akan disembunyikan dari sistem. Aksi ini tidak dapat dibatalkan.</p>
+            <div className="modal-actions">
+              <button type="button" className="btn-delete" onClick={handleConfirmDelete}>Ya, Hapus</button>
+              <button type="button" className="btn-secondary" onClick={() => setShowDeleteConfirm(null)}>Batal</button>
             </div>
           </div>
         </div>

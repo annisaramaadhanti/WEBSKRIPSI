@@ -426,6 +426,8 @@ export default function ProyekPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [showTambah, setShowTambah] = useState(false);
+  const [showEdit, setShowEdit] = useState<Proyek | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<Proyek | null>(null);
   const [showDisposisi, setShowDisposisi] = useState<Proyek | null>(null);
   const [showProgress, setShowProgress] = useState<Proyek | null>(null);
   const [showSuratModal, setShowSuratModal] = useState<{ item: Proyek; mode: "buat" | "edit" } | null>(null);
@@ -439,13 +441,20 @@ export default function ProyekPage() {
     lokasi: "", unitPeminta: "", nomorSurat: "", perihalSurat: "",
     filePath: "", fileData: "", fileSize: 0,
   });
+  const [editForm, setEditForm] = useState({
+    namaProyek: "", divisi: [] as string[], deskripsi: "", targetSelesai: "",
+    lokasi: "", unitPeminta: "", nomorSurat: "", perihalSurat: "",
+    filePath: "", fileData: "", fileSize: 0,
+  });
   const [suratForm, setSuratForm] = useState<SuratDetail>({
     nomorSurat: "", perihal: "", tujuan: "",
     tanggalPelaksanaan: "", lokasiPembuatan: "", tanggalSuratKeluar: "",
   });
 
   const [formUploadProgress, setFormUploadProgress] = useState(false);
+  const [editUploadProgress, setEditUploadProgress] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   const load = () => { seedIfEmpty(); setData(getProyek()); };
   useEffect(() => { load(); }, []);
@@ -482,6 +491,69 @@ export default function ProyekPage() {
       setFormUploadProgress(false);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleEditFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") { alert("Hanya file PDF."); e.target.value = ""; return; }
+    if (file.size > 10 * 1024 * 1024) { alert("Maks 10 MB."); e.target.value = ""; return; }
+    setEditUploadProgress(true);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setEditForm(prev => ({ ...prev, filePath: file.name, fileData: (ev.target?.result as string).split(",")[1], fileSize: file.size }));
+      setEditUploadProgress(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const openEdit = (item: Proyek) => {
+    setEditForm({
+      namaProyek: item.namaProyek,
+      divisi: item.divisi,
+      deskripsi: item.deskripsi || "",
+      targetSelesai: item.targetSelesai,
+      lokasi: item.lokasi,
+      unitPeminta: item.unitPeminta,
+      nomorSurat: item.nomorSuratMasuk || "",
+      perihalSurat: item.perihalSuratMasuk || "",
+      filePath: "", fileData: "", fileSize: 0,
+    });
+    if (editFileInputRef.current) editFileInputRef.current.value = "";
+    setShowEdit(item);
+  };
+
+  const handleSaveEdit = () => {
+    if (!showEdit) return;
+    if (!editForm.namaProyek || !editForm.targetSelesai) return alert("Lengkapi field wajib.");
+    if (!editForm.unitPeminta) return alert("Pilih Unit Peminta.");
+    if (!editForm.lokasi) return alert("Isi Lokasi proyek.");
+    if (!editForm.nomorSurat) return alert("Isi Nomor Surat Masuk.");
+    if (!editForm.perihalSurat) return alert("Isi Perihal Surat Masuk.");
+    const payload: Partial<Proyek> = {
+      namaProyek: editForm.namaProyek,
+      divisi: editForm.divisi,
+      deskripsi: editForm.deskripsi || null,
+      targetSelesai: editForm.targetSelesai,
+      lokasi: editForm.lokasi,
+      unitPeminta: editForm.unitPeminta,
+      nomorSuratMasuk: editForm.nomorSurat,
+      perihalSuratMasuk: editForm.perihalSurat,
+    };
+    if (editForm.fileData) {
+      payload.suratMasuk = editForm.filePath;
+      payload.suratMasukData = editForm.fileData;
+    }
+    updateProyek(showEdit.id, payload);
+    setShowEdit(null);
+    load();
+  };
+
+  const handleConfirmDelete = () => {
+    if (!showDeleteConfirm) return;
+    deleteProyek(showDeleteConfirm.id);
+    setShowDeleteConfirm(null);
+    load();
   };
 
   const handleTambah = () => {
@@ -784,7 +856,17 @@ export default function ProyekPage() {
                       <td className="td-center">{suratCell("operator")}</td>
                       <td className="td-center">{progressCell(false)}</td>
                       <td className="td-center">{laporanCell()}</td>
-                      <td className="td-center"><button type="button" className="btn-secondary btn-sm" onClick={() => setShowRingkasan(item)}>Ringkasan</button></td>
+                      <td className="td-center">
+                        <div className="table-actions table-actions--center">
+                          <button type="button" className="btn-secondary btn-sm" onClick={() => setShowRingkasan(item)}>Ringkasan</button>
+                          {item.suratStatus !== "published" && (
+                            <button type="button" className="btn-edit btn-sm" onClick={() => openEdit(item)}>Edit</button>
+                          )}
+                          {item.assignees.length === 0 && item.suratStatus !== "published" && (
+                            <button type="button" className="btn-delete btn-sm" onClick={() => setShowDeleteConfirm(item)}>Hapus</button>
+                          )}
+                        </div>
+                      </td>
                     </>)}
 
                     {/* ─── KEPALA DIVISI ─── */}
@@ -914,6 +996,70 @@ export default function ProyekPage() {
             <div className="modal-actions">
               <button type="button" onClick={handleTambah} disabled={formUploadProgress}>Simpan</button>
               <button type="button" className="btn-secondary" onClick={() => { setShowTambah(false); setForm({ namaProyek: "", divisi: [], deskripsi: "", targetSelesai: "", lokasi: "", unitPeminta: "", nomorSurat: "", perihalSurat: "", filePath: "", fileData: "", fileSize: 0 }); }}>Batal</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL EDIT PROYEK ─── */}
+      {showEdit && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <h2>Edit Proyek</h2>
+            <div className="form-group"><label>Nama Proyek *</label><input value={editForm.namaProyek} onChange={(e) => setEditForm({ ...editForm, namaProyek: e.target.value })} /></div>
+            <div className="form-group">
+              <label>Unit Peminta *</label>
+              <select value={editForm.unitPeminta} onChange={(e) => setEditForm({ ...editForm, unitPeminta: e.target.value })}>
+                <option value="">-- Pilih Unit Peminta --</option>
+                {unitPemintaList.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+            <div className="form-group"><label>Lokasi *</label><textarea value={editForm.lokasi} onChange={(e) => setEditForm({ ...editForm, lokasi: e.target.value })} rows={2} /></div>
+            <div className="form-group">
+              <label>Divisi</label>
+              <div className="checkbox-group">
+                {divisiList.map(d => (
+                  <label key={d} className="checkbox-item">
+                    <input type="checkbox" checked={editForm.divisi.includes(d)} onChange={(e) => setEditForm({ ...editForm, divisi: e.target.checked ? [...editForm.divisi, d] : editForm.divisi.filter(x => x !== d) })} />{d}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="form-group"><label>Deskripsi</label><textarea value={editForm.deskripsi} onChange={(e) => setEditForm({ ...editForm, deskripsi: e.target.value })} /></div>
+            <div className="form-group"><label>Target Selesai *</label><input type="date" value={editForm.targetSelesai} onChange={(e) => setEditForm({ ...editForm, targetSelesai: e.target.value })} /></div>
+            <div className="form-divider">Surat Masuk</div>
+            <div className="form-group"><label>Nomor Surat Masuk *</label><input value={editForm.nomorSurat} onChange={(e) => setEditForm({ ...editForm, nomorSurat: e.target.value })} /></div>
+            <div className="form-group"><label>Perihal Surat Masuk *</label><textarea value={editForm.perihalSurat} onChange={(e) => setEditForm({ ...editForm, perihalSurat: e.target.value })} rows={2} /></div>
+            <div className="form-group">
+              <label>Ganti Dokumen Surat Masuk (PDF) <span className="text-muted text-small">— biarkan kosong untuk tetap gunakan file saat ini</span></label>
+              <div className="file-upload-area">
+                <input ref={editFileInputRef} type="file" accept="application/pdf" id="edit-proyek-file" className="hidden-input" onChange={handleEditFile} />
+                <label htmlFor="edit-proyek-file" className="file-upload-btn">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M4 6l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  {editUploadProgress ? "Membaca file..." : editForm.filePath ? "Ganti File" : "Pilih File PDF Baru"}
+                </label>
+                {editForm.filePath && <div className="file-upload-preview"><span>{editForm.filePath}</span><span className="file-size-label">{fmt(editForm.fileSize)}</span></div>}
+                {!editForm.filePath && showEdit.suratMasuk && <div className="file-upload-preview"><span>{showEdit.suratMasuk}</span><span className="file-size-label text-muted">File saat ini</span></div>}
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button type="button" onClick={handleSaveEdit} disabled={editUploadProgress}>Simpan Perubahan</button>
+              <button type="button" className="btn-secondary" onClick={() => setShowEdit(null)}>Batal</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL KONFIRMASI HAPUS ─── */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <h2>Hapus Proyek</h2>
+            <p>Apakah kamu yakin ingin menghapus proyek <strong>{showDeleteConfirm.namaProyek}</strong>?</p>
+            <p className="text-muted text-small mt-2">Data akan disembunyikan dari sistem. Aksi ini tidak dapat dibatalkan.</p>
+            <div className="modal-actions">
+              <button type="button" className="btn-delete" onClick={handleConfirmDelete}>Ya, Hapus</button>
+              <button type="button" className="btn-secondary" onClick={() => setShowDeleteConfirm(null)}>Batal</button>
             </div>
           </div>
         </div>

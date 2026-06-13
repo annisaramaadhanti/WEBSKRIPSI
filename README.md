@@ -8,7 +8,6 @@ UPA Teknologi Informasi dan Komunikasi — Universitas Lampung
 ## Instalasi
 
 ```bash
-cd output
 npm install
 npm run dev
 ```

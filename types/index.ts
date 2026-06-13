@@ -40,6 +40,7 @@ export type UnitPeminta = string; // lihat unitPemintaList di lib/data.ts
 
 export type Pekerjaan = {
   id: string;
+  deleted?: boolean;
   namaPekerjaan: string;
   status: StatusPekerjaan;
   suratMasuk: string;
@@ -76,6 +77,7 @@ export type SuratDetail = {
 
 export type Proyek = {
   id: string;
+  deleted?: boolean;
   namaProyek: string;
   status: StatusPekerjaan;
   statusKonfirmasi: StatusKonfirmasi;

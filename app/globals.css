@@ -325,10 +325,9 @@ button:disabled { opacity: 0.42 !important; cursor: not-allowed !important; poin
    ====================================================== */
 
 .layout {
-  display: flex; min-height: 100vh; width: 100vw;
+  display: flex; height: 100vh; width: 100vw;
   background: var(--bg);
-  overflow-x: hidden;
-  align-items: flex-start;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -337,7 +336,6 @@ button:disabled { opacity: 0.42 !important; cursor: not-allowed !important; poin
   color: #fff;
   box-shadow: 2px 0 20px rgba(11,30,75,0.22);
   display: flex; flex-direction: column;
-  position: sticky; top: 0;
   height: 100vh; overflow-y: auto;
 }
 
@@ -398,7 +396,7 @@ button:disabled { opacity: 0.42 !important; cursor: not-allowed !important; poin
 .sidebar-menu a:hover .sidebar-menu-icon { opacity: 1; }
 .sidebar-footer { padding: 16px 16px; border-top: 1px solid rgba(255,255,255,0.07); }
 
-.content { flex: 1; min-width: 0; width: 100%; background: transparent; display: flex; flex-direction: column; }
+.content { flex: 1; min-width: 0; width: 100%; background: transparent; display: flex; flex-direction: column; overflow-y: auto; }
 
 .navbar {
   display: flex; justify-content: space-between; align-items: center;
@@ -982,8 +980,9 @@ input:focus, textarea:focus { border-color: var(--navy-600); box-shadow: 0 0 0 3
    ====================================================== */
 
 @media (max-width: 768px) {
-  .layout { flex-direction: column; align-items: stretch; }
-  .sidebar { width: 100%; position: static; height: auto; overflow-y: visible; }
+  .layout { flex-direction: column; align-items: stretch; height: auto; overflow: visible; }
+  .content { overflow-y: visible; }
+  .sidebar { width: 100%; height: auto; overflow-y: visible; }
   .page { padding: 18px 14px; }
   .navbar { flex-direction: column; align-items: flex-start; padding: 12px 14px; }
   .summary-grid { grid-template-columns: repeat(2, 1fr); }
