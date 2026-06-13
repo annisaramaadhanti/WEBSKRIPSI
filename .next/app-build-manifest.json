@@ -36,11 +36,6 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(app)/pekerjaan/layout.js"
     ],
-    "/(app)/proyek/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(app)/proyek/page.js"
-    ],
     "/(app)/tinjauan-kinerja/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",

@@ -220,7 +220,7 @@ function ChartCard({ title, subtitle, children }: {
   title: string; subtitle?: string; children: React.ReactNode;
 }) {
   return (
-    <div style={{
+    <div className="chart-card" style={{
       background: "#fff", borderRadius: 16,
       border: "1px solid rgba(148,163,184,0.15)",
       padding: "20px 22px",
@@ -377,7 +377,7 @@ function DashboardOperator({ pk, pr }: { pk: Pekerjaan[]; pr: Proyek[] }) {
           <table className="table">
             <thead>
               <tr>
-                <th className="th-center">Nama</th><th className="th-center">Tipe</th><th className="th-center">Unit Peminta</th>
+                <th>Nama</th><th className="th-center">Tipe</th><th>Unit Peminta</th>
                 <th className="th-center">Status</th><th className="th-center">Surat Tugas</th><th className="th-center">Target</th>
               </tr>
             </thead>
@@ -385,7 +385,7 @@ function DashboardOperator({ pk, pr }: { pk: Pekerjaan[]; pr: Proyek[] }) {
               {terbaru.map((item) => (
                 <tr key={item.id}>
                   <td><strong>{item.nama}</strong></td>
-                  <td><span className={`badge ${item.tipe === "Proyek" ? "badge-blue" : "badge-cyan"}`}>{item.tipe}</span></td>
+                  <td className="td-center"><span className={`badge ${item.tipe === "Proyek" ? "badge-blue" : "badge-cyan"}`}>{item.tipe}</span></td>
                   <td className="text-small">{item.unit}</td>
                   <td className="td-center"><span className="badge" style={{ background: `${STATUS_COLOR[item.status]}20`, color: STATUS_COLOR[item.status] }}>{STATUS_LABEL[item.status]}</span></td>
                   <td className="td-center">
@@ -512,7 +512,7 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
           <div className="table-wrap">
             <table className="table">
               <thead>
-                <tr><th className="th-center">Nama</th><th className="th-center">Tipe</th><th className="th-center">Status</th><th className="th-center">Hal yang Perlu Dilakukan</th></tr>
+                <tr><th>Nama</th><th className="th-center">Tipe</th><th className="th-center">Status</th><th className="th-center">Hal yang Perlu Dilakukan</th></tr>
               </thead>
               <tbody>
                 {aksi.map((item) => {
@@ -525,7 +525,7 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
                   return (
                     <tr key={item.id}>
                       <td><strong>{nama}</strong></td>
-                      <td><span className={`badge ${isPk ? "badge-cyan" : "badge-blue"}`}>{isPk ? "Pekerjaan" : "Proyek"}</span></td>
+                      <td className="td-center"><span className={`badge ${isPk ? "badge-cyan" : "badge-blue"}`}>{isPk ? "Pekerjaan" : "Proyek"}</span></td>
                       <td className="td-center"><span className="badge" style={{ background: `${STATUS_COLOR[item.status]}20`, color: STATUS_COLOR[item.status] }}>{STATUS_LABEL[item.status]}</span></td>
                       <td className="td-center">
                         {needACC ? <a href="/tinjauan-kinerja" className="btn-success btn-sm">ACC</a>
@@ -621,7 +621,7 @@ function DashboardStaf({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user: 
           <table className="table">
             <thead>
               <tr>
-                <th className="th-center">Nama</th><th className="th-center">Tipe</th><th className="th-center">Status Saya</th>
+                <th>Nama</th><th className="th-center">Tipe</th><th className="th-center">Status Saya</th>
                 <th className="th-center">Status Tugas</th><th className="th-center">Target</th>
               </tr>
             </thead>
@@ -629,7 +629,7 @@ function DashboardStaf({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user: 
               {all.map((item) => (
                 <tr key={item.id}>
                   <td><strong>{item.nama}</strong></td>
-                  <td><span className={`badge ${item.tipe === "Proyek" ? "badge-blue" : "badge-cyan"}`}>{item.tipe}</span></td>
+                  <td className="td-center"><span className={`badge ${item.tipe === "Proyek" ? "badge-blue" : "badge-cyan"}`}>{item.tipe}</span></td>
                   <td className="td-center">
                     <span className="badge" style={{ background: "#7C3AED20", color: "#7C3AED", fontSize: 11 }}>
                       {item.statusSaya === "pending" ? "Menunggu Konfirmasi"

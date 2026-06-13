@@ -731,17 +731,17 @@ export default function ProyekPage() {
     if (role === "kepala-upa") {
       return (
         <tr>
-          <th className="th-center">Nama Proyek</th>
-          <th className="th-center">Unit Peminta</th>
-          <th className="th-center">Status</th>
-          <th className="th-center">Divisi</th>
-          <th className="th-center">Staf</th>
-          <th className="th-center">Target</th>
-          <th className="th-center">Surat Masuk</th>
-          <th className="th-center">Surat Tugas</th>
-          <th className="th-center">Progress</th>
-          <th className="th-center">Laporan</th>
-          <th className="th-center">Aksi</th>
+          <th className="col-nama">Nama Proyek</th>
+          <th className="col-unit">Unit Peminta</th>
+          <th className="th-center col-status">Status</th>
+          <th className="col-divisi">Divisi</th>
+          <th className="col-staf">Staf</th>
+          <th className="th-center col-target">Target</th>
+          <th className="th-center col-surat">Surat Masuk</th>
+          <th className="th-center col-surat">Surat Tugas</th>
+          <th className="th-center col-progress">Progress</th>
+          <th className="th-center col-laporan">Laporan</th>
+          <th className="th-center col-aksi">Aksi</th>
         </tr>
       );
     }
@@ -799,9 +799,10 @@ export default function ProyekPage() {
                 const hasRejected = item.assignees.some(a => a.statusKonfirmasi === "rejected");
                 const myAssigneeAll = item.assignees.filter(a => a.stafId === user?.id);
                 const myAssignee = myAssigneeAll[myAssigneeAll.length - 1];
-                const stafRingkas = item.assignees.length > 0
-                  ? item.assignees.length === 1 ? item.assignees[0].nama
-                  : `${item.assignees[0].nama} +${item.assignees.length - 1}` : null;
+                const activeAssignees = item.assignees.filter(a => a.statusKonfirmasi !== "rejected");
+                const stafRingkas = activeAssignees.length > 0
+                  ? activeAssignees.length === 1 ? activeAssignees[0].nama
+                  : `${activeAssignees[0].nama} +${activeAssignees.length - 1}` : null;
                 const canBuatPreview = item.assignees.length > 0 &&
                   item.assignees.every(a => a.statusKonfirmasi === "accepted") &&
                   item.suratStatus !== "published";
@@ -850,7 +851,7 @@ export default function ProyekPage() {
                       <td className="td-wrap"><strong>{item.namaProyek}</strong>{item.deskripsi && <div className="text-muted text-small">{item.deskripsi}</div>}</td>
                       <td className="text-small">{item.unitPeminta || <span className="text-muted">-</span>}</td>
                       <td className="td-center"><span className={`badge ${STATUS_BADGE[item.status] || "badge-blue"}`}>{STATUS_LABEL[item.status] || item.status}</span></td>
-                      <td className="text-small">{stafRingkas ? <span title={item.assignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
+                      <td className="text-small">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
                       <td className="td-center text-small">{item.targetSelesai}</td>
                       <td className="td-center">{item.suratMasuk ? <button type="button" className="btn-link-pdf" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-muted text-small">-</span>}</td>
                       <td className="td-center">{suratCell("operator")}</td>
@@ -875,7 +876,7 @@ export default function ProyekPage() {
                       <td className="text-small">{item.unitPeminta || <span className="text-muted">-</span>}</td>
                       <td className="td-center"><span className={`badge ${STATUS_BADGE[item.status] || "badge-blue"}`}>{STATUS_LABEL[item.status] || item.status}</span></td>
                       {isAssigned ? <td className="td-center">{konfirmasiStafBadge()}</td> : <td className="td-center"><span className="text-muted text-small">—</span></td>}
-                      <td className="text-small">{stafRingkas ? <span title={item.assignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
+                      <td className="text-small">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
                       <td className="td-center text-small">{item.targetSelesai}</td>
                       <td className="td-center">{item.suratMasuk ? <button type="button" className="btn-link-pdf" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-muted text-small">-</span>}</td>
                       <td className="td-center">{suratCell("kadiv")}</td>
@@ -896,7 +897,7 @@ export default function ProyekPage() {
                       <td className="text-small">{item.unitPeminta || <span className="text-muted">-</span>}</td>
                       <td className="td-center"><span className={`badge ${STATUS_BADGE[item.status] || "badge-blue"}`}>{STATUS_LABEL[item.status] || item.status}</span></td>
                       <td className="text-small">{divisiRingkas}</td>
-                      <td className="text-small">{stafRingkas ? <span title={item.assignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
+                      <td className="text-small">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
                       <td className="td-center text-small">{item.targetSelesai}</td>
                       <td className="td-center">{item.suratMasuk ? <button type="button" className="btn-link-pdf" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-muted text-small">-</span>}</td>
                       <td className="td-center">{suratCell("kepala-upa")}</td>
@@ -1186,110 +1187,110 @@ function DisposisiModal({ judul, isReassign, rejectedCount = 1, onClose, onSave 
   onSave: (stafList: Array<{ stafId: string; nama: string; nip: string; jabatan: string; divisi: string; masukSurat: boolean }>) => void;
 }) {
   const allStaf = USERS.filter((u: import("@/types").User) => u.role === "staf");
-  const initialRows = isReassign ? rejectedCount : 1;
-  const [selectedIds, setSelectedIds] = useState<string[]>(Array(initialRows).fill(""));
-  const [masukSurat, setMasukSurat] = useState<Record<string, boolean>>({});
-  const [searchTerms, setSearchTerms] = useState<string[]>(Array(initialRows).fill(""));
-  const [openRows, setOpenRows] = useState<number[]>([]);
-
-  const addRow = () => { setSearchTerms(prev => [...prev, ""]); };
-
-  const pickStaf = (rowIdx: number, stafId: string) => {
-    const newIds = [...selectedIds]; const oldId = newIds[rowIdx];
-    newIds[rowIdx] = stafId; setSelectedIds(newIds);
-    setMasukSurat(prev => { const n = { ...prev }; if (oldId) delete n[oldId]; n[stafId] = true; return n; });
-    const newTerms = [...searchTerms];
-    newTerms[rowIdx] = allStaf.find((s: any) => s.id === stafId)?.nama || "";
-    setSearchTerms(newTerms);
-    setOpenRows(prev => prev.filter(r => r !== rowIdx));
-  };
-
-  const removeRow = (rowIdx: number) => {
-    const id = selectedIds[rowIdx];
-    setSelectedIds(selectedIds.filter((_, i) => i !== rowIdx));
-    setSearchTerms(searchTerms.filter((_, i) => i !== rowIdx));
-    setOpenRows(prev => prev.filter(r => r !== rowIdx).map(r => r > rowIdx ? r - 1 : r));
-    if (id) setMasukSurat(prev => { const n = { ...prev }; delete n[id]; return n; });
-  };
+  const [selectedMap, setSelectedMap] = useState<Record<string, { masukSurat: boolean }>>({});
+  const [search, setSearch] = useState("");
 
   const handleSave = () => {
-    const valid = selectedIds.filter(Boolean);
+    const valid = Object.keys(selectedMap);
     if (!valid.length) return alert("Pilih minimal satu staf.");
     onSave(valid.map(id => {
       const s = allStaf.find((u: any) => u.id === id)!;
-      return { stafId: id, nama: s.nama, nip: s.nip, jabatan: s.jabatan, divisi: s.divisi, masukSurat: masukSurat[id] !== false };
+      return { stafId: id, nama: s.nama, nip: s.nip, jabatan: s.jabatan, divisi: s.divisi, masukSurat: selectedMap[id].masukSurat };
     }));
   };
+
+  const avatarInitials = (nama: string) =>
+    nama.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase();
+
+  const q = search.toLowerCase();
+  const filteredStaf = allStaf.filter((s: any) =>
+    !q || s.nama.toLowerCase().includes(q) || s.nip.includes(q) || s.divisi.toLowerCase().includes(q)
+  );
 
   return (
     <div className="modal-overlay">
       <div className="modal-box modal-wide">
         <h2>{isReassign ? "Penugasan Ulang" : "Disposisi Staf"}</h2>
         <div className="form-group"><label>Proyek</label><input readOnly value={judul} /></div>
+        {isReassign && (
+          <div className="notice-card notice-warning" style={{ marginBottom: 14 }}>
+            <div className="notice-card-title">{rejectedCount} staf menolak penugasan</div>
+            <div className="text-small">Pilih staf pengganti dari daftar di bawah.</div>
+          </div>
+        )}
         <div className="form-group">
           <label>Pilih Staf *</label>
-          {searchTerms.map((term, rowIdx) => {
-            const currentId = selectedIds[rowIdx] || "";
-            const isOpen = openRows.includes(rowIdx) || (!!term && !currentId);
-            const filtered = allStaf.filter((s: any) =>
-              (!selectedIds.includes(s.id) || s.id === currentId) &&
-              (!term || s.id === currentId || s.nama.toLowerCase().includes(term.toLowerCase()) || s.nip.includes(term))
-            );
-            return (
-              <div key={rowIdx} className="disposisi-row">
-                <div className="disposisi-search-wrap">
-                  <input placeholder="Cari nama atau NIP..."
-                    onFocus={() => setOpenRows(prev => prev.includes(rowIdx) ? prev : [...prev, rowIdx])}
-                    onBlur={() => setTimeout(() => setOpenRows(prev => prev.filter(r => r !== rowIdx)), 180)}
-                    value={currentId ? (allStaf.find((s: any) => s.id === currentId)?.nama || term) : term}
-                    onChange={(e) => {
-                      const newTerms = [...searchTerms]; newTerms[rowIdx] = e.target.value; setSearchTerms(newTerms);
-                      if (currentId) { const newIds = [...selectedIds]; newIds[rowIdx] = ""; setSelectedIds(newIds); setMasukSurat(prev => { const n = { ...prev }; delete n[currentId]; return n; }); }
-                    }} />
-                  {!currentId && filtered.length > 0 && (
-                    <div className="disposisi-dropdown">
-                      {filtered.map((s: any) => (
-                        <div key={s.id} className="disposisi-option" onMouseDown={(e) => { e.preventDefault(); pickStaf(rowIdx, s.id); }}>
-                          <div className="font-semibold text-small">{s.nama}</div>
-                          <div className="text-muted text-xsmall">{s.nip} · {s.divisi}</div>
-                        </div>
-                      ))}
+          <input
+            type="text"
+            placeholder="Cari nama, NIP, atau divisi..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ marginBottom: 10 }}
+          />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8, maxHeight: 300, overflowY: "auto", padding: "2px 2px 4px" }}>
+            {filteredStaf.map((s: any) => {
+              const sel = !!selectedMap[s.id];
+              return (
+                <div
+                  key={s.id}
+                  onClick={() => setSelectedMap(prev => {
+                    if (prev[s.id]) { const n = { ...prev }; delete n[s.id]; return n; }
+                    return { ...prev, [s.id]: { masukSurat: true } };
+                  })}
+                  style={{
+                    border: sel ? "2px solid var(--navy-600)" : "1.5px solid var(--border-soft)",
+                    borderRadius: 10, padding: "10px 12px", cursor: "pointer",
+                    background: sel ? "var(--navy-50)" : "var(--surface)",
+                    transition: "border-color 0.14s, background 0.14s", position: "relative",
+                  }}
+                >
+                  {sel && (
+                    <span style={{ position: "absolute", top: 8, right: 8, width: 18, height: 18, borderRadius: "50%", background: "var(--navy-600)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>✓</span>
+                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 4 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: "50%", flexShrink: 0, background: sel ? "var(--navy-600)" : "var(--navy-100)", color: sel ? "#fff" : "var(--navy-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700 }}>
+                      {avatarInitials(s.nama)}
                     </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 12, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.nama}</div>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)" }}>{s.divisi}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--text-muted)", paddingLeft: 39 }}>{s.nip}</div>
+                  {sel && (
+                    <label onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 7, paddingTop: 7, borderTop: "1px solid var(--border-soft)", fontSize: 11, color: "var(--text-soft)", cursor: "pointer" }}>
+                      <input type="checkbox" checked={selectedMap[s.id]?.masukSurat !== false}
+                        onChange={() => setSelectedMap(prev => ({ ...prev, [s.id]: { masukSurat: !prev[s.id]?.masukSurat } }))} />
+                      Masuk Surat Tugas
+                    </label>
                   )}
                 </div>
-                {rowIdx > 0 && <button type="button" className="btn-delete btn-sm" onClick={() => removeRow(rowIdx)}>Hapus</button>}
-              </div>
-            );
-          })}
-          <button type="button" className="btn-secondary btn-sm mt-2" onClick={addRow}>+ Tambah Staf</button>
+              );
+            })}
+            {filteredStaf.length === 0 && (
+              <div style={{ gridColumn: "1/-1", textAlign: "center", color: "var(--text-muted)", padding: 20, fontSize: 13 }}>Tidak ada staf yang sesuai.</div>
+            )}
+          </div>
         </div>
-        {selectedIds.filter(Boolean).length > 0 && (
-          <div className="form-group">
-            <label>Ringkasan Staf Terpilih</label>
-            <div className="table-wrap">
-              <table className="table">
-                <thead><tr><th className="th-center">No</th><th className="th-center">Nama</th><th className="th-center">NIP</th><th className="th-center">Divisi</th><th className="th-center">Surat Tugas</th><th></th></tr></thead>
-                <tbody>
-                  {selectedIds.filter(Boolean).map((id, i) => {
-                    const s = allStaf.find((u: any) => u.id === id); if (!s) return null;
-                    return (
-                      <tr key={id}>
-                        <td>{i + 1}</td><td><strong>{s.nama}</strong></td>
-                        <td className="text-small">{s.nip}</td>
-                        <td className="text-small">{s.divisi}</td>
-                        <td className="td-center"><input type="checkbox" checked={masukSurat[id] !== false} onChange={() => setMasukSurat(prev => ({ ...prev, [id]: !prev[id] }))} /></td>
-                        <td><button type="button" className="btn-delete btn-sm" onClick={() => removeRow(selectedIds.indexOf(id))}>Hapus</button></td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+        {Object.keys(selectedMap).length > 0 && (
+          <div className="notice-card notice-info" style={{ marginBottom: 12 }}>
+            <div className="notice-card-title">{Object.keys(selectedMap).length} staf terpilih</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+              {Object.keys(selectedMap).map(id => {
+                const s = allStaf.find((u: any) => u.id === id); if (!s) return null;
+                return (
+                  <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "var(--navy-50)", border: "1px solid var(--navy-100)", borderRadius: 20, padding: "3px 8px 3px 10px", fontSize: 12, fontWeight: 600 }}>
+                    {s.nama}
+                    <button type="button" onClick={() => setSelectedMap(prev => { const n = { ...prev }; delete n[id]; return n; })}
+                      style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 15, color: "var(--text-muted)", lineHeight: 1, display: "flex", alignItems: "center" }}>×</button>
+                  </span>
+                );
+              })}
             </div>
-            <div className="micro-text mt-2"> Centang "Surat Tugas" agar staf muncul di dokumen surat tugas.</div>
           </div>
         )}
         <div className="modal-actions">
-          <button type="button" onClick={handleSave} disabled={!selectedIds.filter(Boolean).length}>
+          <button type="button" onClick={handleSave} disabled={!Object.keys(selectedMap).length}>
             {isReassign ? "Simpan Penugasan Ulang" : "Simpan Disposisi"}
           </button>
           <button type="button" className="btn-secondary" onClick={onClose}>Batal</button>

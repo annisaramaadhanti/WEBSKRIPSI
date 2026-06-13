@@ -781,8 +781,23 @@ button:disabled { opacity: 0.42 !important; cursor: not-allowed !important; poin
 .table-actions--scroll > * { flex: 0 0 auto; }
 .table-actions button { min-width: 64px; }
 .table-actions--center { justify-content: center; }
-.card .table-wrap { width: 100%; }
+.card .table-wrap {
+  width: 100%;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+  margin: 0;
+}
 .card .table-wrap .table { width: 100%; }
+/* table-wrap di dalam ChartCard (dashboard) */
+.chart-card .table-wrap {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+  margin: 4px 0 0;
+}
 .action-dropdown { position: relative; }
 .action-dropdown summary {
   list-style: none; display: inline-flex; align-items: center; justify-content: center;
@@ -821,6 +836,13 @@ button:disabled { opacity: 0.42 !important; cursor: not-allowed !important; poin
 .col-target, .table-col-target { width: 120px; }
 .col-surat, .table-col-surat { width: 120px; }
 .col-actions, .table-col-actions { width: 150px; }
+/* Kolom tambahan untuk pekerjaan/proyek/tinjauan-kinerja */
+.col-nama { min-width: 200px; width: auto; }
+.col-staf { width: 180px; }
+.col-konfirmasi { width: 130px; }
+.col-laporan { width: 120px; }
+.col-aksi { width: 1%; white-space: nowrap; }
+.col-progress { width: 120px; }
 .table-col-divisi .table-cell-truncate { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .table-col-staff { max-width: 260px; }
 .table-staff-list { display: flex; flex-direction: column; gap: 7px; }

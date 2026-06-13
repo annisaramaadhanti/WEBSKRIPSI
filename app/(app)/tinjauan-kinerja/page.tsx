@@ -7,6 +7,7 @@ import {
   getDokumentasiByRef, getHasilSurveyByRef, getProgressByProyekId,
 } from "@/lib/storage";
 import { openLaporanInTab } from "@/lib/laporan-pdf";
+import { PERTANYAAN_SURVEY } from "@/lib/data";
 import type { Pekerjaan, StatusPekerjaan, Dokumentasi, HasilSurvey } from "@/types";
 
 type TinjauanItem = {
@@ -448,12 +449,14 @@ export default function TinjauanKinerjaPage() {
                       </div>
                       <div className="table-wrap" style={{ marginBottom: saran ? 10 : 0 }}>
                         <table className="table">
-                          <thead><tr><th className="th-center">No</th><th className="th-center">Pertanyaan</th><th className="th-center">Nilai</th></tr></thead>
+                          <thead><tr><th className="th-center" style={{ width: 40 }}>No</th><th>Pertanyaan</th><th className="th-center" style={{ width: 60 }}>Nilai</th></tr></thead>
                           <tbody>
                             {sv.jawaban.filter(j => typeof j.nilaiPilihan === "number").map((j, qi) => (
                               <tr key={j.pertanyaanId}>
                                 <td className="td-center">{qi + 1}</td>
-                                <td className="td-center">{j.pertanyaanId}</td>
+                                <td style={{ whiteSpace: "normal" }}>
+                                  {PERTANYAAN_SURVEY.find(q => q.id === j.pertanyaanId)?.teks || j.pertanyaanId}
+                                </td>
                                 <td className="td-center">
                                   <span style={{ fontWeight: 700, color: (j.nilaiPilihan ?? 0) >= 4 ? "#16A34A" : (j.nilaiPilihan ?? 0) >= 3 ? "#D97706" : "#DC2626" }}>
                                     {j.nilaiPilihan}

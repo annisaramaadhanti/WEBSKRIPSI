@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useRef, useState, Fragment } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRole } from "@/components/providers/RoleProvider";
 import {
   getPekerjaan, deletePekerjaan, updatePekerjaan, addPekerjaan, seedIfEmpty,
@@ -675,16 +675,16 @@ export default function PekerjaanPage() {
     if (role === "kepala-upa") {
       return (
         <tr>
-          <th className="th-center">Nama Pekerjaan</th>
-          <th className="th-center">Unit Peminta</th>
-          <th className="th-center">Status</th>
-          <th className="th-center">Divisi</th>
-          <th className="th-center">Staf</th>
-          <th className="th-center">Target</th>
-          <th className="th-center">Surat Masuk</th>
-          <th className="th-center">Surat Tugas</th>
-          <th className="th-center">Laporan</th>
-          <th className="th-center">Aksi</th>
+          <th className="col-nama">Nama Pekerjaan</th>
+          <th className="col-unit">Unit Peminta</th>
+          <th className="th-center col-status">Status</th>
+          <th className="col-divisi">Divisi</th>
+          <th className="col-staf">Staf</th>
+          <th className="th-center col-target">Target</th>
+          <th className="th-center col-surat">Surat Masuk</th>
+          <th className="th-center col-surat">Surat Tugas</th>
+          <th className="th-center col-laporan">Laporan</th>
+          <th className="th-center col-aksi">Aksi</th>
         </tr>
       );
     }
@@ -746,10 +746,11 @@ export default function PekerjaanPage() {
                 const allAccepted = item.assignees.length > 0 &&
                   item.assignees.every(a => a.statusKonfirmasi === "accepted");
 
-                const stafRingkas = item.assignees.length > 0
-                  ? item.assignees.length === 1
-                    ? item.assignees[0].nama
-                    : `${item.assignees[0].nama} +${item.assignees.length - 1}`
+                const activeAssignees = item.assignees.filter(a => a.statusKonfirmasi !== "rejected");
+                const stafRingkas = activeAssignees.length > 0
+                  ? activeAssignees.length === 1
+                    ? activeAssignees[0].nama
+                    : `${activeAssignees[0].nama} +${activeAssignees.length - 1}`
                   : null;
 
                 const konfirmasiStafBadge = () => {
@@ -804,7 +805,7 @@ export default function PekerjaanPage() {
                         <td className="td-wrap"><strong>{item.namaPekerjaan}</strong></td>
                         <td>{item.unitPeminta || <span className="text-muted">—</span>}</td>
                         <td className="td-center"><span className={`badge ${STATUS_BADGE[item.status] || "badge-blue"}`}>{STATUS_LABEL[item.status] || item.status}</span></td>
-                        <td className="text-small">{stafRingkas ? <span title={item.assignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
+                        <td className="text-small">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
                         <td className="td-center text-small">{item.targetSelesai}</td>
                         <td className="td-center">{item.suratMasuk ? <button type="button" className="btn-link-pdf" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-muted text-small">-</span>}</td>
                         <td className="td-center">{suratTugasCell("operator")}</td>
@@ -834,7 +835,7 @@ export default function PekerjaanPage() {
                           ? <td className="td-center">{konfirmasiStafBadge()}</td>
                           : <td className="td-center"><span className="text-muted text-small">—</span></td>
                         }
-                        <td className="text-small">{stafRingkas ? <span title={item.assignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
+                        <td className="text-small">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
                         <td className="td-center text-small">{item.targetSelesai}</td>
                         <td className="td-center">{item.suratMasuk ? <button type="button" className="btn-link-pdf" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-muted text-small">-</span>}</td>
                         <td className="td-center">{suratTugasCell("kadiv")}</td>
@@ -862,7 +863,7 @@ export default function PekerjaanPage() {
                         <td>{item.unitPeminta || <span className="text-muted">—</span>}</td>
                         <td className="td-center"><span className={`badge ${STATUS_BADGE[item.status] || "badge-blue"}`}>{STATUS_LABEL[item.status] || item.status}</span></td>
                         <td className="text-small">{divisiRingkas}</td>
-                        <td className="text-small">{stafRingkas ? <span title={item.assignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
+                        <td className="text-small">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
                         <td className="td-center text-small">{item.targetSelesai}</td>
                         <td className="td-center">{item.suratMasuk ? <button type="button" className="btn-link-pdf" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-muted text-small">-</span>}</td>
                         <td className="td-center">{suratTugasCell("kepala-upa")}</td>
@@ -1198,13 +1199,11 @@ function DisposisiModal({
 }) {
   const allStaf = USERS.filter((u: import("@/types").User) => u.role === "staf");
 
-  // ── State: initial disposisi (non-reassign) ──
-  const [selectedIds, setSelectedIds] = useState<string[]>([""]);
-  const [masukSuratMap, setMasukSuratMap] = useState<Record<string, boolean>>({});
-  const [searchTerms, setSearchTerms] = useState<string[]>([""]);
-  const [openRows, setOpenRows] = useState<number[]>([]);
+  // ── Initial disposisi: card grid selection ──
+  const [selectedMap, setSelectedMap] = useState<Record<string, { masukSurat: boolean }>>({});
+  const [search, setSearch] = useState("");
 
-  // ── State: reassign mode ──
+  // ── Reassign mode state ──
   type ExistingAction = {
     action: "keep" | "remove" | "replace";
     replacementId: string;
@@ -1228,55 +1227,39 @@ function DisposisiModal({
 
   const updateExisting = (i: number, patch: Partial<ExistingAction>) =>
     setExistingActions(prev => prev.map((x, j) => j === i ? { ...x, ...patch } : x));
+  const addNewRow = () => { setAddRows(prev => [...prev, { uid: nextUid, stafId: "", search: "", open: false, masukSurat: true }]); setNextUid(n => n + 1); };
+  const removeAddRow = (uid: number) => setAddRows(prev => prev.filter(r => r.uid !== uid));
+  const updateAddRow = (uid: number, patch: Partial<AddRow>) =>
+    setAddRows(prev => prev.map(r => r.uid === uid ? { ...r, ...patch } : r));
 
-  // IDs already occupied — excluded from all dropdowns
   const occupiedIds = (() => {
     const ids = new Set<string>();
     if (isReassign) {
       pekerjaan.assignees.forEach((a, i) => {
+        // Staf yang sudah rejected tidak boleh dipilih lagi di manapun
+        if (a.statusKonfirmasi === "rejected") { ids.add(a.stafId); return; }
         if (existingActions[i]?.action === "keep") ids.add(a.stafId);
+        // Staf yang sedang di-replace juga tidak bisa jadi pengganti diri sendiri
+        if (existingActions[i]?.action === "replace") ids.add(a.stafId);
         if (existingActions[i]?.action === "replace" && existingActions[i].replacementId)
           ids.add(existingActions[i].replacementId);
       });
       addRows.forEach(r => { if (r.stafId) ids.add(r.stafId); });
     } else {
-      selectedIds.forEach(id => { if (id) ids.add(id); });
+      Object.keys(selectedMap).forEach(id => ids.add(id));
     }
     return ids;
   })();
 
-  // ── Initial disposisi handlers ──
-  const addRow = () => { setSearchTerms(prev => [...prev, ""]); setSelectedIds(prev => [...prev, ""]); };
-
-  const pickStaf = (rowIdx: number, stafId: string) => {
-    const newIds = [...selectedIds]; const oldId = newIds[rowIdx]; newIds[rowIdx] = stafId; setSelectedIds(newIds);
-    setMasukSuratMap(prev => { const n = { ...prev }; if (oldId) delete n[oldId]; n[stafId] = true; return n; });
-    const newTerms = [...searchTerms]; newTerms[rowIdx] = allStaf.find(s => s.id === stafId)?.nama || ""; setSearchTerms(newTerms);
-    setOpenRows(prev => prev.filter(r => r !== rowIdx));
-  };
-
-  const removeRow = (rowIdx: number) => {
-    const id = selectedIds[rowIdx];
-    setSelectedIds(selectedIds.filter((_, i) => i !== rowIdx));
-    setSearchTerms(searchTerms.filter((_, i) => i !== rowIdx));
-    setOpenRows(prev => prev.filter(r => r !== rowIdx).map(r => r > rowIdx ? r - 1 : r));
-    if (id) setMasukSuratMap(prev => { const n = { ...prev }; delete n[id]; return n; });
-  };
-
-  // ── Reassign add-row handlers ──
-  const addNewRow = () => { setAddRows(prev => [...prev, { uid: nextUid, stafId: "", search: "", open: false, masukSurat: true }]); setNextUid(n => n + 1); };
-  const removeAddRow = (uid: number) => setAddRows(prev => prev.filter(r => r.uid !== uid));
-  const updateAddRow = (uid: number, patch: Partial<AddRow>) => setAddRows(prev => prev.map(r => r.uid === uid ? { ...r, ...patch } : r));
-
-  // ── Save ──
   const handleSave = () => {
     if (!isReassign) {
-      const valid = selectedIds.filter(Boolean);
+      const valid = Object.keys(selectedMap);
       if (valid.length === 0) return alert("Pilih minimal satu staf.");
       onSave(valid.map(id => {
         const s = allStaf.find(u => u.id === id)!;
         return { stafId: id, nama: s.nama, nip: s.nip, jabatan: s.jabatan, divisi: s.divisi,
-          statusPekerjaan: "assigned" as const, statusKonfirmasi: "pending" as const, masukSurat: masukSuratMap[id] !== false };
+          statusPekerjaan: "assigned" as const, statusKonfirmasi: "pending" as const,
+          masukSurat: selectedMap[id].masukSurat };
       }));
       return;
     }
@@ -1302,11 +1285,19 @@ function DisposisiModal({
     onSave(final);
   };
 
+  const avatarInitials = (nama: string) =>
+    nama.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase();
+
   const statusBadge = (a: Assignee) => {
     if (a.statusKonfirmasi === "accepted") return <span className="badge badge-green">Diterima</span>;
     if (a.statusKonfirmasi === "rejected") return <span className="badge badge-red">Ditolak</span>;
     return <span className="badge badge-purple">Menunggu</span>;
   };
+
+  const q = search.toLowerCase();
+  const filteredStaf = allStaf.filter(s =>
+    !q || s.nama.toLowerCase().includes(q) || s.nip.includes(q) || s.divisi.toLowerCase().includes(q)
+  );
 
   return (
     <div className="modal-overlay">
@@ -1314,223 +1305,237 @@ function DisposisiModal({
         <h2>{isReassign ? "Penugasan Ulang" : "Disposisi Staf"}</h2>
         <div className="form-group"><label>Pekerjaan</label><input readOnly value={pekerjaan.namaPekerjaan} /></div>
 
-        {/* ── Initial disposisi: pilih staf baru ── */}
+        {/* ── Initial disposisi: card grid ── */}
         {!isReassign && (
-          <div className="form-group">
-            <label>Pilih Staf *</label>
-            {searchTerms.map((term, rowIdx) => {
-              const currentId = selectedIds[rowIdx] || "";
-              const isOpen = openRows.includes(rowIdx) || (!!term && !currentId);
-              const filtered = allStaf.filter(s =>
-                (!occupiedIds.has(s.id) || s.id === currentId) &&
-                (!term || s.id === currentId || s.nama.toLowerCase().includes(term.toLowerCase()) || s.nip.includes(term))
-              );
-              return (
-                <div key={rowIdx} className="disposisi-row">
-                  <div className="disposisi-search-wrap">
-                    <input
-                      placeholder="Cari nama atau NIP..."
-                      onFocus={() => setOpenRows(prev => prev.includes(rowIdx) ? prev : [...prev, rowIdx])}
-                      onBlur={() => setTimeout(() => setOpenRows(prev => prev.filter(r => r !== rowIdx)), 180)}
-                      value={currentId ? (allStaf.find(s => s.id === currentId)?.nama || term) : term}
-                      onChange={(e) => {
-                        const newTerms = [...searchTerms]; newTerms[rowIdx] = e.target.value; setSearchTerms(newTerms);
-                        if (currentId) { const newIds = [...selectedIds]; newIds[rowIdx] = ""; setSelectedIds(newIds); setMasukSuratMap(prev => { const n = { ...prev }; delete n[currentId]; return n; }); }
+          <>
+            <div className="form-group">
+              <label>Pilih Staf *</label>
+              <input
+                type="text"
+                placeholder="Cari nama, NIP, atau divisi..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{ marginBottom: 10 }}
+              />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8, maxHeight: 300, overflowY: "auto", padding: "2px 2px 4px" }}>
+                {filteredStaf.map(s => {
+                  const sel = !!selectedMap[s.id];
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedMap(prev => {
+                        if (prev[s.id]) { const n = { ...prev }; delete n[s.id]; return n; }
+                        return { ...prev, [s.id]: { masukSurat: true } };
+                      })}
+                      style={{
+                        border: sel ? "2px solid var(--navy-600)" : "1.5px solid var(--border-soft)",
+                        borderRadius: 10, padding: "10px 12px", cursor: "pointer",
+                        background: sel ? "var(--navy-50)" : "var(--surface)",
+                        transition: "border-color 0.14s, background 0.14s", position: "relative",
                       }}
-                    />
-                    {isOpen && filtered.length > 0 && (
-                      <div className="disposisi-dropdown">
-                        {filtered.map(s => (
-                          <div key={s.id} className="disposisi-option" onMouseDown={(e) => { e.preventDefault(); pickStaf(rowIdx, s.id); }}>
-                            <div className="font-semibold text-small">{s.nama}</div>
-                            <div className="text-muted text-xsmall">{s.nip} · {s.divisi}</div>
-                          </div>
-                        ))}
+                    >
+                      {sel && (
+                        <span style={{ position: "absolute", top: 8, right: 8, width: 18, height: 18, borderRadius: "50%", background: "var(--navy-600)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>✓</span>
+                      )}
+                      <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 4 }}>
+                        <div style={{ width: 30, height: 30, borderRadius: "50%", flexShrink: 0, background: sel ? "var(--navy-600)" : "var(--navy-100)", color: sel ? "#fff" : "var(--navy-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700 }}>
+                          {avatarInitials(s.nama)}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: 12, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.nama}</div>
+                          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>{s.divisi}</div>
+                        </div>
                       </div>
-                    )}
+                      <div style={{ fontSize: 10, color: "var(--text-muted)", paddingLeft: 39 }}>{s.nip}</div>
+                      {sel && (
+                        <label onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 7, paddingTop: 7, borderTop: "1px solid var(--border-soft)", fontSize: 11, color: "var(--text-soft)", cursor: "pointer" }}>
+                          <input type="checkbox" checked={selectedMap[s.id]?.masukSurat !== false}
+                            onChange={() => setSelectedMap(prev => ({ ...prev, [s.id]: { masukSurat: !prev[s.id]?.masukSurat } }))} />
+                          Masuk Surat Tugas
+                        </label>
+                      )}
+                    </div>
+                  );
+                })}
+                {filteredStaf.length === 0 && (
+                  <div style={{ gridColumn: "1/-1", textAlign: "center", color: "var(--text-muted)", padding: 20, fontSize: 13 }}>
+                    Tidak ada staf yang sesuai.
                   </div>
-                  {rowIdx > 0 && <button type="button" className="btn-delete btn-sm" onClick={() => removeRow(rowIdx)}>Hapus</button>}
-                </div>
-              );
-            })}
-            <button type="button" className="btn-secondary btn-sm mt-2" onClick={addRow}>+ Tambah Staf</button>
-          </div>
-        )}
-
-        {!isReassign && selectedIds.filter(Boolean).length > 0 && (
-          <div className="form-group">
-            <label>Ringkasan Staf Terpilih</label>
-            <div className="table-wrap">
-              <table className="table">
-                <thead><tr><th>No</th><th>Nama</th><th>NIP</th><th>Divisi / Jabatan</th><th className="th-center">Surat Tugas</th><th></th></tr></thead>
-                <tbody>
-                  {selectedIds.filter(Boolean).map((id, i) => {
+                )}
+              </div>
+            </div>
+            {Object.keys(selectedMap).length > 0 && (
+              <div className="notice-card notice-info" style={{ marginBottom: 12 }}>
+                <div className="notice-card-title">{Object.keys(selectedMap).length} staf terpilih</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+                  {Object.keys(selectedMap).map(id => {
                     const s = allStaf.find(u => u.id === id); if (!s) return null;
                     return (
-                      <tr key={id}>
-                        <td>{i + 1}</td><td><strong>{s.nama}</strong></td>
-                        <td className="text-small">{s.nip}</td><td className="text-small">{s.divisi}</td>
-                        <td className="td-center"><input type="checkbox" checked={masukSuratMap[id] !== false} onChange={() => setMasukSuratMap(prev => ({ ...prev, [id]: !prev[id] }))} /></td>
-                        <td><button type="button" className="btn-delete btn-sm" onClick={() => removeRow(selectedIds.indexOf(id))}>Hapus</button></td>
-                      </tr>
+                      <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "var(--navy-50)", border: "1px solid var(--navy-100)", borderRadius: 20, padding: "3px 8px 3px 10px", fontSize: 12, fontWeight: 600 }}>
+                        {s.nama}
+                        <button type="button" onClick={() => setSelectedMap(prev => { const n = { ...prev }; delete n[id]; return n; })}
+                          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 15, color: "var(--text-muted)", lineHeight: 1, display: "flex", alignItems: "center" }}>×</button>
+                      </span>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
-            <div className="micro-text mt-2">Centang "Surat Tugas" agar staf muncul di dokumen surat tugas. Staf yang tidak dicentang tetap tercatat di sistem.</div>
-          </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
-        {/* ── Reassign: tabel staf saat ini + tambah baru ── */}
+        {/* ── Penugasan Ulang: card list ── */}
         {isReassign && (
           <div className="form-group">
             <label>Staf Saat Ini</label>
-            <div className="table-wrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>No</th><th>Nama</th><th>NIP</th><th>Divisi / Jabatan</th>
-                    <th className="th-center">Status</th>
-                    <th className="th-center">Surat Tugas</th>
-                    <th className="th-center">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pekerjaan.assignees.map((a, i) => {
-                    const ea = existingActions[i] ?? { action: "keep", replacementId: "", replacementSearch: "", replacementOpen: false, replacementMasukSurat: true };
-                    const isRemoved = ea.action === "remove";
-                    return (
-                      <Fragment key={a.stafId}>
-                        <tr style={isRemoved ? { opacity: 0.4 } : {}}>
-                          <td>{i + 1}</td>
-                          <td><strong>{a.nama}</strong>{isRemoved && <span className="text-xsmall text-muted"> (dihapus)</span>}</td>
-                          <td className="text-small">{a.nip}</td>
-                          <td className="text-small">{a.divisi}</td>
-                          <td className="td-center">
-                            {statusBadge(a)}
-                            {a.statusKonfirmasi === "rejected" && a.alasanPenolakan && (
-                              <div className="text-xsmall text-muted mt-1">"{a.alasanPenolakan}"</div>
-                            )}
-                          </td>
-                          <td className="td-center">
-                            <input type="checkbox" checked={a.masukSurat !== false} disabled />
-                          </td>
-                          <td className="td-center">
-                            <div className="table-actions table-actions--center">
-                              {a.statusKonfirmasi === "accepted" && (
-                                <span className="text-xsmall text-muted">Terkunci</span>
-                              )}
-                              {a.statusKonfirmasi === "pending" && ea.action === "keep" && (
-                                <button type="button" className="btn-delete btn-sm" onClick={() => updateExisting(i, { action: "remove" })}>Hapus</button>
-                              )}
-                              {a.statusKonfirmasi === "pending" && ea.action === "remove" && (
-                                <button type="button" className="btn-secondary btn-sm" onClick={() => updateExisting(i, { action: "keep" })}>Batalkan</button>
-                              )}
-                              {a.statusKonfirmasi === "rejected" && ea.action === "keep" && (
-                                <>
-                                  <button type="button" className="btn-edit btn-sm" onClick={() => updateExisting(i, { action: "replace" })}>Ganti</button>
-                                  <button type="button" className="btn-delete btn-sm" onClick={() => updateExisting(i, { action: "remove" })}>Hapus</button>
-                                </>
-                              )}
-                              {a.statusKonfirmasi === "rejected" && ea.action === "remove" && (
-                                <button type="button" className="btn-secondary btn-sm" onClick={() => updateExisting(i, { action: "keep" })}>Batalkan</button>
-                              )}
-                              {ea.action === "replace" && (
-                                <button type="button" className="btn-secondary btn-sm" onClick={() => updateExisting(i, { action: "keep", replacementId: "", replacementSearch: "" })}>Batal Ganti</button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                        {ea.action === "replace" && (
-                          <tr>
-                            <td></td>
-                            <td colSpan={5}>
-                              <div className="disposisi-replace-row">
-                                <span className="text-small" style={{ whiteSpace: "nowrap", color: "var(--text-muted)" }}>Ganti dengan:</span>
-                                <div className="disposisi-search-wrap">
-                                  <input
-                                    placeholder="Cari nama atau NIP staf pengganti..."
-                                    value={ea.replacementId ? (allStaf.find(s => s.id === ea.replacementId)?.nama || ea.replacementSearch) : ea.replacementSearch}
-                                    onFocus={() => updateExisting(i, { replacementOpen: true })}
-                                    onBlur={() => setTimeout(() => updateExisting(i, { replacementOpen: false }), 180)}
-                                    onChange={(e) => updateExisting(i, { replacementSearch: e.target.value, replacementId: "" })}
-                                  />
-                                  {(ea.replacementOpen || (!!ea.replacementSearch && !ea.replacementId)) && (
-                                    <div className="disposisi-dropdown">
-                                      {allStaf
-                                        .filter(s =>
-                                          (!occupiedIds.has(s.id) || s.id === ea.replacementId) &&
-                                          (!ea.replacementSearch || s.id === ea.replacementId ||
-                                            s.nama.toLowerCase().includes(ea.replacementSearch.toLowerCase()) ||
-                                            s.nip.includes(ea.replacementSearch))
-                                        )
-                                        .map(s => (
-                                          <div key={s.id} className="disposisi-option"
-                                            onMouseDown={(e) => { e.preventDefault(); updateExisting(i, { replacementId: s.id, replacementSearch: s.nama, replacementOpen: false }); }}>
-                                            <div className="font-semibold text-small">{s.nama}</div>
-                                            <div className="text-muted text-xsmall">{s.nip} · {s.divisi}</div>
-                                          </div>
-                                        ))
-                                      }
-                                    </div>
-                                  )}
-                                </div>
-                                <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: "0.75rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
-                                  <input type="checkbox" checked={ea.replacementMasukSurat} onChange={() => updateExisting(i, { replacementMasukSurat: !ea.replacementMasukSurat })} />
-                                  Surat Tugas
-                                </label>
-                              </div>
-                            </td>
-                            <td></td>
-                          </tr>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {pekerjaan.assignees.map((a, i) => {
+                const ea = existingActions[i] ?? { action: "keep", replacementId: "", replacementSearch: "", replacementOpen: false, replacementMasukSurat: true };
+                const isRemoved = ea.action === "remove";
+                const isReplacing = ea.action === "replace";
+                const avatarBg = a.statusKonfirmasi === "rejected" ? "#FEE2E2" : a.statusKonfirmasi === "accepted" ? "#D1FAE5" : "var(--navy-100)";
+                const avatarColor = a.statusKonfirmasi === "rejected" ? "#991B1B" : a.statusKonfirmasi === "accepted" ? "#065F46" : "var(--navy-700)";
+                return (
+                  <div key={a.stafId} style={{ border: "1.5px solid var(--border-soft)", borderRadius: 10, padding: "12px 14px", background: isRemoved ? "var(--surface-alt)" : "var(--surface)", opacity: isRemoved ? 0.55 : 1 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: "50%", flexShrink: 0, background: avatarBg, color: avatarColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>
+                        {avatarInitials(a.nama)}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                          <span style={{ fontWeight: 700, fontSize: 13 }}>{a.nama}</span>
+                          {statusBadge(a)}
+                          {isRemoved && <span className="badge badge-red">Akan Dihapus</span>}
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{a.nip} · {a.divisi}</div>
+                        {a.statusKonfirmasi === "rejected" && a.alasanPenolakan && (
+                          <div style={{ fontSize: 11, color: "var(--danger-600)", marginTop: 4, fontStyle: "italic" }}>"{a.alasanPenolakan}"</div>
                         )}
-                      </Fragment>
-                    );
-                  })}
-                  {/* Baris tambah staf baru */}
-                  {addRows.map((r) => {
-                    const selStaf = r.stafId ? allStaf.find(s => s.id === r.stafId) : null;
-                    const filteredAdd = allStaf.filter(s =>
-                      (!occupiedIds.has(s.id) || s.id === r.stafId) &&
-                      (!r.search || s.id === r.stafId || s.nama.toLowerCase().includes(r.search.toLowerCase()) || s.nip.includes(r.search))
-                    );
-                    return (
-                      <tr key={r.uid}>
-                        <td className="text-muted">—</td>
-                        <td colSpan={3}>
-                          <div className="disposisi-search-wrap">
-                            <input
-                              placeholder="Cari nama atau NIP..."
-                              value={r.stafId ? (selStaf?.nama || r.search) : r.search}
-                              onFocus={() => updateAddRow(r.uid, { open: true })}
-                              onBlur={() => setTimeout(() => updateAddRow(r.uid, { open: false }), 180)}
-                              onChange={(e) => updateAddRow(r.uid, { search: e.target.value, stafId: "" })}
-                            />
-                            {(r.open || (!!r.search && !r.stafId)) && filteredAdd.length > 0 && (
-                              <div className="disposisi-dropdown">
-                                {filteredAdd.map(s => (
-                                  <div key={s.id} className="disposisi-option"
-                                    onMouseDown={(e) => { e.preventDefault(); updateAddRow(r.uid, { stafId: s.id, search: s.nama, open: false }); }}>
-                                    <div className="font-semibold text-small">{s.nama}</div>
-                                    <div className="text-muted text-xsmall">{s.nip} · {s.divisi}</div>
-                                  </div>
-                                ))}
+                      </div>
+                      <div style={{ display: "flex", gap: 5, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                        {a.statusKonfirmasi === "accepted" && <span className="text-xsmall text-muted" style={{ alignSelf: "center" }}>Terkunci</span>}
+                        {a.statusKonfirmasi === "pending" && ea.action === "keep" && (
+                          <button type="button" className="btn-delete btn-sm" onClick={() => updateExisting(i, { action: "remove" })}>Hapus</button>
+                        )}
+                        {a.statusKonfirmasi === "pending" && ea.action === "remove" && (
+                          <button type="button" className="btn-secondary btn-sm" onClick={() => updateExisting(i, { action: "keep" })}>Batalkan</button>
+                        )}
+                        {a.statusKonfirmasi === "rejected" && ea.action === "keep" && (
+                          <>
+                            <button type="button" className="btn-edit btn-sm" onClick={() => updateExisting(i, { action: "replace" })}>Ganti</button>
+                            <button type="button" className="btn-delete btn-sm" onClick={() => updateExisting(i, { action: "remove" })}>Hapus</button>
+                          </>
+                        )}
+                        {a.statusKonfirmasi === "rejected" && ea.action === "remove" && (
+                          <button type="button" className="btn-secondary btn-sm" onClick={() => updateExisting(i, { action: "keep" })}>Batalkan</button>
+                        )}
+                        {isReplacing && (
+                          <button type="button" className="btn-secondary btn-sm" onClick={() => updateExisting(i, { action: "keep", replacementId: "", replacementSearch: "" })}>Batal</button>
+                        )}
+                      </div>
+                    </div>
+                    {isReplacing && (
+                      <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border-soft)" }}>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6 }}>Ganti dengan:</div>
+                        <div style={{ position: "relative" }}>
+                          <input
+                            placeholder="Cari nama atau NIP staf pengganti..."
+                            value={ea.replacementId ? (allStaf.find(s => s.id === ea.replacementId)?.nama || ea.replacementSearch) : ea.replacementSearch}
+                            onFocus={() => updateExisting(i, { replacementOpen: true })}
+                            onBlur={() => setTimeout(() => updateExisting(i, { replacementOpen: false }), 180)}
+                            onChange={e => updateExisting(i, { replacementSearch: e.target.value, replacementId: "" })}
+                            style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box" }}
+                          />
+                          {(ea.replacementOpen || (!!ea.replacementSearch && !ea.replacementId)) && (
+                            <div className="disposisi-dropdown">
+                              {allStaf.filter(s =>
+                                (!occupiedIds.has(s.id) || s.id === ea.replacementId) &&
+                                (!ea.replacementSearch || s.id === ea.replacementId ||
+                                  s.nama.toLowerCase().includes(ea.replacementSearch.toLowerCase()) ||
+                                  s.nip.includes(ea.replacementSearch))
+                              ).map(s => (
+                                <div key={s.id} className="disposisi-option"
+                                  onMouseDown={e => { e.preventDefault(); updateExisting(i, { replacementId: s.id, replacementSearch: s.nama, replacementOpen: false }); }}>
+                                  <div className="font-semibold text-small">{s.nama}</div>
+                                  <div className="text-muted text-xsmall">{s.nip} · {s.divisi}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {ea.replacementId && (() => {
+                          const rs = allStaf.find(s => s.id === ea.replacementId);
+                          if (!rs) return null;
+                          return (
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, padding: "8px 12px", background: "var(--navy-50)", borderRadius: 8, border: "1px solid var(--navy-100)" }}>
+                              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy-600)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{avatarInitials(rs.nama)}</div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontWeight: 700, fontSize: 13 }}>{rs.nama}</div>
+                                <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{rs.nip} · {rs.divisi}</div>
                               </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="td-center"><span className="badge badge-blue">Baru</span></td>
-                        <td className="td-center"><input type="checkbox" checked={r.masukSurat} onChange={() => updateAddRow(r.uid, { masukSurat: !r.masukSurat })} /></td>
-                        <td className="td-center"><button type="button" className="btn-delete btn-sm" onClick={() => removeAddRow(r.uid)}>Hapus</button></td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                              <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--text-soft)", cursor: "pointer", whiteSpace: "nowrap" }}>
+                                <input type="checkbox" checked={ea.replacementMasukSurat} onChange={() => updateExisting(i, { replacementMasukSurat: !ea.replacementMasukSurat })} />
+                                Surat Tugas
+                              </label>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {addRows.map(r => {
+                const sel = r.stafId ? allStaf.find(s => s.id === r.stafId) : null;
+                return (
+                  <div key={r.uid} style={{ border: "1.5px dashed var(--navy-200)", borderRadius: 10, padding: "12px 14px", background: "var(--navy-50)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--navy-700)" }}>Staf Tambahan</span>
+                      <button type="button" className="btn-delete btn-sm" onClick={() => removeAddRow(r.uid)}>Hapus</button>
+                    </div>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        placeholder="Cari nama atau NIP..."
+                        value={r.stafId ? (sel?.nama || r.search) : r.search}
+                        onFocus={() => updateAddRow(r.uid, { open: true })}
+                        onBlur={() => setTimeout(() => updateAddRow(r.uid, { open: false }), 180)}
+                        onChange={e => updateAddRow(r.uid, { search: e.target.value, stafId: "" })}
+                        style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box" }}
+                      />
+                      {(r.open || (!!r.search && !r.stafId)) && (
+                        <div className="disposisi-dropdown">
+                          {allStaf.filter(s =>
+                            (!occupiedIds.has(s.id) || s.id === r.stafId) &&
+                            (!r.search || s.id === r.stafId || s.nama.toLowerCase().includes(r.search.toLowerCase()) || s.nip.includes(r.search))
+                          ).map(s => (
+                            <div key={s.id} className="disposisi-option" onMouseDown={e => { e.preventDefault(); updateAddRow(r.uid, { stafId: s.id, search: s.nama, open: false }); }}>
+                              <div className="font-semibold text-small">{s.nama}</div>
+                              <div className="text-muted text-xsmall">{s.nip} · {s.divisi}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {sel && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, padding: "8px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border-soft)" }}>
+                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy-600)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{avatarInitials(sel.nama)}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: 13 }}>{sel.nama}</div>
+                          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{sel.nip} · {sel.divisi}</div>
+                        </div>
+                        <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--text-soft)", cursor: "pointer", whiteSpace: "nowrap" }}>
+                          <input type="checkbox" checked={r.masukSurat} onChange={() => updateAddRow(r.uid, { masukSurat: !r.masukSurat })} />
+                          Surat Tugas
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <button type="button" className="btn-secondary btn-sm" style={{ alignSelf: "flex-start" }} onClick={addNewRow}>+ Tambah Staf Lain</button>
             </div>
-            <button type="button" className="btn-secondary btn-sm mt-2" onClick={addNewRow}>+ Tambah Staf</button>
-            <div className="micro-text mt-2">Centang "Surat Tugas" agar staf muncul di dokumen surat tugas. Staf yang tidak dicentang tetap tercatat di sistem.</div>
+            <div className="micro-text mt-2">Staf "Terkunci" (sudah Diterima) tidak dapat diubah.</div>
           </div>
         )}
 
@@ -1538,7 +1543,7 @@ function DisposisiModal({
           <button type="button" onClick={handleSave} disabled={
             isReassign
               ? existingActions.every(ea => ea.action === "remove") && addRows.every(r => !r.stafId)
-              : selectedIds.filter(Boolean).length === 0
+              : Object.keys(selectedMap).length === 0
           }>
             {isReassign ? "Simpan Penugasan Ulang" : "Simpan Disposisi"}
           </button>
