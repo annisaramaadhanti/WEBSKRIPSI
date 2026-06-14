@@ -473,14 +473,12 @@ export const STATUS_KONFIRMASI_LABELS: Record<StatusKonfirmasi, string> = {
   "pending": "Menunggu Konfirmasi",
   "accepted": "Diterima",
   "rejected": "Ditolak",
-  "rejected": "Penugasan Ulang",
 };
 
 export const STATUS_KONFIRMASI_BADGES: Record<StatusKonfirmasi, string> = {
   "pending": "badge-purple",
-  "accepted": "badge-blue",
+  "accepted": "badge-green",
   "rejected": "badge-red",
-  "rejected": "badge-orange",
 };
 
 export function getUserById(id: string): User | null {

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useRef, useState } from "react";
 import { useRole } from "@/components/providers/RoleProvider";
 import {
-  getPekerjaan, deletePekerjaan, updatePekerjaan, addPekerjaan, seedIfEmpty,
+  getPekerjaan, updatePekerjaan, addPekerjaan, seedIfEmpty,
   getDokumentasiByRef, getHasilSurveyByRef,
 } from "@/lib/storage";
 import { divisiList, unitPemintaList, getKepalaUPA, PERTANYAAN_SURVEY, USERS } from "@/lib/data";
@@ -339,7 +339,6 @@ export default function PekerjaanPage() {
   // Modals
   const [showTambah, setShowTambah] = useState(false);
   const [showEdit, setShowEdit] = useState<Pekerjaan | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<Pekerjaan | null>(null);
   const [showDisposisi, setShowDisposisi] = useState<Pekerjaan | null>(null);
   const [showTolakModal, setShowTolakModal] = useState<Pekerjaan | null>(null);
   const [showSuratModal, setShowSuratModal] = useState<{ item: Pekerjaan; mode: "buat" | "edit" } | null>(null);
@@ -473,13 +472,6 @@ export default function PekerjaanPage() {
     }
     updatePekerjaan(showEdit.id, payload);
     setShowEdit(null);
-    load();
-  };
-
-  const handleConfirmDelete = () => {
-    if (!showDeleteConfirm) return;
-    deletePekerjaan(showDeleteConfirm.id);
-    setShowDeleteConfirm(null);
     load();
   };
 
@@ -813,11 +805,8 @@ export default function PekerjaanPage() {
                         <td className="td-center">
                           <div className="table-actions table-actions--center">
                             <button type="button" className="btn-secondary btn-sm" onClick={() => setShowRingkasan(item)}>Ringkasan</button>
-                            {item.suratStatus !== "published" && (
+                            {isAssigned && item.suratStatus !== "published" && (
                               <button type="button" className="btn-edit btn-sm" onClick={() => openEdit(item)}>Edit</button>
-                            )}
-                            {item.assignees.length === 0 && item.suratStatus !== "published" && (
-                              <button type="button" className="btn-delete btn-sm" onClick={() => setShowDeleteConfirm(item)}>Hapus</button>
                             )}
                           </div>
                         </td>
@@ -843,12 +832,12 @@ export default function PekerjaanPage() {
                         <td className="td-center">
                           <div className="table-actions table-actions--center">
                             <button type="button" className="btn-secondary btn-sm" onClick={() => setShowRingkasan(item)}>Ringkasan</button>
-                            {/* Disposisi: hanya kalau belum ada staf & masih assigned */}
-                            {item.assignees.length === 0 && isAssigned && (
+                            {/* Disposisi: belum ada staf, masih assigned, surat belum published */}
+                            {item.assignees.length === 0 && isAssigned && item.suratStatus !== "published" && (
                               <button type="button" className="btn-edit btn-sm" onClick={() => setShowDisposisi(item)}>Disposisi</button>
                             )}
-                            {/* Penugasan Ulang: ada yang ditolak & masih assigned */}
-                            {hasRejected && isAssigned && (
+                            {/* Penugasan Ulang: ada yang ditolak, masih assigned, surat belum published */}
+                            {hasRejected && isAssigned && item.suratStatus !== "published" && (
                               <button type="button" className="btn-warning btn-sm" onClick={() => setShowDisposisi(item)}>Penugasan Ulang</button>
                             )}
                           </div>
@@ -1049,21 +1038,6 @@ export default function PekerjaanPage() {
             <div className="modal-actions">
               <button type="button" onClick={handleSaveEdit} disabled={editUploadProgress}>Simpan Perubahan</button>
               <button type="button" className="btn-secondary" onClick={() => setShowEdit(null)}>Batal</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL KONFIRMASI HAPUS ─── */}
-      {showDeleteConfirm && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <h2>Hapus Pekerjaan</h2>
-            <p>Apakah kamu yakin ingin menghapus pekerjaan <strong>{showDeleteConfirm.namaPekerjaan}</strong>?</p>
-            <p className="text-muted text-small mt-2">Data akan disembunyikan dari sistem. Aksi ini tidak dapat dibatalkan.</p>
-            <div className="modal-actions">
-              <button type="button" className="btn-delete" onClick={handleConfirmDelete}>Ya, Hapus</button>
-              <button type="button" className="btn-secondary" onClick={() => setShowDeleteConfirm(null)}>Batal</button>
             </div>
           </div>
         </div>

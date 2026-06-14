@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRole } from "@/components/providers/RoleProvider";
 import {
-  getProyek, deleteProyek, updateProyek, addProyek, seedIfEmpty,
+  getProyek, updateProyek, addProyek, seedIfEmpty,
   getProgressByProyekId, addProgress,
-  getDokumentasiByRef, addDokumentasi,
+  getDokumentasiByRef,
   getHasilSurveyByRef,
 } from "@/lib/storage";
 import { divisiList, unitPemintaList, getKepalaUPA, USERS } from "@/lib/data";
@@ -427,7 +427,6 @@ export default function ProyekPage() {
 
   const [showTambah, setShowTambah] = useState(false);
   const [showEdit, setShowEdit] = useState<Proyek | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<Proyek | null>(null);
   const [showDisposisi, setShowDisposisi] = useState<Proyek | null>(null);
   const [showProgress, setShowProgress] = useState<Proyek | null>(null);
   const [showSuratModal, setShowSuratModal] = useState<{ item: Proyek; mode: "buat" | "edit" } | null>(null);
@@ -546,13 +545,6 @@ export default function ProyekPage() {
     }
     updateProyek(showEdit.id, payload);
     setShowEdit(null);
-    load();
-  };
-
-  const handleConfirmDelete = () => {
-    if (!showDeleteConfirm) return;
-    deleteProyek(showDeleteConfirm.id);
-    setShowDeleteConfirm(null);
     load();
   };
 
@@ -860,11 +852,8 @@ export default function ProyekPage() {
                       <td className="td-center">
                         <div className="table-actions table-actions--center">
                           <button type="button" className="btn-secondary btn-sm" onClick={() => setShowRingkasan(item)}>Ringkasan</button>
-                          {item.suratStatus !== "published" && (
+                          {isAssigned && item.suratStatus !== "published" && (
                             <button type="button" className="btn-edit btn-sm" onClick={() => openEdit(item)}>Edit</button>
-                          )}
-                          {item.assignees.length === 0 && item.suratStatus !== "published" && (
-                            <button type="button" className="btn-delete btn-sm" onClick={() => setShowDeleteConfirm(item)}>Hapus</button>
                           )}
                         </div>
                       </td>
@@ -885,8 +874,8 @@ export default function ProyekPage() {
                       <td className="td-center">
                         <div className="table-actions table-actions--center">
                           <button type="button" className="btn-secondary btn-sm" onClick={() => setShowRingkasan(item)}>Ringkasan</button>
-                          {item.assignees.length === 0 && isAssigned && <button type="button" className="btn-edit btn-sm" onClick={() => setShowDisposisi(item)}>Disposisi</button>}
-                          {hasRejected && isAssigned && <button type="button" className="btn-warning btn-sm" onClick={() => setShowDisposisi(item)}>Penugasan Ulang</button>}
+                          {item.assignees.length === 0 && isAssigned && item.suratStatus !== "published" && <button type="button" className="btn-edit btn-sm" onClick={() => setShowDisposisi(item)}>Disposisi</button>}
+                          {hasRejected && isAssigned && item.suratStatus !== "published" && <button type="button" className="btn-warning btn-sm" onClick={() => setShowDisposisi(item)}>Penugasan Ulang</button>}
                         </div>
                       </td>
                     </>)}
@@ -1046,21 +1035,6 @@ export default function ProyekPage() {
             <div className="modal-actions">
               <button type="button" onClick={handleSaveEdit} disabled={editUploadProgress}>Simpan Perubahan</button>
               <button type="button" className="btn-secondary" onClick={() => setShowEdit(null)}>Batal</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL KONFIRMASI HAPUS ─── */}
-      {showDeleteConfirm && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <h2>Hapus Proyek</h2>
-            <p>Apakah kamu yakin ingin menghapus proyek <strong>{showDeleteConfirm.namaProyek}</strong>?</p>
-            <p className="text-muted text-small mt-2">Data akan disembunyikan dari sistem. Aksi ini tidak dapat dibatalkan.</p>
-            <div className="modal-actions">
-              <button type="button" className="btn-delete" onClick={handleConfirmDelete}>Ya, Hapus</button>
-              <button type="button" className="btn-secondary" onClick={() => setShowDeleteConfirm(null)}>Batal</button>
             </div>
           </div>
         </div>
