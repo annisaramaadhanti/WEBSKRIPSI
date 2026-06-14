@@ -35,7 +35,7 @@ export default function LoginPage() {
           min-height: 100vh;
           display: grid;
           grid-template-columns: 1fr 1fr;
-          font-family: "Inter", system-ui, sans-serif;
+          font-family: "Plus Jakarta Sans", system-ui, sans-serif;
           background: #F3F5F9;
         }
 

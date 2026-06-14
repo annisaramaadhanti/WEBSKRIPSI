@@ -15,12 +15,12 @@ import { openLaporanInTab } from "@/lib/laporan-pdf";
 const STATUS_BADGE: Record<string, string> = {
   // StatusKonfirmasi
   "pending":     "badge-yellow",
-  "accepted":    "badge-green",
+  "accepted":    "badge-cyan",
   "rejected":    "badge-red",
   // StatusPekerjaan
   "assigned":    "badge-purple",
   "in_progress": "badge-blue",
-  "review":      "badge-yellow",
+  "review":      "badge-orange",
   "done":        "badge-green",
 };
 
@@ -278,7 +278,7 @@ function RingkasanModal({ item, onClose }: { item: Pekerjaan; onClose: () => voi
             <div className="info-box-title">Data Surat Tugas</div>
             <table><tbody>
               <tr><td className="info-label">Nomor Surat</td><td>: {item.suratDetail.nomorSurat}</td></tr>
-              <tr><td className="info-label">Status</td><td>: <span className={`badge ${item.suratStatus === "published" ? "badge-green" : "badge-yellow"}`}>{item.suratStatus === "published" ? "Published" : "Preview"}</span></td></tr>
+              <tr><td className="info-label">Status</td><td>: <span className={`badge ${item.suratStatus === "published" ? "badge-indigo" : "badge-yellow"}`}>{item.suratStatus === "published" ? "Published" : "Preview"}</span></td></tr>
               <tr><td className="info-label">Tanggal Surat</td><td>: {item.suratDetail.tanggalSuratKeluar}</td></tr>
               <tr><td className="info-label">Tanggal Pelaksanaan</td><td>: {item.suratDetail.tanggalPelaksanaan}</td></tr>
               <tr><td className="info-label">Lokasi Pelaksanaan</td><td>: {item.suratDetail.lokasiPembuatan}</td></tr>
@@ -751,7 +751,7 @@ export default function PekerjaanPage() {
                   const rejected = item.assignees.filter(a => a.statusKonfirmasi === "rejected").length;
                   const accepted = item.assignees.filter(a => a.statusKonfirmasi === "accepted").length;
                   if (rejected > 0) return <span className="badge badge-red">{rejected} Ditolak</span>;
-                  if (accepted === total) return <span className="badge badge-green">Semua Diterima</span>;
+                  if (accepted === total) return <span className="badge badge-cyan">Semua Diterima</span>;
                   return <span className="badge badge-purple">Menunggu</span>;
                 };
 
@@ -1263,7 +1263,7 @@ function DisposisiModal({
     nama.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase();
 
   const statusBadge = (a: Assignee) => {
-    if (a.statusKonfirmasi === "accepted") return <span className="badge badge-green">Diterima</span>;
+    if (a.statusKonfirmasi === "accepted") return <span className="badge badge-cyan">Diterima</span>;
     if (a.statusKonfirmasi === "rejected") return <span className="badge badge-red">Ditolak</span>;
     return <span className="badge badge-purple">Menunggu</span>;
   };

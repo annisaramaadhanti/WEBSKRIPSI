@@ -28,12 +28,12 @@ type TinjauanItem = {
 const STATUS_BADGE: Record<string, string> = {
   // StatusKonfirmasi
   "pending":     "badge-yellow",
-  "accepted":    "badge-green",
+  "accepted":    "badge-cyan",
   "rejected":    "badge-red",
   // StatusPekerjaan
   "assigned":    "badge-purple",
   "in_progress": "badge-blue",
-  "review":      "badge-yellow",
+  "review":      "badge-orange",
   "done":        "badge-green",
 };
 

@@ -15,7 +15,7 @@ const STATUS_COLOR: Record<string,string> = {
   assigned:"#7C3AED", in_progress:"#2563EB", review:"#D97706", done:"#16A34A",
 };
 const STATUS_BG: Record<string,string> = {
-  assigned:"#F0EAFB", in_progress:"#EBF2FF", review:"#FEF9E7", done:"#E8F5EE",
+  assigned:"#7C3AED", in_progress:"#2563EB", review:"#EA580C", done:"#16A34A",
 };
 
 type AnyItem = {
@@ -294,7 +294,7 @@ export default function PublicDashboard() {
                       <td style={{ color:"#475569", fontSize:12 }}>{item.unitPeminta}</td>
                       <td style={{ color:"#475569", fontSize:12 }}>{item.divisi.join(", ")||"—"}</td>
                       <td>
-                        <span className="pub-badge-status" style={{ background:STATUS_BG[item.status]||"#F3F5F9", color:STATUS_COLOR[item.status]||"#475569" }}>
+                        <span className="pub-badge-status" style={{ background:STATUS_BG[item.status]||"#64748B" }}>
                           {STATUS_LABEL[item.status]||item.status}
                         </span>
                       </td>

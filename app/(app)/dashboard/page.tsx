@@ -200,17 +200,17 @@ function StatCard({ label, value, color, icon, sub }: {
 }) {
   return (
     <div style={{
-      background: "#fff", borderRadius: 16,
-      border: `1px solid rgba(148,163,184,0.18)`,
+      background: `linear-gradient(135deg, ${color} 0%, ${color}CC 100%)`,
+      borderRadius: 16,
+      border: "none",
       padding: "18px 20px",
-      boxShadow: "0 2px 8px rgba(15,23,42,0.06)",
-      borderTop: `3px solid ${color}`,
+      boxShadow: `0 4px 16px ${color}44`,
       display: "flex", flexDirection: "column", gap: 4,
     }}>
       <span style={{ fontSize: 22 }}>{icon}</span>
-      <span style={{ fontSize: 11, color: "#94A3B8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.6px", marginTop: 4 }}>{label}</span>
-      <span style={{ fontSize: 30, fontWeight: 800, color: "#1E3A5F", lineHeight: 1.1 }}>{value}</span>
-      {sub && <span style={{ fontSize: 11, color: "#64748B" }}>{sub}</span>}
+      <span style={{ fontSize: 11, color: "rgba(255,255,255,0.70)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.6px", marginTop: 4 }}>{label}</span>
+      <span style={{ fontSize: 30, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>{value}</span>
+      {sub && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.65)" }}>{sub}</span>}
     </div>
   );
 }
@@ -222,11 +222,11 @@ function ChartCard({ title, subtitle, children }: {
   return (
     <div className="chart-card" style={{
       background: "#fff", borderRadius: 16,
-      border: "1px solid rgba(148,163,184,0.15)",
+      border: "1px solid rgba(148,163,184,0.25)",
       padding: "20px 22px",
-      boxShadow: "0 2px 8px rgba(15,23,42,0.06)",
+      boxShadow: "0 3px 14px rgba(15,23,42,0.09)",
     }}>
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: "1.5px solid #EEF2FA" }}>
         <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1E3A5F" }}>{title}</h3>
         {subtitle && <p style={{ margin: "3px 0 0", fontSize: 12, color: "#94A3B8" }}>{subtitle}</p>}
       </div>
@@ -241,7 +241,7 @@ function AlertBanner({ color, icon, title, desc, href, linkLabel }: {
 }) {
   return (
     <div style={{
-      background: `${color}10`, border: `1px solid ${color}30`,
+      background: `${color}18`, border: `1px solid ${color}45`,
       borderLeft: `4px solid ${color}`,
       borderRadius: 12, padding: "14px 18px",
       display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
@@ -389,7 +389,7 @@ function DashboardOperator({ pk, pr }: { pk: Pekerjaan[]; pr: Proyek[] }) {
                   <td className="text-small">{item.unit}</td>
                   <td className="td-center"><span className="badge" style={{ background: `${STATUS_COLOR[item.status]}20`, color: STATUS_COLOR[item.status] }}>{STATUS_LABEL[item.status]}</span></td>
                   <td className="td-center">
-                    {item.suratStatus === "published" ? <span className="badge badge-green">Published</span>
+                    {item.suratStatus === "published" ? <span className="badge badge-indigo">Published</span>
                       : item.suratTugasData ? <span className="badge badge-yellow">Preview</span>
                       : <span className="text-muted text-small">Belum Ada</span>}
                   </td>
