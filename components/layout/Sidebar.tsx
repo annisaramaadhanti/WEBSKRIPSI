@@ -17,8 +17,6 @@ export default function Sidebar() {
 
   const avatarInitial = user?.nama?.charAt(0).toUpperCase() ?? "?";
 
-  // Menu tinjauan-kinerja hanya untuk kepala-divisi, operator, kepala-upa
-  // Disembunyikan untuk staf
   const visibleMenu = mainMenu.filter((item) => {
     if (!role) return false;
     return item.roles.includes(role);

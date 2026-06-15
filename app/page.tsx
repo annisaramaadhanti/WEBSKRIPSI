@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getPekerjaan, getProyek } from "@/lib/storage";
-import { unitPemintaList } from "@/lib/data";
+import { getPekerjaanList, getProyekList, getMasterUnitKerja } from "@/lib/api";
+import { mapPekerjaan, mapProyek, extractList } from "@/lib/api-mapper";
 import type { Pekerjaan, Proyek } from "@/types";
 
 const BULAN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
@@ -32,8 +32,13 @@ export default function PublicDashboard() {
   const [filterStatus, setFilterStatus] = useState("semua");
   const [filterUnit, setFilterUnit] = useState("semua");
   const [sortBy, setSortBy] = useState("terbaru");
+  const [unitKerjaList, setUnitKerjaList] = useState<string[]>([]);
 
-  useEffect(() => { setPk(getPekerjaan()); setPr(getProyek()); }, []);
+  useEffect(() => {
+    getPekerjaanList({}).then((res: any) => setPk(extractList(res).map(mapPekerjaan))).catch(console.error);
+    getProyekList({}).then((res: any) => setPr(extractList(res).map(mapProyek))).catch(console.error);
+    getMasterUnitKerja().then((res: any) => setUnitKerjaList(extractList(res).map((u: any) => u.nama_unit))).catch(console.error);
+  }, []);
 
   const tahunList = Array.from(new Set(
     [...pk,...pr].map(x => new Date(x.targetSelesai).getFullYear()).filter(y => !isNaN(y))
@@ -165,7 +170,7 @@ export default function PublicDashboard() {
             </select>
             <select className="pub-select pub-select-unit" value={filterUnit} onChange={e=>setFilterUnit(e.target.value)}>
               <option value="semua">Semua Unit Kerja</option>
-              {unitPemintaList.map(u=><option key={u} value={u}>{u}</option>)}
+              {unitKerjaList.map(u=><option key={u} value={u}>{u}</option>)}
             </select>
             <select className="pub-select" value={sortBy} onChange={e=>setSortBy(e.target.value)}>
               <option value="terbaru">Target Terbaru</option>

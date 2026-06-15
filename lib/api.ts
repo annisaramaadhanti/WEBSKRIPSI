@@ -71,6 +71,7 @@ export const getMasterUnitKerja = () => get("/master/unit-kerja");
 export const getMasterDivisi = () => get("/master/divisi");
 export const getMasterStatusKinerja = () => get("/master/status-kinerja");
 export const getMasterStatusKonfirmasi = () => get("/master/status-konfirmasi");
+export const getMasterPertanyaanSurvei = () => get("/master/pertanyaan-survei");
 
 /** Daftar staf. Opsional: search nama atau filter id_divisi */
 export const getMasterStaf = (params?: { search?: string; id_divisi?: string }) => {
