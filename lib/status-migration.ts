@@ -19,7 +19,6 @@ export function migrateStatus(oldStatus: string): {
     "pending": "pending",
     "accepted": "accepted",
     "rejected": "rejected",
-    "rejected": "rejected",
   };
 
   // If it's a work status, assign it as statusPekerjaan with accepted as default confirmation

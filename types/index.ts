@@ -15,6 +15,8 @@ export type TipeJawabanSurvey = "pilihan" | "teks";
 
 export type Assignee = {
   stafId: string;
+  id_pekerjaan_staf?: string; // UUID dari API (pivot record)
+  id_proyek_staf?: string;    // UUID dari API (pivot record)
   nama: string;
   nip: string;
   jabatan: string;
@@ -41,6 +43,9 @@ export type UnitPeminta = string; // lihat unitPemintaList di lib/data.ts
 export type Pekerjaan = {
   id: string;
   deleted?: boolean;
+  id_surat_tugas?: string;   // UUID surat tugas dari API
+  id_dokumen_surat?: string; // UUID dokumen surat masuk dari API
+  id_tinjauan?: string;      // UUID tinjauan kinerja dari API (untuk laporan PDF)
   namaPekerjaan: string;
   status: StatusPekerjaan;
   suratMasuk: string;
@@ -78,6 +83,9 @@ export type SuratDetail = {
 export type Proyek = {
   id: string;
   deleted?: boolean;
+  id_surat_tugas?: string;   // UUID surat tugas dari API
+  id_dokumen_surat?: string; // UUID dokumen surat masuk dari API
+  id_tinjauan?: string;      // UUID tinjauan kinerja dari API (untuk laporan PDF)
   namaProyek: string;
   status: StatusPekerjaan;
   statusKonfirmasi: StatusKonfirmasi;

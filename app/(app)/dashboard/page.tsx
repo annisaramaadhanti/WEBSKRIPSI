@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRole } from "@/components/providers/RoleProvider";
-import { getPekerjaan, getProyek, getHasilSurvey, seedIfEmpty } from "@/lib/storage";
+import { getPekerjaanList, getProyekList, getDashboardStaf } from "@/lib/api";
+import { mapPekerjaan, mapProyek, extractList } from "@/lib/api-mapper";
 import { PERTANYAAN_SURVEY } from "@/lib/data";
 import type { Pekerjaan, Proyek, HasilSurvey } from "@/types";
 
@@ -297,7 +298,7 @@ function DashboardOperator({ pk, pr }: { pk: Pekerjaan[]; pr: Proyek[] }) {
   const all = [...pk, ...pr];
   const totalPk = pk.length;
   const totalPr = pr.length;
-  const belumSurat = all.filter((x) => !x.suratTugasData).length;
+  const belumSurat = all.filter((x) => !x.id_surat_tugas && x.suratStatus !== "draft" && x.suratStatus !== "published").length;
   const preview = all.filter((x) => x.suratStatus === "draft").length;
   const published = all.filter((x) => x.suratStatus === "published").length;
   const laporanSiap = all.filter((x) => x.status === "done").length;
@@ -315,8 +316,8 @@ function DashboardOperator({ pk, pr }: { pk: Pekerjaan[]; pr: Proyek[] }) {
   const prByMonth = byMonth(pr);
 
   const terbaru = [
-    ...pk.map((x) => ({ id: x.id, nama: x.namaPekerjaan, tipe: "Pekerjaan", unit: x.unitPeminta, status: x.status, suratStatus: x.suratStatus, suratTugasData: x.suratTugasData, target: x.targetSelesai })),
-    ...pr.map((x) => ({ id: x.id, nama: x.namaProyek, tipe: "Proyek", unit: x.unitPeminta, status: x.status, suratStatus: x.suratStatus, suratTugasData: x.suratTugasData, target: x.targetSelesai })),
+    ...pk.map((x) => ({ id: x.id, nama: x.namaPekerjaan, tipe: "Pekerjaan", unit: x.unitPeminta, status: x.status, suratStatus: x.suratStatus, hasSurat: !!x.id_surat_tugas, target: x.targetSelesai })),
+    ...pr.map((x) => ({ id: x.id, nama: x.namaProyek, tipe: "Proyek", unit: x.unitPeminta, status: x.status, suratStatus: x.suratStatus, hasSurat: !!x.id_surat_tugas, target: x.targetSelesai })),
   ].slice(0, 8);
 
   return (
@@ -390,7 +391,7 @@ function DashboardOperator({ pk, pr }: { pk: Pekerjaan[]; pr: Proyek[] }) {
                   <td className="td-center"><span className="badge" style={{ background: `${STATUS_COLOR[item.status]}20`, color: STATUS_COLOR[item.status] }}>{STATUS_LABEL[item.status]}</span></td>
                   <td className="td-center">
                     {item.suratStatus === "published" ? <span className="badge badge-indigo">Published</span>
-                      : item.suratTugasData ? <span className="badge badge-yellow">Preview</span>
+                      : item.suratStatus === "draft" || item.hasSurat ? <span className="badge badge-yellow">Preview</span>
                       : <span className="text-muted text-small">Belum Ada</span>}
                   </td>
                   <td className="td-center text-small">{item.target}</td>
@@ -416,7 +417,7 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
   const all = [...myPk, ...myPr];
 
   const belumDisposisi = all.filter((x) => x.assignees.length === 0).length;
-  const adaPenolakan = all.reduce((s, x) => s + x.assignees.filter((a) => a.statusKonfirmasi === "rejected" || a.statusKonfirmasi === "rejected").length, 0);
+  const adaPenolakan = all.reduce((s, x) => s + x.assignees.filter((a) => (a.statusKonfirmasi as string) === "rejected").length, 0);
   const menungguKonfirmasi = all.reduce((s, x) => s + x.assignees.filter((a) => a.statusKonfirmasi === "pending").length, 0);
   const menungguACC = all.filter((x) => x.status === "review").length;
   const selesai = all.filter((x) => x.status === "done").length;
@@ -446,7 +447,7 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
   const aksi = all.filter((x) =>
     x.assignees.length === 0 ||
     (
-      x.assignees.some((a) => a.statusKonfirmasi === "rejected" || a.statusKonfirmasi === "rejected") &&
+      x.assignees.some((a) => (a.statusKonfirmasi as string) === "rejected") &&
       !x.assignees.some((a) => a.statusKonfirmasi === "accepted" || a.statusKonfirmasi === "pending")
     ) ||
     x.status === "review"
@@ -519,7 +520,7 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
                   const isPk = "namaPekerjaan" in item;
                   const nama = isPk ? (item as Pekerjaan).namaPekerjaan : (item as Proyek).namaProyek;
                   const needDisposisi = item.assignees.length === 0;
-                  const needReassign = item.assignees.some((a) => a.statusKonfirmasi === "rejected" || a.statusKonfirmasi === "rejected") &&
+                  const needReassign = item.assignees.some((a) => (a.statusKonfirmasi as string) === "rejected") &&
                     !item.assignees.some((a) => a.statusKonfirmasi === "accepted" || a.statusKonfirmasi === "pending");
                   const needACC = item.status === "review";
                   return (
@@ -787,14 +788,32 @@ export default function DashboardPage() {
   const { role, user } = useRole();
   const [pk, setPk] = useState<Pekerjaan[]>([]);
   const [pr, setPr] = useState<Proyek[]>([]);
-  const [surveys, setSurveys] = useState<HasilSurvey[]>([]);
+  const [surveys] = useState<HasilSurvey[]>([]); // survei tersedia di tinjauan kinerja
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    seedIfEmpty();
-    setPk(getPekerjaan());
-    setPr(getProyek());
-    setSurveys(getHasilSurvey());
-  }, []);
+    if (!role) return;
+    setLoading(true);
+    setError(null);
+
+    const pkFilter = role === "staf" ? { id_pengguna_staf: user?.id } : {};
+    const prFilter = role === "staf" ? { id_pengguna_staf: user?.id } : {};
+
+    Promise.all([
+      getPekerjaanList(pkFilter),
+      getProyekList(prFilter),
+    ])
+      .then(([pkRes, prRes]) => {
+        setPk(extractList(pkRes).map(mapPekerjaan));
+        setPr(extractList(prRes).map(mapProyek));
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [role, user?.id]);
+
+  if (loading) return <div className="dashboard-stack"><p className="text-muted">Memuat dashboard...</p></div>;
+  if (error) return <div className="dashboard-stack"><p className="text-danger">Gagal memuat data: {error}</p></div>;
 
   if (role === "operator")     return <DashboardOperator pk={pk} pr={pr} />;
   if (role === "kepala-divisi") return <DashboardKadiv pk={pk} pr={pr} user={user} />;

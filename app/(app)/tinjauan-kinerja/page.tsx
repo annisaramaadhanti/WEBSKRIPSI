@@ -2,13 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRole } from "@/components/providers/RoleProvider";
-import {
-  getPekerjaan, getProyek, updatePekerjaan, updateProyek, seedIfEmpty,
-  getDokumentasiByRef, getHasilSurveyByRef, getProgressByProyekId,
-} from "@/lib/storage";
-import { openLaporanInTab } from "@/lib/laporan-pdf";
+import { getTinjauanList, getTinjauanDetail, accTinjauan, urlLaporanPdf, urlDokumen } from "@/lib/api";
+import { extractList } from "@/lib/api-mapper";
 import { PERTANYAAN_SURVEY } from "@/lib/data";
-import type { Pekerjaan, StatusPekerjaan, Dokumentasi, HasilSurvey } from "@/types";
+import type { StatusPekerjaan, Dokumentasi, HasilSurvey } from "@/types";
 
 type TinjauanItem = {
   id: string;
@@ -63,26 +60,37 @@ export default function TinjauanKinerjaPage() {
   const [surveiList, setSurveiList] = useState<HasilSurvey[]>([]);
   const [showRingkasan, setShowRingkasan] = useState<TinjauanItem | null>(null);
 
-  const load = () => { seedIfEmpty();
-    const pk = getPekerjaan().map((p: Pekerjaan): TinjauanItem => ({
-      id: p.id, jenis: "PEKERJAAN", judul: p.namaPekerjaan,
-      unitPeminta: p.unitPeminta || "—",
-      divisi: p.divisi, status: p.status, catatan: p.catatan,
-      catatanKadiv: p.catatanKadiv,
-      targetSelesai: p.targetSelesai,
-      staf: p.assignees.length > 0 ? p.assignees.map(a => a.nama).join(", ") : null,
-      accBy: p.accBy, accAt: p.accAt,
-    }));
-    const pr = getProyek().map((p): TinjauanItem => ({
-      id: p.id, jenis: "PROYEK", judul: p.namaProyek,
-      unitPeminta: p.unitPeminta || "—",
-      divisi: p.divisi, status: p.status, catatan: p.catatan,
-      catatanKadiv: p.catatanKadiv,
-      targetSelesai: p.targetSelesai,
-      staf: p.assignees.length > 0 ? p.assignees.map(a => a.nama).join(", ") : p.staf,
-      accBy: p.accBy, accAt: p.accAt,
-    }));
-    setItems([...pk, ...pr]);
+  const load = () => {
+    getTinjauanList()
+      .then((res: any) => {
+        const list = extractList(res);
+        setItems(list.map((t: any): TinjauanItem => {
+          const stafList: any[] = t.pekerjaan?.staf ?? t.proyek?.staf ?? [];
+          const divisi: string[] = [...new Set(stafList.map((s: any) => s.divisi?.nama_divisi).filter(Boolean))] as string[];
+          const stafNama = stafList.map((s: any) => s.pengguna?.nama_lengkap ?? "").filter(Boolean).join(", ") || null;
+          const status: string = t.hasil_tinjauan === "disetujui" ? "done" : "review";
+          return {
+            id: t.id_tinjauan ?? "",
+            jenis: t.id_pekerjaan ? "PEKERJAAN" : "PROYEK",
+            judul: t.pekerjaan?.nama_pekerjaan ?? t.proyek?.nama_proyek ?? "",
+            unitPeminta: t.pekerjaan?.unit_kerja?.nama_unit ?? t.proyek?.unit_kerja?.nama_unit ?? "—",
+            divisi,
+            status: status as TinjauanItem["status"],
+            catatan: t.catatan ?? null,
+            catatanKadiv: null,
+            targetSelesai: t.pekerjaan?.target_selesai ?? t.proyek?.target_selesai ?? "",
+            staf: stafNama,
+            accBy: t.peninjau ? {
+              stafId: t.peninjau.uuid ?? "",
+              nama: t.peninjau.nama_lengkap ?? "",
+              nip: t.peninjau.NIP ?? "",
+              jabatan: t.peninjau.peran ?? "",
+            } : null,
+            accAt: t.ditinjau_at ?? null,
+          };
+        }));
+      })
+      .catch(console.error);
   };
 
   useEffect(() => { load(); }, []);
@@ -107,43 +115,76 @@ export default function TinjauanKinerjaPage() {
     return true;
   });
 
-  const handleACC = () => {
-    if (!showACC) return;
-    const now = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-    const accBy = user ? { stafId: user.id, nama: user.nama, nip: user.nip, jabatan: user.jabatan } : null;
-    const payload = { status: "done" as const, catatan: null, catatanKadiv: catatanACC || null, accBy, accAt: now };
-    if (showACC.jenis === "PEKERJAAN") updatePekerjaan(showACC.id, payload);
-    else updateProyek(showACC.id, payload);
-    setShowACC(null); setCatatanACC(""); load();
+  const handleACC = async () => {
+    if (!showACC || !user?.id) return;
+    try {
+      await accTinjauan(showACC.id, {
+        id_ditinjau_oleh: user.id,
+        catatan: catatanACC || "",
+      });
+      setShowACC(null); setCatatanACC(""); load();
+    } catch (e: any) {
+      alert("Gagal ACC: " + e.message);
+    }
   };
 
   const openDoc = (item: TinjauanItem) => {
-    setShowDoc(item);
-    setDocDokList(getDokumentasiByRef(item.id).filter(d => !d.judul.startsWith("Surat Masuk:")));
+    getTinjauanDetail(item.id)
+      .then((res: any) => {
+        const rawData = res.data ?? res;
+        const dok = rawData.dokumen;
+        const docs: Dokumentasi[] = dok ? [{
+          id: dok.id_dokumen ?? "",
+          refId: item.id,
+          jenis: item.jenis,
+          judul: dok.nama_dokumen ?? dok.file_path ?? "",
+          filePath: dok.file_path ?? "",
+          tanggal: rawData.created_at?.split("T")[0] ?? "",
+          uploadedBy: "",
+          fileData: undefined,
+        }] : [];
+        setDocDokList(docs);
+        setShowDoc(item);
+      })
+      .catch(console.error);
   };
 
   const openSurvei = (item: TinjauanItem) => {
-    setShowSurvei(item);
-    setSurveiList(getHasilSurveyByRef(item.id));
+    getTinjauanDetail(item.id)
+      .then((res: any) => {
+        const rawData = res.data ?? res;
+        const sv = rawData.jawaban_survei;
+        if (!sv) { setSurveiList([]); setShowSurvei(item); return; }
+        const jawaban = PERTANYAAN_SURVEY.map((q, i) => {
+          const n = i + 1;
+          return q.tipeJawaban === "pilihan"
+            ? { pertanyaanId: q.id, nilaiPilihan: sv[`jawaban${n}`] ?? undefined }
+            : { pertanyaanId: q.id, teksJawaban: sv[`jawaban${n}`] ?? "" };
+        });
+        setSurveiList([{
+          id: sv.id_jawaban ?? "",
+          refId: item.id,
+          jenis: item.jenis,
+          tanggalSurvey: sv.created_at?.split("T")[0] ?? "",
+          surveyor: "",
+          namaKlien: sv.nama_klien ?? "",
+          nipKlien: sv.nip_klien ?? "",
+          jawaban,
+        }]);
+        setShowSurvei(item);
+      })
+      .catch(console.error);
   };
 
-  // ─── Buka PDF Laporan ───
   const openLaporan = (item: TinjauanItem) => {
     if (item.status !== "done") return;
-    const fullItem = item.jenis === "PEKERJAAN"
-      ? getPekerjaan().find(p => p.id === item.id)
-      : getProyek().find(p => p.id === item.id);
-    if (!fullItem) { alert("Data tidak ditemukan."); return; }
-
-    const dokumentasiList = getDokumentasiByRef(item.id).filter(d => !d.judul.startsWith("Surat Masuk:"));
-    const surveyList = getHasilSurveyByRef(item.id);
-    const progressList = item.jenis === "PROYEK" ? getProgressByProyekId(item.id) : [];
-
-    openLaporanInTab({ item: fullItem, jenis: item.jenis, progressList, dokumentasiList, surveyList });
+    window.open(urlLaporanPdf(item.id), "_blank");
   };
 
   const openPDF = (d: Dokumentasi) => {
-    if (d.fileData) {
+    if ((d as any).id) {
+      window.open(urlDokumen((d as any).id), "_blank");
+    } else if (d.fileData) {
       const byteChars = atob(d.fileData);
       const byteArr = new Uint8Array(byteChars.length);
       for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);

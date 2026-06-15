@@ -3,14 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useRole } from "@/components/providers/RoleProvider";
 import {
-  getProyek, updateProyek, addProyek, seedIfEmpty,
-  getProgressByProyekId, addProgress,
-  getDokumentasiByRef,
-  getHasilSurveyByRef,
-} from "@/lib/storage";
-import { divisiList, unitPemintaList, getKepalaUPA, USERS } from "@/lib/data";
+  getProyekList,
+  tambahProyek as apiTambahProyek, editProyek as apiEditProyek,
+  disposisiProyek, terimaProyek, tolakProyek, mulaiProyek,
+  buatSuratTugasProyek, publishSuratTugas, urlPdfSuratTugas, urlDokumen, urlLaporanPdf,
+  getMasterUnitKerja, getMasterStaf,
+  getProgressProyek, tambahProgressProyek,
+} from "@/lib/api";
+import { mapProyek, mapProgress, extractList } from "@/lib/api-mapper";
 import type { Assignee, Proyek, Progress, SuratDetail } from "@/types";
-import { openLaporanInTab } from "@/lib/laporan-pdf";
 
 const STATUS_BADGE: Record<string, string> = {
   // StatusKonfirmasi
@@ -34,136 +35,6 @@ const STATUS_LABEL: Record<string, string> = {
   "done": "Selesai",
 };
 
-function generateSuratTugasPDFHTML(data: {
-  nomorSurat: string; perihal: string; tujuan: string;
-  tanggalPelaksanaan: string; lokasiPembuatan: string; tanggalSuratKeluar: string;
-  namaProyek: string; lokasi: string; unitPeminta: string;
-  assignees: Assignee[]; namaKepalaUPA: string; nipKepalaUPA: string;
-  jabatanKepalaUPA: string; isPreview?: boolean;
-}): string {
-  const stafRows = data.assignees
-    .filter(a => a.masukSurat !== false && a.statusKonfirmasi !== "rejected" && a.statusKonfirmasi !== "rejected")
-    .map((a, i) => `
-      <tr>
-        <td style="text-align:center;width:8%">${i + 1}</td>
-        <td style="width:35%">${a.nama}</td>
-        <td style="width:25%">${a.nip}</td>
-        <td style="width:32%">${a.divisi || a.jabatan}</td>
-      </tr>`)
-    .join("");
-
-  const watermark = data.isPreview
-    ? `<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-25deg);opacity:0.06;font-size:96px;font-weight:900;color:#000;letter-spacing:6px;pointer-events:none;z-index:999;white-space:nowrap;">PREVIEW</div>`
-    : "";
-
-  const fmtTgl = (s: string) => {
-    if (!s) return "-";
-    const d = new Date(s);
-    if (isNaN(d.getTime())) return s;
-    return d.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
-  };
-
-  return `<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="utf-8"/>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
-  .page { max-width: 720px; margin: 0 auto; }
-  .kop { display: flex; align-items: center; gap: 18px; margin-bottom: 10px; }
-  .kop-logo { width: 88px; height: auto; flex-shrink: 0; }
-  .kop-kementerian { font-size: 11pt; text-align: center; line-height: 1.4; }
-  .kop-univ { font-size: 14pt; font-weight: bold; text-align: center; letter-spacing: 0.5px; margin-top: 2px; }
-  .kop-upa  { font-size: 12pt; font-weight: bold; text-align: center; margin-top: 2px; }
-  .kop-alamat { font-size: 9pt; text-align: center; margin-top: 3px; color: #333; }
-  hr.tebal { border: none; border-top: 2.5px solid #000; margin: 8px 0 2px; }
-  hr.tipis { border: none; border-top: 1px solid #000; margin: 0 0 14px; }
-  .judul-box { text-align: center; margin: 20px 0 18px; }
-  .judul-box .judul { font-size: 13pt; font-weight: bold; text-decoration: underline; letter-spacing: 1px; }
-  .judul-box .nomor { font-size: 11pt; margin-top: 4px; }
-  .narasi { font-size: 11.5pt; text-align: justify; line-height: 1.7; margin-bottom: 14px; }
-  .tbl-staf { width: 100%; border-collapse: collapse; margin: 12px 0 14px; font-size: 11pt; }
-  .tbl-staf th { border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold; background: #f0f0f0; }
-  .tbl-staf td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
-  .ttd-wrap { margin-top: 32px; overflow: hidden; font-size: 11pt; }
-  .ttd-kota { margin-bottom: 4px; }
-  .ttd-box { float: right; text-align: center; width: 260px; }
-  .ttd-jabatan { margin-bottom: 70px; }
-  .ttd-nama { font-weight: bold; text-decoration: underline; }
-  .ttd-nip  { margin-top: 3px; }
-  @media print { body { padding: 1.5cm 2cm; } }
-</style>
-</head>
-<body>
-${watermark}
-<div class="page">
-  <div class="kop">
-    <img src="/logo-unila.png" alt="Logo Universitas Lampung" class="kop-logo" />
-    <div style="flex:1">
-      <div class="kop-kementerian">KEMENTERIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</div>
-      <div class="kop-univ">UNIVERSITAS LAMPUNG</div>
-      <div class="kop-upa">UPA. TEKNOLOGI INFORMASI DAN KOMUNIKASI</div>
-      <div class="kop-alamat">Jl. Prof. Dr. Sumantri Brojonegoro No.1, Gedong Meneng, Bandar Lampung 35145</div>
-      <div class="kop-alamat">e-mail: tik@kpa.ac.id &nbsp;&#9679;&nbsp; laman: http://tik.unila.ac.id</div>
-    </div>
-  </div>
-  <hr class="tebal"/><hr class="tipis"/>
-  <div class="judul-box">
-    <div class="judul">SURAT TUGAS</div>
-    <div class="nomor">Nomor : ${data.nomorSurat}</div>
-  </div>
-  <p class="narasi">
-    Sehubungan dengan surat ${data.unitPeminta} Nomor: ${data.nomorSurat} perihal ${data.perihal}.
-    Dengan ini Kepala UPA Teknologi Informasi dan Komunikasi menugaskan kepada:
-  </p>
-  <table class="tbl-staf">
-    <thead>
-      <tr>
-        <th style="width:8%">No</th>
-        <th style="width:35%">NAMA</th>
-        <th style="width:25%">NIP</th>
-        <th className="th-center">KETERANGAN</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${stafRows || `<tr><td colspan="4" style="text-align:center;padding:10px;">Belum ada staf ditugaskan</td></tr>`}
-    </tbody>
-  </table>
-  <p class="narasi">
-    Untuk Melaksanakan ${data.perihal.toLowerCase()}. pada kegiatan ${data.namaProyek},
-    yang akan dilaksanakan pada tanggal ${fmtTgl(data.tanggalPelaksanaan)},
-    kegiatan dilaksanakan di ${data.lokasi}.
-  </p>
-  <p class="narasi">
-    Demikian surat tugas ini dikeluarkan untuk dilaksanakan dengan penuh tanggung jawab.
-  </p>
-  <div class="ttd-wrap">
-    <div class="ttd-box">
-      <div class="ttd-kota">${data.lokasiPembuatan}, ${fmtTgl(data.tanggalSuratKeluar)}</div>
-      <div class="ttd-jabatan">${data.jabatanKepalaUPA}</div>
-      <div class="ttd-nama">${data.namaKepalaUPA}</div>
-      <div class="ttd-nip">NIP ${data.nipKepalaUPA}</div>
-    </div>
-  </div>
-</div>
-</body>
-</html>`;
-}
-
-function generateSuratBase64(data: Parameters<typeof generateSuratTugasPDFHTML>[0]): string {
-  return btoa(encodeURIComponent(generateSuratTugasPDFHTML(data)));
-}
-
-
-function openHtmlInTab(base64: string) {
-  try {
-    const html = decodeURIComponent(atob(base64));
-    const w = window.open("", "_blank");
-    if (w) { w.document.write(html); w.document.close(); }
-  } catch (e) { alert("Gagal membuka dokumen: " + (e instanceof Error ? e.message : "Unknown error")); }
-}
-
 // ─── Lihat Progress Modal ───
 function ProgressModal({
   proyek, role, userId, userName, onClose,
@@ -172,43 +43,39 @@ function ProgressModal({
 }) {
   const [progressData, setProgressData] = useState<Progress[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [progressForm, setProgressForm] = useState({ keteranganProgress: "", catatan: "", lampiranName: "", lampiranData: "", lampiranSize: 0 });
+  const [progressForm, setProgressForm] = useState({ keteranganProgress: "", catatan: "", file: null as File | null });
   const [fileLoading, setFileLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const fmt = (b?: number) => !b ? "" : b < 1048576 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1048576).toFixed(1)} MB`;
+  const loadProgress = () => {
+    getProgressProyek(proyek.id)
+      .then((res: any) => setProgressData(extractList(res).map(mapProgress)))
+      .catch(console.error);
+  };
 
-  useEffect(() => {
-    setProgressData(getProgressByProyekId(proyek.id));
-  }, [proyek.id]);
+  useEffect(() => { loadProgress(); }, [proyek.id]);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 20 * 1024 * 1024) { alert("Maks 20 MB."); e.target.value = ""; return; }
-    setFileLoading(true);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setProgressForm(prev => ({ ...prev, lampiranName: file.name, lampiranData: (ev.target?.result as string).split(",")[1], lampiranSize: file.size }));
-      setFileLoading(false);
-    };
-    reader.readAsDataURL(file);
+    setProgressForm(prev => ({ ...prev, file }));
   };
 
-  const handleSimpan = () => {
+  const handleSimpan = async () => {
     if (!progressForm.keteranganProgress) return alert("Keterangan progress wajib diisi.");
-    addProgress({
-      proyekId: proyek.id,
-      keteranganProgress: progressForm.keteranganProgress,
-      stafPelapor: userName || "Staf",
-      tanggalProgress: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-      lampiran: progressForm.lampiranName || null,
-      catatan: progressForm.catatan || null,
-    });
-    setProgressData(getProgressByProyekId(proyek.id));
-    setProgressForm({ keteranganProgress: "", catatan: "", lampiranName: "", lampiranData: "", lampiranSize: 0 });
-    if (fileRef.current) fileRef.current.value = "";
-    setShowForm(false);
+    try {
+      await tambahProgressProyek({
+        id_proyek: proyek.id,
+        id_pengguna: userId!,
+        keterangan: progressForm.keteranganProgress,
+        ...(progressForm.file ? { lampiran: [progressForm.file] } : {}),
+      });
+      loadProgress();
+      setProgressForm({ keteranganProgress: "", catatan: "", file: null });
+      if (fileRef.current) fileRef.current.value = "";
+      setShowForm(false);
+    } catch (e: any) { alert("Gagal simpan progress: " + e.message); }
   };
 
   // Staf dapat tambah progress hanya saat in_progress
@@ -249,13 +116,12 @@ function ProgressModal({
                 <input ref={fileRef} type="file" id="progress-file" className="hidden-input" onChange={handleFile} />
                 <label htmlFor="progress-file" className="file-upload-btn">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M4 6l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                  {fileLoading ? "Membaca file..." : progressForm.lampiranName ? "Ganti File" : "Pilih File"}
+                  {progressForm.file ? "Ganti File" : "Pilih File"}
                 </label>
-                {progressForm.lampiranName && (
+                {progressForm.file && (
                   <div className="file-upload-preview">
-                    <span> {progressForm.lampiranName}</span>
-                    <span className="file-size-label">{fmt(progressForm.lampiranSize)}</span>
-                    <button type="button" className="text-button" onClick={() => { setProgressForm({ ...progressForm, lampiranName: "", lampiranData: "", lampiranSize: 0 }); if (fileRef.current) fileRef.current.value = ""; }}></button>
+                    <span> {progressForm.file.name}</span>
+                    <button type="button" className="text-button" onClick={() => { setProgressForm({ ...progressForm, file: null }); if (fileRef.current) fileRef.current.value = ""; }}></button>
                   </div>
                 )}
               </div>
@@ -265,8 +131,8 @@ function ProgressModal({
               <input value={progressForm.catatan} onChange={(e) => setProgressForm({ ...progressForm, catatan: e.target.value })} placeholder="Catatan tambahan" />
             </div>
             <div className="modal-actions">
-              <button type="button" onClick={handleSimpan} disabled={fileLoading}>Simpan Progress</button>
-              <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); setProgressForm({ keteranganProgress: "", catatan: "", lampiranName: "", lampiranData: "", lampiranSize: 0 }); if (fileRef.current) fileRef.current.value = ""; }}>Batal</button>
+              <button type="button" onClick={handleSimpan}>Simpan Progress</button>
+              <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); setProgressForm({ keteranganProgress: "", catatan: "", file: null }); if (fileRef.current) fileRef.current.value = ""; }}>Batal</button>
             </div>
           </div>
         )}
@@ -301,15 +167,13 @@ function ProgressModal({
 // ─── Ringkasan Modal ───
 function RingkasanModal({ item, onClose }: { item: Proyek; onClose: () => void }) {
   const openSurat = () => {
-    if (item.suratTugasData) openHtmlInTab(item.suratTugasData);
-    else alert("Surat tugas belum tersedia.");
+    if (!item.id_surat_tugas) { alert("Surat tugas belum tersedia."); return; }
+    window.open(urlPdfSuratTugas(item.id_surat_tugas), "_blank");
   };
 
   const handleOpenLaporan = () => {
-    const dokumentasiList = getDokumentasiByRef(item.id).filter(d => !d.judul.startsWith("Surat Masuk:"));
-    const surveyList = getHasilSurveyByRef(item.id);
-    const progressList = getProgressByProyekId(item.id);
-    openLaporanInTab({ item, jenis: "PROYEK", progressList, dokumentasiList, surveyList });
+    if (!item.id_tinjauan) { alert("Laporan belum tersedia."); return; }
+    window.open(urlLaporanPdf(item.id_tinjauan), "_blank");
   };
 
   const isDone = item.status === "done";
@@ -373,7 +237,7 @@ function RingkasanModal({ item, onClose }: { item: Proyek; onClose: () => void }
               <tr><td className="info-label">Tanggal Pelaksanaan</td><td>: {item.suratDetail.tanggalPelaksanaan}</td></tr>
               <tr><td className="info-label">Lokasi Pelaksanaan</td><td>: {item.suratDetail.lokasiPembuatan}</td></tr>
             </tbody></table>
-            {item.suratTugasData && (
+            {item.id_surat_tugas && (
               <button type="button" className="btn-secondary btn-sm mt-3" onClick={openSurat}>
                 {item.suratStatus === "published" ? " Buka PDF Surat Tugas" : " Buka PDF Preview"}
               </button>
@@ -435,28 +299,39 @@ export default function ProyekPage() {
   const [alasanTolak, setAlasanTolak] = useState("");
   const [showRingkasan, setShowRingkasan] = useState<Proyek | null>(null);
 
+  const [unitKerjaList, setUnitKerjaList] = useState<{ id_unit: string; nama_unit: string }[]>([]);
   const [form, setForm] = useState({
-    namaProyek: "", divisi: [] as string[], deskripsi: "", targetSelesai: "",
-    lokasi: "", unitPeminta: "", nomorSurat: "", perihalSurat: "",
-    filePath: "", fileData: "", fileSize: 0,
+    namaProyek: "", targetSelesai: "",
+    lokasi: "", id_unit: "", nomorSurat: "", perihalSurat: "",
+    file: null as File | null,
   });
   const [editForm, setEditForm] = useState({
-    namaProyek: "", divisi: [] as string[], deskripsi: "", targetSelesai: "",
-    lokasi: "", unitPeminta: "", nomorSurat: "", perihalSurat: "",
-    filePath: "", fileData: "", fileSize: 0,
+    namaProyek: "", targetSelesai: "",
+    lokasi: "", id_unit: "", nomorSurat: "", perihalSurat: "",
+    file: null as File | null,
   });
   const [suratForm, setSuratForm] = useState<SuratDetail>({
     nomorSurat: "", perihal: "", tujuan: "",
     tanggalPelaksanaan: "", lokasiPembuatan: "", tanggalSuratKeluar: "",
   });
 
-  const [formUploadProgress, setFormUploadProgress] = useState(false);
-  const [editUploadProgress, setEditUploadProgress] = useState(false);
+  const [formUploadProgress] = useState(false);
+  const [editUploadProgress] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
-  const load = () => { seedIfEmpty(); setData(getProyek()); };
-  useEffect(() => { load(); }, []);
+  const load = () => {
+    const filter = role === "staf" ? { id_pengguna_staf: user?.id } : {};
+    getProyekList(filter)
+      .then((res: any) => setData(extractList(res).map(mapProyek)))
+      .catch(console.error);
+  };
+  useEffect(() => { load(); }, [role, user?.id]);
+  useEffect(() => {
+    getMasterUnitKerja()
+      .then((res: any) => setUnitKerjaList(extractList(res)))
+      .catch(console.error);
+  }, []);
 
   const fmt = (bytes?: number) => {
     if (!bytes) return "";
@@ -469,7 +344,7 @@ export default function ProyekPage() {
     const base = role === "staf"
       ? data.filter((d) => d.assignees.some((a) => a.stafId === user?.id))
       : role === "kepala-divisi"
-        ? data.filter((d) => d.divisi.includes(user?.divisi || ""))
+        ? data.filter((d) => d.assignees.length === 0 || d.divisi.includes(user?.divisi || ""))
         : data;
     if (!q) return base;
     return base.filter((d) =>
@@ -483,13 +358,7 @@ export default function ProyekPage() {
     if (!file) return;
     if (file.type !== "application/pdf") { alert("Hanya file PDF."); e.target.value = ""; return; }
     if (file.size > 10 * 1024 * 1024) { alert("Maks 10 MB."); e.target.value = ""; return; }
-    setFormUploadProgress(true);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setForm(prev => ({ ...prev, filePath: file.name, fileData: (ev.target?.result as string).split(",")[1], fileSize: file.size }));
-      setFormUploadProgress(false);
-    };
-    reader.readAsDataURL(file);
+    setForm(prev => ({ ...prev, file }));
   };
 
   const handleEditFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -497,126 +366,112 @@ export default function ProyekPage() {
     if (!file) return;
     if (file.type !== "application/pdf") { alert("Hanya file PDF."); e.target.value = ""; return; }
     if (file.size > 10 * 1024 * 1024) { alert("Maks 10 MB."); e.target.value = ""; return; }
-    setEditUploadProgress(true);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setEditForm(prev => ({ ...prev, filePath: file.name, fileData: (ev.target?.result as string).split(",")[1], fileSize: file.size }));
-      setEditUploadProgress(false);
-    };
-    reader.readAsDataURL(file);
+    setEditForm(prev => ({ ...prev, file }));
   };
 
   const openEdit = (item: Proyek) => {
+    const unitMatch = unitKerjaList.find(u => u.nama_unit === item.unitPeminta);
     setEditForm({
       namaProyek: item.namaProyek,
-      divisi: item.divisi,
-      deskripsi: item.deskripsi || "",
       targetSelesai: item.targetSelesai,
       lokasi: item.lokasi,
-      unitPeminta: item.unitPeminta,
+      id_unit: unitMatch?.id_unit ?? "",
       nomorSurat: item.nomorSuratMasuk || "",
       perihalSurat: item.perihalSuratMasuk || "",
-      filePath: "", fileData: "", fileSize: 0,
+      file: null,
     });
     if (editFileInputRef.current) editFileInputRef.current.value = "";
     setShowEdit(item);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!showEdit) return;
     if (!editForm.namaProyek || !editForm.targetSelesai) return alert("Lengkapi field wajib.");
-    if (!editForm.unitPeminta) return alert("Pilih Unit Peminta.");
+    if (!editForm.id_unit) return alert("Pilih Unit Peminta.");
     if (!editForm.lokasi) return alert("Isi Lokasi proyek.");
     if (!editForm.nomorSurat) return alert("Isi Nomor Surat Masuk.");
     if (!editForm.perihalSurat) return alert("Isi Perihal Surat Masuk.");
-    const payload: Partial<Proyek> = {
-      namaProyek: editForm.namaProyek,
-      divisi: editForm.divisi,
-      deskripsi: editForm.deskripsi || null,
-      targetSelesai: editForm.targetSelesai,
-      lokasi: editForm.lokasi,
-      unitPeminta: editForm.unitPeminta,
-      nomorSuratMasuk: editForm.nomorSurat,
-      perihalSuratMasuk: editForm.perihalSurat,
-    };
-    if (editForm.fileData) {
-      payload.suratMasuk = editForm.filePath;
-      payload.suratMasukData = editForm.fileData;
-    }
-    updateProyek(showEdit.id, payload);
-    setShowEdit(null);
-    load();
+    try {
+      await apiEditProyek(showEdit.id, {
+        id_unit: editForm.id_unit,
+        nama_proyek: editForm.namaProyek,
+        lokasi: editForm.lokasi,
+        target_selesai: editForm.targetSelesai,
+        nomor_surat: editForm.nomorSurat,
+        perihal: editForm.perihalSurat,
+        ...(editForm.file ? { dokumen_surat: editForm.file } : {}),
+      });
+      setShowEdit(null); load();
+    } catch (e: any) { alert("Gagal edit: " + e.message); }
   };
 
-  const handleTambah = () => {
+  const handleTambah = async () => {
     if (!form.namaProyek || !form.targetSelesai) return alert("Lengkapi field wajib.");
-    if (!form.unitPeminta) return alert("Pilih Unit Peminta.");
+    if (!form.id_unit) return alert("Pilih Unit Peminta.");
     if (!form.lokasi) return alert("Isi Lokasi proyek.");
     if (!form.nomorSurat) return alert("Isi Nomor Surat Masuk.");
     if (!form.perihalSurat) return alert("Isi Perihal Surat Masuk.");
-    if (!form.fileData) return alert("Dokumen surat masuk (PDF) wajib diunggah.");
-    addProyek({
-      namaProyek: form.namaProyek, status: "assigned", statusKonfirmasi: "accepted",
-      suratMasuk: form.filePath, suratMasukData: form.fileData,
-      nomorSuratMasuk: form.nomorSurat, perihalSuratMasuk: form.perihalSurat,
-      divisi: form.divisi, lokasi: form.lokasi, unitPeminta: form.unitPeminta,
-      staf: null, stafId: null, assignees: [], deskripsi: form.deskripsi || null,
-      targetSelesai: form.targetSelesai, suratTugas: null, suratStatus: undefined, catatan: null,
-    });
-    setShowTambah(false);
-    setForm({ namaProyek: "", divisi: [], deskripsi: "", targetSelesai: "", lokasi: "", unitPeminta: "", nomorSurat: "", perihalSurat: "", filePath: "", fileData: "", fileSize: 0 });
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    load();
+    if (!form.file) return alert("Dokumen surat masuk (PDF) wajib diunggah.");
+    try {
+      await apiTambahProyek({
+        id_pengguna: user!.id,
+        id_unit: form.id_unit,
+        nama_proyek: form.namaProyek,
+        lokasi: form.lokasi,
+        target_selesai: form.targetSelesai,
+        nomor_surat: form.nomorSurat,
+        perihal: form.perihalSurat,
+        dokumen_surat: form.file,
+      });
+      setShowTambah(false);
+      setForm({ namaProyek: "", targetSelesai: "", lokasi: "", id_unit: "", nomorSurat: "", perihalSurat: "", file: null });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      load();
+    } catch (e: any) { alert("Gagal tambah: " + e.message); }
   };
 
-  const handleDisposisi = (proyek: Proyek, stafList: Array<{ stafId: string; nama: string; nip: string; jabatan: string; divisi: string; masukSurat: boolean }>) => {
-    // Pertahankan HANYA staf yang sudah accepted, hapus yang rejected/pending
-    const acceptedOld = proyek.assignees.filter(a => a.statusKonfirmasi === "accepted");
-    // Pastikan tidak ada duplikasi - filter staf baru yang stafId-nya sudah ada di accepted
-    const acceptedIds = new Set(acceptedOld.map(a => a.stafId));
-    const newAssignees: Assignee[] = stafList
-      .filter(s => !acceptedIds.has(s.stafId))
-      .map(s => ({
-        stafId: s.stafId, nama: s.nama, nip: s.nip, jabatan: s.jabatan,
-        divisi: s.divisi, statusPekerjaan: "assigned" as const, statusKonfirmasi: "pending" as const, masukSurat: s.masukSurat,
-      }));
-    const mergedAssignees = [...acceptedOld, ...newAssignees];
-    const firstNew = newAssignees[0] || acceptedOld[0];
-    updateProyek(proyek.id, {
-      staf: mergedAssignees.map(s => s.nama).join(", "),
-      stafId: firstNew?.stafId || null,
-      nip: firstNew?.nip || "",
-      jabatan: firstNew?.jabatan || "",
-      status: "assigned",
-      statusKonfirmasi: "pending",
-      suratTugas: null, suratStatus: undefined,
-      assignees: mergedAssignees,
-    });
-    setShowDisposisi(null); load();
+  const handleDisposisi = async (proyek: Proyek, stafList: Array<{ stafId: string; nama: string; nip: string; jabatan: string; divisi: string; masukSurat: boolean }>) => {
+    try {
+      await disposisiProyek(proyek.id, stafList.map(s => ({
+        id_pengguna: s.stafId,
+        sertakan_dalam_surat: s.masukSurat,
+      })));
+      setShowDisposisi(null); load();
+    } catch (e: any) { alert("Gagal disposisi: " + e.message); }
   };
 
-  const handleTerima = (item: Proyek) => {
-    const updated = item.assignees.map(a => a.stafId === user?.id ? { ...a, statusKonfirmasi: "accepted" as const } : a);
-    const allAccepted = updated.every(a => a.statusKonfirmasi === "accepted");
-    updateProyek(item.id, { assignees: updated, statusKonfirmasi: allAccepted ? "accepted" : "pending" });
-    load();
+  const handleTerima = async (item: Proyek) => {
+    const assignee = item.assignees.find(a => a.stafId === user?.id);
+    const idStaf = assignee?.id_proyek_staf;
+    if (!idStaf) { alert("ID staf tidak ditemukan."); return; }
+    try {
+      await terimaProyek(idStaf);
+      load();
+    } catch (e: any) { alert("Gagal terima: " + e.message); }
   };
 
-  const handleTolak = () => {
+  const handleTolak = async () => {
     if (!alasanTolak.trim()) return alert("Wajib mengisi alasan penolakan.");
-    const updated = showTolakModal!.assignees.map(a =>
-      a.stafId === user?.id ? { ...a, statusKonfirmasi: "rejected" as const, alasanPenolakan: alasanTolak } : a
-    );
-    updateProyek(showTolakModal!.id, { assignees: updated, statusKonfirmasi: "rejected", catatan: alasanTolak });
-    setShowTolakModal(null); setAlasanTolak(""); load();
+    const assignee = showTolakModal!.assignees.find(a => a.stafId === user?.id);
+    const idStaf = assignee?.id_proyek_staf;
+    if (!idStaf) { alert("ID staf tidak ditemukan."); return; }
+    try {
+      await tolakProyek(idStaf, alasanTolak);
+      setShowTolakModal(null); setAlasanTolak(""); load();
+    } catch (e: any) { alert("Gagal tolak: " + e.message); }
   };
 
-  const handleMulai = (item: Proyek) => { updateProyek(item.id, { status: "in_progress" }); load(); };
+  const handleMulai = async (item: Proyek) => {
+    try {
+      await mulaiProyek(item.id, user!.id);
+      load();
+    } catch (e: any) { alert("Gagal mulai: " + e.message); }
+  };
 
   const openSuratModal = (item: Proyek, mode: "buat" | "edit") => {
     const defaultDetail: SuratDetail = {
       nomorSurat: item.suratDetail?.nomorSurat ?? "",
-      perihal: item.suratDetail?.perihal ?? (item as any).perihalSuratMasuk ?? "",
+      perihal: item.suratDetail?.perihal ?? item.perihalSuratMasuk ?? "",
       tujuan: item.suratDetail?.tujuan ?? "",
       tanggalPelaksanaan: item.suratDetail?.tanggalPelaksanaan ?? "",
       lokasiPembuatan: item.suratDetail?.lokasiPembuatan ?? "Bandar Lampung",
@@ -626,63 +481,46 @@ export default function ProyekPage() {
     setShowSuratModal({ item, mode });
   };
 
-  const handleSimpanPreview = () => {
+  const handleSimpanPreview = async () => {
     if (!suratForm.nomorSurat || !suratForm.tujuan || !suratForm.tanggalPelaksanaan) return alert("Lengkapi semua field surat.");
     const item = showSuratModal!.item;
-    const kepala = getKepalaUPA();
-    const previewBase64 = generateSuratBase64({
-      ...suratForm,
-      namaProyek: item.namaProyek, lokasi: item.lokasi || "-", unitPeminta: item.unitPeminta || "-",
-      assignees: item.assignees,
-      namaKepalaUPA: kepala?.nama || "-", nipKepalaUPA: kepala?.nip || "-", jabatanKepalaUPA: kepala?.jabatan || "-",
-      isPreview: true,
-    });
-    updateProyek(item.id, { suratStatus: "draft", suratDetail: suratForm, suratTugasData: previewBase64, suratTugas: `ST-PREVIEW-${item.id}.pdf` });
-    setShowSuratModal(null); load();
+    try {
+      await buatSuratTugasProyek(item.id, {
+        nomor_surat: suratForm.nomorSurat,
+        perihal: suratForm.perihal,
+        tujuan: suratForm.tujuan,
+        tanggal_pelaksanaan: suratForm.tanggalPelaksanaan,
+        lokasi_pelaksanaan: item.lokasi,
+        lokasi_surat: suratForm.lokasiPembuatan,
+        tanggal_surat: suratForm.tanggalSuratKeluar,
+      });
+      setShowSuratModal(null); load();
+    } catch (e: any) { alert("Gagal simpan preview: " + e.message); }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const item = showPublishKonfirm!;
-    const kepala = getKepalaUPA();
-    const finalBase64 = generateSuratBase64({
-      ...(item.suratDetail ?? { nomorSurat: "-", perihal: "-", tujuan: "-", tanggalPelaksanaan: "-", lokasiPembuatan: "Bandar Lampung", tanggalSuratKeluar: "-" }),
-      namaProyek: item.namaProyek, lokasi: item.lokasi || "-", unitPeminta: item.unitPeminta || "-",
-      assignees: item.assignees,
-      namaKepalaUPA: kepala?.nama || "-", nipKepalaUPA: kepala?.nip || "-", jabatanKepalaUPA: kepala?.jabatan || "-",
-      isPreview: false,
-    });
-    updateProyek(item.id, { suratTugas: `ST-${item.id}.pdf`, suratTugasData: finalBase64, suratStatus: "published" });
-    setShowPublishKonfirm(null); load();
+    if (!item.id_surat_tugas) { alert("ID surat tugas tidak ditemukan."); return; }
+    try {
+      await publishSuratTugas(item.id_surat_tugas);
+      setShowPublishKonfirm(null); load();
+    } catch (e: any) { alert("Gagal publish: " + e.message); }
   };
 
   const openSuratPDF = (item: Proyek) => {
-    if (!item.suratTugasData) { alert("Surat tugas belum tersedia."); return; }
-    openHtmlInTab(item.suratTugasData);
+    if (!item.id_surat_tugas) { alert("Surat tugas belum tersedia."); return; }
+    window.open(urlPdfSuratTugas(item.id_surat_tugas), "_blank");
   };
 
-  // ─── Buka PDF Laporan ───
   const openLaporan = (item: Proyek) => {
     if (item.status !== "done") return;
-    const dokumentasiList = getDokumentasiByRef(item.id).filter(d => !d.judul.startsWith("Surat Masuk:"));
-    const surveyList = getHasilSurveyByRef(item.id);
-    const progressList = getProgressByProyekId(item.id);
-    openLaporanInTab({ item, jenis: "PROYEK", progressList, dokumentasiList, surveyList });
+    if (!item.id_tinjauan) { alert("Laporan belum tersedia."); return; }
+    window.open(urlLaporanPdf(item.id_tinjauan), "_blank");
   };
 
-  // ─── Buka PDF Surat Masuk ───
   const openSuratMasuk = (item: Proyek) => {
-    if (!item.suratMasuk) return;
-    if (item.suratMasukData) {
-      try {
-        const byteChars = atob(item.suratMasukData);
-        const byteArr = new Uint8Array(byteChars.length);
-        for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
-        const blob = new Blob([byteArr], { type: "application/pdf" });
-        window.open(URL.createObjectURL(blob), "_blank");
-      } catch { alert(`File: ${item.suratMasuk}`); }
-    } else {
-      alert(`File surat masuk: ${item.suratMasuk}`);
-    }
+    if (!item.id_dokumen_surat) { alert("Dokumen surat masuk tidak tersedia."); return; }
+    window.open(urlDokumen(item.id_dokumen_surat), "_blank");
   };
 
   // ─── Render header berdasarkan role ───
@@ -945,26 +783,15 @@ export default function ProyekPage() {
             <div className="form-group"><label>Nama Proyek *</label><input value={form.namaProyek} onChange={(e) => setForm({ ...form, namaProyek: e.target.value })} placeholder="Nama proyek" /></div>
             <div className="form-group">
               <label>Unit Peminta *</label>
-              <select value={form.unitPeminta} onChange={(e) => setForm({ ...form, unitPeminta: e.target.value })}>
+              <select value={form.id_unit} onChange={(e) => setForm({ ...form, id_unit: e.target.value })}>
                 <option value="">-- Pilih Unit Peminta --</option>
-                {unitPemintaList.map(u => <option key={u} value={u}>{u}</option>)}
+                {unitKerjaList.map(u => <option key={u.id_unit} value={u.id_unit}>{u.nama_unit}</option>)}
               </select>
             </div>
             <div className="form-group">
               <label>Lokasi *</label>
               <textarea value={form.lokasi} onChange={(e) => setForm({ ...form, lokasi: e.target.value })} placeholder="Contoh: Gedung UPA TIK Lantai 3" rows={2} />
             </div>
-            <div className="form-group">
-              <label>Divisi</label>
-              <div className="checkbox-group">
-                {divisiList.map(d => (
-                  <label key={d} className="checkbox-item">
-                    <input type="checkbox" checked={form.divisi.includes(d)} onChange={(e) => setForm({ ...form, divisi: e.target.checked ? [...form.divisi, d] : form.divisi.filter(x => x !== d) })} />{d}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="form-group"><label>Deskripsi</label><textarea value={form.deskripsi} onChange={(e) => setForm({ ...form, deskripsi: e.target.value })} placeholder="Deskripsi (opsional)" /></div>
             <div className="form-group"><label>Target Selesai *</label><input type="date" value={form.targetSelesai} onChange={(e) => setForm({ ...form, targetSelesai: e.target.value })} /></div>
             <div className="form-divider">Surat Masuk</div>
             <div className="form-group"><label>Nomor Surat Masuk *</label><input value={form.nomorSurat} onChange={(e) => setForm({ ...form, nomorSurat: e.target.value })} placeholder="Contoh: 001/UN26/TI/2026" /></div>
@@ -978,14 +805,14 @@ export default function ProyekPage() {
                 <input ref={fileInputRef} type="file" accept="application/pdf" id="form-proyek-file" className="hidden-input" onChange={handleFormFile} />
                 <label htmlFor="form-proyek-file" className="file-upload-btn">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M4 6l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                  {formUploadProgress ? "Membaca file..." : form.filePath ? "Ganti File" : "Pilih File PDF"}
+                  {form.file ? "Ganti File" : "Pilih File PDF"}
                 </label>
-                {form.filePath && <div className="file-upload-preview"><span> {form.filePath}</span><span className="file-size-label">{fmt(form.fileSize)}</span></div>}
+                {form.file && <div className="file-upload-preview"><span> {form.file.name}</span></div>}
               </div>
             </div>
             <div className="modal-actions">
-              <button type="button" onClick={handleTambah} disabled={formUploadProgress}>Simpan</button>
-              <button type="button" className="btn-secondary" onClick={() => { setShowTambah(false); setForm({ namaProyek: "", divisi: [], deskripsi: "", targetSelesai: "", lokasi: "", unitPeminta: "", nomorSurat: "", perihalSurat: "", filePath: "", fileData: "", fileSize: 0 }); }}>Batal</button>
+              <button type="button" onClick={handleTambah}>Simpan</button>
+              <button type="button" className="btn-secondary" onClick={() => { setShowTambah(false); setForm({ namaProyek: "", targetSelesai: "", lokasi: "", id_unit: "", nomorSurat: "", perihalSurat: "", file: null }); }}>Batal</button>
             </div>
           </div>
         </div>
@@ -999,23 +826,12 @@ export default function ProyekPage() {
             <div className="form-group"><label>Nama Proyek *</label><input value={editForm.namaProyek} onChange={(e) => setEditForm({ ...editForm, namaProyek: e.target.value })} /></div>
             <div className="form-group">
               <label>Unit Peminta *</label>
-              <select value={editForm.unitPeminta} onChange={(e) => setEditForm({ ...editForm, unitPeminta: e.target.value })}>
+              <select value={editForm.id_unit} onChange={(e) => setEditForm({ ...editForm, id_unit: e.target.value })}>
                 <option value="">-- Pilih Unit Peminta --</option>
-                {unitPemintaList.map(u => <option key={u} value={u}>{u}</option>)}
+                {unitKerjaList.map(u => <option key={u.id_unit} value={u.id_unit}>{u.nama_unit}</option>)}
               </select>
             </div>
             <div className="form-group"><label>Lokasi *</label><textarea value={editForm.lokasi} onChange={(e) => setEditForm({ ...editForm, lokasi: e.target.value })} rows={2} /></div>
-            <div className="form-group">
-              <label>Divisi</label>
-              <div className="checkbox-group">
-                {divisiList.map(d => (
-                  <label key={d} className="checkbox-item">
-                    <input type="checkbox" checked={editForm.divisi.includes(d)} onChange={(e) => setEditForm({ ...editForm, divisi: e.target.checked ? [...editForm.divisi, d] : editForm.divisi.filter(x => x !== d) })} />{d}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="form-group"><label>Deskripsi</label><textarea value={editForm.deskripsi} onChange={(e) => setEditForm({ ...editForm, deskripsi: e.target.value })} /></div>
             <div className="form-group"><label>Target Selesai *</label><input type="date" value={editForm.targetSelesai} onChange={(e) => setEditForm({ ...editForm, targetSelesai: e.target.value })} /></div>
             <div className="form-divider">Surat Masuk</div>
             <div className="form-group"><label>Nomor Surat Masuk *</label><input value={editForm.nomorSurat} onChange={(e) => setEditForm({ ...editForm, nomorSurat: e.target.value })} /></div>
@@ -1026,14 +842,14 @@ export default function ProyekPage() {
                 <input ref={editFileInputRef} type="file" accept="application/pdf" id="edit-proyek-file" className="hidden-input" onChange={handleEditFile} />
                 <label htmlFor="edit-proyek-file" className="file-upload-btn">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M4 6l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                  {editUploadProgress ? "Membaca file..." : editForm.filePath ? "Ganti File" : "Pilih File PDF Baru"}
+                  {editForm.file ? "Ganti File" : "Pilih File PDF Baru"}
                 </label>
-                {editForm.filePath && <div className="file-upload-preview"><span>{editForm.filePath}</span><span className="file-size-label">{fmt(editForm.fileSize)}</span></div>}
-                {!editForm.filePath && showEdit.suratMasuk && <div className="file-upload-preview"><span>{showEdit.suratMasuk}</span><span className="file-size-label text-muted">File saat ini</span></div>}
+                {editForm.file && <div className="file-upload-preview"><span>{editForm.file.name}</span></div>}
+                {!editForm.file && showEdit.suratMasuk && <div className="file-upload-preview"><span>{showEdit.suratMasuk}</span><span className="file-size-label text-muted">File saat ini</span></div>}
               </div>
             </div>
             <div className="modal-actions">
-              <button type="button" onClick={handleSaveEdit} disabled={editUploadProgress}>Simpan Perubahan</button>
+              <button type="button" onClick={handleSaveEdit}>Simpan Perubahan</button>
               <button type="button" className="btn-secondary" onClick={() => setShowEdit(null)}>Batal</button>
             </div>
           </div>
@@ -1160,7 +976,12 @@ function DisposisiModal({ judul, isReassign, rejectedCount = 1, onClose, onSave 
   onClose: () => void;
   onSave: (stafList: Array<{ stafId: string; nama: string; nip: string; jabatan: string; divisi: string; masukSurat: boolean }>) => void;
 }) {
-  const allStaf = USERS.filter((u: import("@/types").User) => u.role === "staf");
+  const [allStaf, setAllStaf] = useState<any[]>([]);
+  useEffect(() => {
+    getMasterStaf()
+      .then((res: any) => setAllStaf(extractList(res)))
+      .catch(console.error);
+  }, []);
   const [selectedMap, setSelectedMap] = useState<Record<string, { masukSurat: boolean }>>({});
   const [search, setSearch] = useState("");
 
@@ -1168,8 +989,15 @@ function DisposisiModal({ judul, isReassign, rejectedCount = 1, onClose, onSave 
     const valid = Object.keys(selectedMap);
     if (!valid.length) return alert("Pilih minimal satu staf.");
     onSave(valid.map(id => {
-      const s = allStaf.find((u: any) => u.id === id)!;
-      return { stafId: id, nama: s.nama, nip: s.nip, jabatan: s.jabatan, divisi: s.divisi, masukSurat: selectedMap[id].masukSurat };
+      const s = allStaf.find((u: any) => (u.uuid ?? u.id) === id) ?? {};
+      return {
+        stafId: id,
+        nama: s.nama_lengkap ?? s.nama ?? "",
+        nip: s.NIP ?? s.nip ?? "",
+        jabatan: s.peran ?? s.jabatan ?? "",
+        divisi: s.divisi?.nama_divisi ?? (typeof s.divisi === "string" ? s.divisi : ""),
+        masukSurat: selectedMap[id].masukSurat,
+      };
     }));
   };
 
@@ -1177,9 +1005,12 @@ function DisposisiModal({ judul, isReassign, rejectedCount = 1, onClose, onSave 
     nama.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase();
 
   const q = search.toLowerCase();
-  const filteredStaf = allStaf.filter((s: any) =>
-    !q || s.nama.toLowerCase().includes(q) || s.nip.includes(q) || s.divisi.toLowerCase().includes(q)
-  );
+  const filteredStaf = allStaf.filter((s: any) => {
+    const nama = (s.nama_lengkap ?? s.nama ?? "").toLowerCase();
+    const nip = (s.NIP ?? s.nip ?? "");
+    const divisi = (s.divisi?.nama_divisi ?? s.divisi ?? "").toLowerCase();
+    return !q || nama.includes(q) || nip.includes(q) || divisi.includes(q);
+  });
 
   return (
     <div className="modal-overlay">
@@ -1203,13 +1034,16 @@ function DisposisiModal({ judul, isReassign, rejectedCount = 1, onClose, onSave 
           />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8, maxHeight: 300, overflowY: "auto", padding: "2px 2px 4px" }}>
             {filteredStaf.map((s: any) => {
-              const sel = !!selectedMap[s.id];
+              const sid = s.uuid ?? s.id;
+              const snama = s.nama_lengkap ?? s.nama ?? "";
+              const snip = s.NIP ?? s.nip ?? "";
+              const sel = !!selectedMap[sid];
               return (
                 <div
-                  key={s.id}
+                  key={sid}
                   onClick={() => setSelectedMap(prev => {
-                    if (prev[s.id]) { const n = { ...prev }; delete n[s.id]; return n; }
-                    return { ...prev, [s.id]: { masukSurat: true } };
+                    if (prev[sid]) { const n = { ...prev }; delete n[sid]; return n; }
+                    return { ...prev, [sid]: { masukSurat: true } };
                   })}
                   style={{
                     border: sel ? "2px solid var(--navy-600)" : "1.5px solid var(--border-soft)",
@@ -1223,18 +1057,18 @@ function DisposisiModal({ judul, isReassign, rejectedCount = 1, onClose, onSave 
                   )}
                   <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 4 }}>
                     <div style={{ width: 30, height: 30, borderRadius: "50%", flexShrink: 0, background: sel ? "var(--navy-600)" : "var(--navy-100)", color: sel ? "#fff" : "var(--navy-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700 }}>
-                      {avatarInitials(s.nama)}
+                      {avatarInitials(snama)}
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: 12, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.nama}</div>
-                      <div style={{ fontSize: 10, color: "var(--text-muted)" }}>{s.divisi}</div>
+                      <div style={{ fontWeight: 700, fontSize: 12, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{snama}</div>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)" }}>{s.divisi?.nama_divisi ?? s.divisi ?? ""}</div>
                     </div>
                   </div>
-                  <div style={{ fontSize: 10, color: "var(--text-muted)", paddingLeft: 39 }}>{s.nip}</div>
+                  <div style={{ fontSize: 10, color: "var(--text-muted)", paddingLeft: 39 }}>{snip}</div>
                   {sel && (
                     <label onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 7, paddingTop: 7, borderTop: "1px solid var(--border-soft)", fontSize: 11, color: "var(--text-soft)", cursor: "pointer" }}>
-                      <input type="checkbox" checked={selectedMap[s.id]?.masukSurat !== false}
-                        onChange={() => setSelectedMap(prev => ({ ...prev, [s.id]: { masukSurat: !prev[s.id]?.masukSurat } }))} />
+                      <input type="checkbox" checked={selectedMap[sid]?.masukSurat !== false}
+                        onChange={() => setSelectedMap(prev => ({ ...prev, [sid]: { masukSurat: !prev[sid]?.masukSurat } }))} />
                       Masuk Surat Tugas
                     </label>
                   )}
@@ -1251,10 +1085,10 @@ function DisposisiModal({ judul, isReassign, rejectedCount = 1, onClose, onSave 
             <div className="notice-card-title">{Object.keys(selectedMap).length} staf terpilih</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
               {Object.keys(selectedMap).map(id => {
-                const s = allStaf.find((u: any) => u.id === id); if (!s) return null;
+                const s = allStaf.find((u: any) => (u.uuid ?? u.id) === id); if (!s) return null;
                 return (
                   <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "var(--navy-50)", border: "1px solid var(--navy-100)", borderRadius: 20, padding: "3px 8px 3px 10px", fontSize: 12, fontWeight: 600 }}>
-                    {s.nama}
+                    {s.nama_lengkap ?? s.nama}
                     <button type="button" onClick={() => setSelectedMap(prev => { const n = { ...prev }; delete n[id]; return n; })}
                       style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 15, color: "var(--text-muted)", lineHeight: 1, display: "flex", alignItems: "center" }}>×</button>
                   </span>

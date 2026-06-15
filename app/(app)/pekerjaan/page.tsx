@@ -5,12 +5,14 @@ export const dynamic = "force-dynamic";
 import { useEffect, useRef, useState } from "react";
 import { useRole } from "@/components/providers/RoleProvider";
 import {
-  getPekerjaan, updatePekerjaan, addPekerjaan, seedIfEmpty,
-  getDokumentasiByRef, getHasilSurveyByRef,
-} from "@/lib/storage";
-import { divisiList, unitPemintaList, getKepalaUPA, PERTANYAAN_SURVEY, USERS } from "@/lib/data";
-import type { Pekerjaan, Assignee, HasilSurvey, SuratDetail } from "@/types";
-import { openLaporanInTab } from "@/lib/laporan-pdf";
+  getPekerjaanList,
+  tambahPekerjaan as apiTambah, editPekerjaan as apiEdit,
+  disposisiPekerjaan, terimaPekerjaan, tolakPekerjaan, mulaiPekerjaan,
+  buatSuratTugasPekerjaan, publishSuratTugas, urlPdfSuratTugas, urlDokumen, urlLaporanPdf,
+  getMasterUnitKerja, getMasterStaf, getMasterDivisi,
+} from "@/lib/api";
+import { mapPekerjaan, extractList } from "@/lib/api-mapper";
+import type { Pekerjaan, Assignee, SuratDetail } from "@/types";
 
 const STATUS_BADGE: Record<string, string> = {
   // StatusKonfirmasi
@@ -34,188 +36,21 @@ const STATUS_LABEL: Record<string, string> = {
   "done": "Selesai",
 };
 
-// ─── Generate Surat Tugas PDF (HTML-based, opens in new tab) ───
-function generateSuratTugasPDFHTML(data: {
-  nomorSurat: string; perihal: string; tujuan: string;
-  tanggalPelaksanaan: string; lokasiPembuatan: string; tanggalSuratKeluar: string;
-  namaPekerjaan: string; lokasi: string; unitPeminta: string;
-  assignees: Assignee[]; namaKepalaUPA: string; nipKepalaUPA: string;
-  jabatanKepalaUPA: string; isPreview?: boolean;
-}): string {
-  const stafRows = data.assignees
-    .filter((a) => a.masukSurat !== false && a.statusKonfirmasi !== "rejected" && a.statusKonfirmasi !== "rejected")
-    .map((a, i) => `
-      <tr>
-        <td style="text-align:center;width:8%">${i + 1}</td>
-        <td style="width:35%">${a.nama}</td>
-        <td style="width:25%">${a.nip}</td>
-        <td style="width:32%">${a.divisi || a.jabatan}</td>
-      </tr>`)
-    .join("");
-
-  const watermark = data.isPreview
-    ? `<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-25deg);opacity:0.06;font-size:96px;font-weight:900;color:#000;letter-spacing:6px;pointer-events:none;z-index:999;white-space:nowrap;">PREVIEW</div>`
-    : "";
-
-  // Format tanggal: "05 Juni 2026" → tampilkan apa adanya, atau konversi jika ISO
-  const fmtTgl = (s: string) => {
-    if (!s) return "-";
-    const d = new Date(s);
-    if (isNaN(d.getTime())) return s;
-    return d.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
-  };
-
-  return `<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="utf-8"/>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
-  .page { max-width: 720px; margin: 0 auto; }
-
-  /* KOP */
-  .kop { display: flex; align-items: center; gap: 18px; margin-bottom: 10px; }
-  .kop-logo { width: 88px; height: auto; flex-shrink: 0; }
-  .kop-teks { flex: 1; }
-  .kop-kementerian { font-size: 11pt; text-align: center; line-height: 1.4; }
-  .kop-univ { font-size: 14pt; font-weight: bold; text-align: center; letter-spacing: 0.5px; margin-top: 2px; }
-  .kop-upa  { font-size: 12pt; font-weight: bold; text-align: center; margin-top: 2px; }
-  .kop-alamat { font-size: 9pt; text-align: center; margin-top: 3px; color: #333; }
-  hr.tebal { border: none; border-top: 2.5px solid #000; margin: 8px 0 2px; }
-  hr.tipis { border: none; border-top: 1px solid #000; margin: 0 0 14px; }
-
-  /* Judul */
-  .judul-box { text-align: center; margin: 20px 0 18px; }
-  .judul-box .judul { font-size: 13pt; font-weight: bold; text-decoration: underline; letter-spacing: 1px; }
-  .judul-box .nomor { font-size: 11pt; margin-top: 4px; }
-
-  /* Isi naratif */
-  .narasi { font-size: 11.5pt; text-align: justify; line-height: 1.7; margin-bottom: 14px; }
-
-  /* Tabel staf */
-  .tbl-staf { width: 100%; border-collapse: collapse; margin: 12px 0 14px; font-size: 11pt; }
-  .tbl-staf th { border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold; background: #f0f0f0; }
-  .tbl-staf td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
-
-  /* Tanda tangan */
-  .ttd-wrap { margin-top: 32px; overflow: hidden; font-size: 11pt; }
-  .ttd-kota { margin-bottom: 4px; }
-  .ttd-box { float: right; text-align: center; width: 260px; }
-  .ttd-jabatan { margin-bottom: 70px; }
-  .ttd-nama { font-weight: bold; text-decoration: underline; }
-  .ttd-nip  { margin-top: 3px; }
-
-  @media print { body { padding: 1.5cm 2cm; } }
-</style>
-</head>
-<body>
-${watermark}
-<div class="page">
-
-  <!-- KOP -->
-  <div class="kop">
-    <img src="/logo-unila.png" alt="Logo Universitas Lampung" class="kop-logo" />
-    <div class="kop-teks">
-      <div class="kop-kementerian">KEMENTERIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</div>
-      <div class="kop-univ">UNIVERSITAS LAMPUNG</div>
-      <div class="kop-upa">UPA. TEKNOLOGI INFORMASI DAN KOMUNIKASI</div>
-      <div class="kop-alamat">Jl. Prof. Dr. Sumantri Brojonegoro No.1, Gedong Meneng, Bandar Lampung 35145</div>
-      <div class="kop-alamat">e-mail: tik@kpa.ac.id &nbsp;&#9679;&nbsp; laman: http://tik.unila.ac.id</div>
-    </div>
-  </div>
-  <hr class="tebal"/><hr class="tipis"/>
-
-  <!-- JUDUL -->
-  <div class="judul-box">
-    <div class="judul">SURAT TUGAS</div>
-    <div class="nomor">Nomor : ${data.nomorSurat}</div>
-  </div>
-
-  <!-- NARASI PEMBUKA -->
-  <p class="narasi">
-    Sehubungan dengan surat ${data.unitPeminta} Nomor: ${data.nomorSurat} perihal ${data.perihal}.
-    Dengan ini Kepala UPA Teknologi Informasi dan Komunikasi menugaskan kepada:
-  </p>
-
-  <!-- TABEL STAF -->
-  <table class="tbl-staf">
-    <thead>
-      <tr>
-        <th style="width:8%">No</th>
-        <th style="width:35%">NAMA</th>
-        <th style="width:25%">NIP</th>
-        <th className="th-center">KETERANGAN</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${stafRows || `<tr><td colspan="4" style="text-align:center;padding:10px;">Belum ada staf ditugaskan</td></tr>`}
-    </tbody>
-  </table>
-
-  <!-- NARASI TUGAS -->
-  <p class="narasi">
-    Untuk Melaksanakan ${data.perihal.toLowerCase()}. pada kegiatan ${data.namaPekerjaan},
-    yang akan dilaksanakan pada tanggal ${fmtTgl(data.tanggalPelaksanaan)},
-    kegiatan dilaksanakan di ${data.lokasi}.
-  </p>
-
-  <p class="narasi">
-    Demikian surat tugas ini dikeluarkan untuk dilaksanakan dengan penuh tanggung jawab.
-  </p>
-
-  <!-- TANDA TANGAN -->
-  <div class="ttd-wrap">
-    <div class="ttd-box">
-      <div class="ttd-kota">${data.lokasiPembuatan}, ${fmtTgl(data.tanggalSuratKeluar)}</div>
-      <div class="ttd-jabatan">${data.jabatanKepalaUPA}</div>
-      <div class="ttd-nama">${data.namaKepalaUPA}</div>
-      <div class="ttd-nip">NIP ${data.nipKepalaUPA}</div>
-    </div>
-  </div>
-
-</div>
-</body>
-</html>`;
-}
-
-function generateSuratTugasPDFBase64(data: Parameters<typeof generateSuratTugasPDFHTML>[0]): string {
-  return btoa(encodeURIComponent(generateSuratTugasPDFHTML(data)));
-}
-
-function openHtmlInTab(base64: string) {
-  try {
-    const html = decodeURIComponent(atob(base64));
-    const w = window.open("", "_blank");
-    if (w) { w.document.write(html); w.document.close(); }
-  } catch (e) { alert("Gagal membuka dokumen: " + (e instanceof Error ? e.message : "Unknown error")); }
-}
-
 // ─── Ringkasan Modal ───
 function RingkasanModal({ item, onClose }: { item: Pekerjaan; onClose: () => void }) {
   const openSurat = () => {
-    if (item.suratTugasData) openHtmlInTab(item.suratTugasData);
+    if (item.id_surat_tugas) window.open(urlPdfSuratTugas(item.id_surat_tugas), "_blank");
     else alert("Surat tugas belum tersedia.");
   };
 
   const openSuratPreview = () => {
-    if (item.suratTugasData) {
-      const kepala = getKepalaUPA();
-      const previewData = generateSuratTugasPDFBase64({
-        ...(item.suratDetail ?? { nomorSurat: "-", perihal: "-", tujuan: "-", tanggalPelaksanaan: "-", lokasiPembuatan: "Bandar Lampung", tanggalSuratKeluar: "-" }),
-        namaPekerjaan: item.namaPekerjaan, lokasi: item.lokasi, unitPeminta: item.unitPeminta,
-        assignees: item.assignees,
-        namaKepalaUPA: kepala?.nama || "-", nipKepalaUPA: kepala?.nip || "-", jabatanKepalaUPA: kepala?.jabatan || "-",
-        isPreview: true,
-      });
-      openHtmlInTab(previewData);
-    } else alert("Preview belum tersedia.");
+    if (item.id_surat_tugas) window.open(urlPdfSuratTugas(item.id_surat_tugas), "_blank");
+    else alert("Preview belum tersedia.");
   };
 
   const handleOpenLaporan = () => {
-    const dokumentasiList = getDokumentasiByRef(item.id).filter(d => !d.judul.startsWith("Surat Masuk:"));
-    const surveyList = getHasilSurveyByRef(item.id);
-    openLaporanInTab({ item, jenis: "PEKERJAAN", dokumentasiList, surveyList });
+    if (!item.id_tinjauan) { alert("Laporan belum tersedia."); return; }
+    window.open(urlLaporanPdf(item.id_tinjauan), "_blank");
   };
 
   const isDone = item.status === "done";
@@ -335,6 +170,8 @@ export default function PekerjaanPage() {
   const { role, user } = useRole();
   const [data, setData] = useState<Pekerjaan[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [unitKerjaList, setUnitKerjaList] = useState<{ id_unit: string; nama_unit: string }[]>([]);
+  const [divisiList, setDivisiList] = useState<{ uuid: string; nama_divisi: string }[]>([]);
 
   // Modals
   const [showTambah, setShowTambah] = useState(false);
@@ -347,18 +184,18 @@ export default function PekerjaanPage() {
 
   // Tambah pekerjaan form
   const [form, setForm] = useState({
-    namaPekerjaan: "", divisi: [] as string[], deskripsi: "", targetSelesai: "",
-    lokasi: "", unitPeminta: "",
-    nomorSurat: "", perihalSurat: "", lokasiSurat: "",
-    filePath: "", fileData: "", fileSize: 0,
+    namaPekerjaan: "", targetSelesai: "",
+    lokasi: "", id_unit: "", id_divisi: "",
+    nomorSurat: "", perihalSurat: "",
+    file: null as File | null,
   });
 
   // Edit pekerjaan form
   const [editForm, setEditForm] = useState({
-    namaPekerjaan: "", divisi: [] as string[], deskripsi: "", targetSelesai: "",
-    lokasi: "", unitPeminta: "",
-    nomorSurat: "", perihalSurat: "", lokasiSurat: "",
-    filePath: "", fileData: "", fileSize: 0,
+    namaPekerjaan: "", targetSelesai: "",
+    lokasi: "", id_unit: "",
+    nomorSurat: "", perihalSurat: "",
+    file: null as File | null,
   });
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const [editUploadProgress, setEditUploadProgress] = useState(false);
@@ -372,13 +209,34 @@ export default function PekerjaanPage() {
   // Tolak form
   const [alasanTolak, setAlasanTolak] = useState("");
 
-  // Survey state
-
   const [formUploadProgress, setFormUploadProgress] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const load = () => { seedIfEmpty(); setData(getPekerjaan()); };
-  useEffect(() => { load(); }, []);
+  const load = (dl?: typeof divisiList) => {
+    const effectiveDivisiList = dl ?? divisiList;
+    const filter: any = {};
+    if (role === "staf") filter.id_pengguna_staf = user?.id;
+    if (role === "kepala-divisi" && user?.divisi) {
+      const myDiv = effectiveDivisiList.find((d) => d.nama_divisi === user.divisi);
+      if (myDiv) filter.id_divisi = myDiv.uuid;
+    }
+    getPekerjaanList(filter)
+      .then((res: any) => setData(extractList(res).map(mapPekerjaan)))
+      .catch(console.error);
+  };
+
+  useEffect(() => { if (divisiList.length > 0 || role !== "kepala-divisi") load(); }, [role, user?.id, divisiList]);
+  useEffect(() => {
+    getMasterUnitKerja()
+      .then((res: any) => setUnitKerjaList(extractList(res)))
+      .catch(console.error);
+    getMasterDivisi()
+      .then((res: any) => {
+        const list = extractList(res);
+        setDivisiList(list);
+      })
+      .catch(console.error);
+  }, []);
 
   const fmt = (bytes?: number) => {
     if (!bytes) return "";
@@ -392,7 +250,7 @@ export default function PekerjaanPage() {
     const base = role === "staf"
       ? data.filter((d) => d.assignees.some((a) => a.stafId === user?.id))
       : role === "kepala-divisi"
-        ? data.filter((d) => d.divisi.includes(user?.divisi || ""))
+        ? data.filter((d) => d.assignees.length === 0 || d.divisi.includes(user?.divisi || ""))
         : data;
     if (!q) return base;
     return base.filter((d) =>
@@ -406,14 +264,7 @@ export default function PekerjaanPage() {
     if (!file) return;
     if (file.type !== "application/pdf") { alert("Hanya file PDF."); e.target.value = ""; return; }
     if (file.size > 10 * 1024 * 1024) { alert("Maks 10 MB."); e.target.value = ""; return; }
-    setFormUploadProgress(true);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = (ev.target?.result as string).split(",")[1];
-      setForm((prev) => ({ ...prev, filePath: file.name, fileData: base64, fileSize: file.size }));
-      setFormUploadProgress(false);
-    };
-    reader.readAsDataURL(file);
+    setForm((prev) => ({ ...prev, file }));
   };
 
   const handleEditFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -421,123 +272,111 @@ export default function PekerjaanPage() {
     if (!file) return;
     if (file.type !== "application/pdf") { alert("Hanya file PDF."); e.target.value = ""; return; }
     if (file.size > 10 * 1024 * 1024) { alert("Maks 10 MB."); e.target.value = ""; return; }
-    setEditUploadProgress(true);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = (ev.target?.result as string).split(",")[1];
-      setEditForm((prev) => ({ ...prev, filePath: file.name, fileData: base64, fileSize: file.size }));
-      setEditUploadProgress(false);
-    };
-    reader.readAsDataURL(file);
+    setEditForm((prev) => ({ ...prev, file }));
   };
 
   const openEdit = (item: Pekerjaan) => {
+    const unitMatch = unitKerjaList.find(u => u.nama_unit === item.unitPeminta || u.nama_unit === item.unitPeminta);
     setEditForm({
       namaPekerjaan: item.namaPekerjaan,
-      divisi: item.divisi,
-      deskripsi: item.deskripsi || "",
       targetSelesai: item.targetSelesai,
       lokasi: item.lokasi,
-      unitPeminta: item.unitPeminta,
+      id_unit: unitMatch?.id_unit ?? "",
       nomorSurat: item.nomorSuratMasuk || "",
       perihalSurat: item.perihalSuratMasuk || "",
-      lokasiSurat: item.lokasiSuratMasuk || "",
-      filePath: "", fileData: "", fileSize: 0,
+      file: null,
     });
     if (editFileInputRef.current) editFileInputRef.current.value = "";
     setShowEdit(item);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!showEdit) return;
     if (!editForm.namaPekerjaan || !editForm.targetSelesai) return alert("Lengkapi field wajib.");
-    if (!editForm.unitPeminta) return alert("Pilih Unit Peminta.");
+    if (!editForm.id_unit) return alert("Pilih Unit Peminta.");
     if (!editForm.lokasi) return alert("Isi Lokasi pekerjaan.");
     if (!editForm.nomorSurat) return alert("Isi Nomor Surat Masuk.");
     if (!editForm.perihalSurat) return alert("Isi Perihal Surat Masuk.");
-    const payload: Partial<Pekerjaan> = {
-      namaPekerjaan: editForm.namaPekerjaan,
-      divisi: editForm.divisi,
-      deskripsi: editForm.deskripsi || null,
-      targetSelesai: editForm.targetSelesai,
-      lokasi: editForm.lokasi,
-      unitPeminta: editForm.unitPeminta,
-      nomorSuratMasuk: editForm.nomorSurat,
-      perihalSuratMasuk: editForm.perihalSurat,
-      lokasiSuratMasuk: editForm.lokasiSurat,
-    };
-    if (editForm.fileData) {
-      payload.suratMasuk = editForm.filePath;
-      payload.suratMasukData = editForm.fileData;
-    }
-    updatePekerjaan(showEdit.id, payload);
-    setShowEdit(null);
-    load();
+    try {
+      await apiEdit(showEdit.id, {
+        id_unit: editForm.id_unit,
+        nama_pekerjaan: editForm.namaPekerjaan,
+        lokasi: editForm.lokasi,
+        target_selesai: editForm.targetSelesai,
+        nomor_surat: editForm.nomorSurat,
+        perihal: editForm.perihalSurat,
+        ...(editForm.file ? { dokumen_surat: editForm.file } : {}),
+      });
+      setShowEdit(null);
+      load();
+    } catch (e: any) { alert("Gagal edit: " + e.message); }
   };
 
-  const handleTambah = () => {
+  const handleTambah = async () => {
     if (!form.namaPekerjaan || !form.targetSelesai) return alert("Lengkapi field wajib.");
-    if (!form.unitPeminta) return alert("Pilih Unit Peminta.");
+    if (!form.id_unit) return alert("Pilih Unit Peminta.");
+    if (!form.id_divisi) return alert("Pilih Divisi Penanggungjawab.");
     if (!form.lokasi) return alert("Isi Lokasi pekerjaan.");
     if (!form.nomorSurat) return alert("Isi Nomor Surat Masuk.");
     if (!form.perihalSurat) return alert("Isi Perihal Surat Masuk.");
-    if (!form.fileData) return alert("Dokumen surat masuk (PDF) wajib diunggah.");
-    addPekerjaan({
-      namaPekerjaan: form.namaPekerjaan,
-      status: "assigned",
-      suratMasuk: form.filePath,
-      suratMasukData: form.fileData,
-      nomorSuratMasuk: form.nomorSurat,
-      perihalSuratMasuk: form.perihalSurat,
-      lokasiSuratMasuk: form.lokasiSurat,
-      divisi: form.divisi,
-      assignees: [],
-      lokasi: form.lokasi,
-      unitPeminta: form.unitPeminta,
-      deskripsi: form.deskripsi || null,
-      targetSelesai: form.targetSelesai,
-      suratTugas: null,
-      suratStatus: undefined,
-      catatan: null,
-    });
-    setShowTambah(false);
-    setForm({ namaPekerjaan: "", divisi: [], deskripsi: "", targetSelesai: "", lokasi: "", unitPeminta: "", nomorSurat: "", perihalSurat: "", lokasiSurat: "", filePath: "", fileData: "", fileSize: 0 });
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    load();
+    if (!form.file) return alert("Dokumen surat masuk (PDF) wajib diunggah.");
+    try {
+      await apiTambah({
+        id_pengguna: user!.id,
+        id_unit: form.id_unit,
+        id_divisi: form.id_divisi,
+        nama_pekerjaan: form.namaPekerjaan,
+        lokasi: form.lokasi,
+        target_selesai: form.targetSelesai,
+        nomor_surat: form.nomorSurat,
+        perihal: form.perihalSurat,
+        dokumen_surat: form.file,
+      });
+      setShowTambah(false);
+      setForm({ namaPekerjaan: "", targetSelesai: "", lokasi: "", id_unit: "", id_divisi: "", nomorSurat: "", perihalSurat: "", file: null });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      load();
+    } catch (e: any) { alert("Gagal tambah: " + e.message); }
   };
 
-  const handleTerima = (item: Pekerjaan) => {
-    const newAssignees = item.assignees.map((a) =>
-      a.stafId === user?.id ? { ...a, statusKonfirmasi: "accepted" as const } : a
-    );
-    updatePekerjaan(item.id, { assignees: newAssignees });
-    load();
+  const handleTerima = async (item: Pekerjaan) => {
+    const assignee = myAssignee(item);
+    const idStaf = assignee?.id_pekerjaan_staf;
+    if (!idStaf) { alert("ID staf tidak ditemukan."); return; }
+    try {
+      await terimaPekerjaan(idStaf);
+      load();
+    } catch (e: any) { alert("Gagal terima: " + e.message); }
   };
 
   const openTolak = (item: Pekerjaan) => { setAlasanTolak(""); setShowTolakModal(item); };
 
-  const handleTolak = () => {
+  const handleTolak = async () => {
     if (!alasanTolak.trim()) return alert("Wajib mengisi alasan penolakan.");
-    const newAssignees = showTolakModal!.assignees.map((a) =>
-      a.stafId === user?.id
-        ? { ...a, statusKonfirmasi: "rejected" as const, alasanPenolakan: alasanTolak }
-        : a
-    );
-    updatePekerjaan(showTolakModal!.id, { assignees: newAssignees });
-    setShowTolakModal(null); setAlasanTolak(""); load();
+    const assignee = myAssignee(showTolakModal!);
+    const idStaf = assignee?.id_pekerjaan_staf;
+    if (!idStaf) { alert("ID staf tidak ditemukan."); return; }
+    try {
+      await tolakPekerjaan(idStaf, alasanTolak);
+      setShowTolakModal(null); setAlasanTolak(""); load();
+    } catch (e: any) { alert("Gagal tolak: " + e.message); }
   };
 
-  const handleMulai = (item: Pekerjaan) => {
-    const newAssignees = item.assignees.map((a) =>
-      a.stafId === user?.id ? { ...a, statusPekerjaan: "in_progress" as const } : a
-    );
-    updatePekerjaan(item.id, { assignees: newAssignees, status: "in_progress" });
-    load();
+  const handleMulai = async (item: Pekerjaan) => {
+    try {
+      await mulaiPekerjaan(item.id, user!.id);
+      load();
+    } catch (e: any) { alert("Gagal mulai: " + e.message); }
   };
 
-  const handleDisposisi = (pekerjaan: Pekerjaan, finalAssignees: Assignee[]) => {
-    updatePekerjaan(pekerjaan.id, { assignees: finalAssignees, status: "assigned" });
-    setShowDisposisi(null); load();
+  const handleDisposisi = async (pekerjaan: Pekerjaan, finalAssignees: Assignee[]) => {
+    try {
+      await disposisiPekerjaan(pekerjaan.id, finalAssignees.map(a => ({
+        id_pengguna: a.stafId,
+        sertakan_dalam_surat: a.masukSurat !== false,
+      })));
+      setShowDisposisi(null); load();
+    } catch (e: any) { alert("Gagal disposisi: " + e.message); }
   };
 
   const openSuratModal = (item: Pekerjaan, mode: "buat" | "edit") => {
@@ -553,63 +392,40 @@ export default function PekerjaanPage() {
     setShowSuratModal({ item, mode });
   };
 
-  const handleSimpanPreview = () => {
+  const handleSimpanPreview = async () => {
     if (!suratForm.nomorSurat || !suratForm.tujuan || !suratForm.tanggalPelaksanaan) return alert("Lengkapi semua field surat.");
     const item = showSuratModal!.item;
-    const kepala = getKepalaUPA();
-    const previewBase64 = generateSuratTugasPDFBase64({
-      ...suratForm,
-      namaPekerjaan: item.namaPekerjaan, lokasi: item.lokasi, unitPeminta: item.unitPeminta,
-      assignees: item.assignees,
-      namaKepalaUPA: kepala?.nama || "-", nipKepalaUPA: kepala?.nip || "-", jabatanKepalaUPA: kepala?.jabatan || "-",
-      isPreview: true,
-    });
-    updatePekerjaan(item.id, {
-      suratStatus: "draft",
-      suratDetail: suratForm,
-      suratTugasData: previewBase64,
-      suratTugas: `ST-PREVIEW-${item.id}.pdf`,
-    });
-    setShowSuratModal(null); load();
+    try {
+      await buatSuratTugasPekerjaan(item.id, {
+        nomor_surat: suratForm.nomorSurat,
+        perihal: suratForm.perihal,
+        tujuan: suratForm.tujuan,
+        tanggal_pelaksanaan: suratForm.tanggalPelaksanaan,
+        lokasi_pelaksanaan: item.lokasi,
+        lokasi_surat: suratForm.lokasiPembuatan,
+        tanggal_surat: suratForm.tanggalSuratKeluar,
+      });
+      setShowSuratModal(null); load();
+    } catch (e: any) { alert("Gagal simpan preview: " + e.message); }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const item = showPublishKonfirm!;
-    const kepala = getKepalaUPA();
-    const finalBase64 = generateSuratTugasPDFBase64({
-      ...(item.suratDetail ?? { nomorSurat: "-", perihal: "-", tujuan: "-", tanggalPelaksanaan: "-", lokasiPembuatan: "Bandar Lampung", tanggalSuratKeluar: "-" }),
-      namaPekerjaan: item.namaPekerjaan, lokasi: item.lokasi, unitPeminta: item.unitPeminta,
-      assignees: item.assignees,
-      namaKepalaUPA: kepala?.nama || "-", nipKepalaUPA: kepala?.nip || "-", jabatanKepalaUPA: kepala?.jabatan || "-",
-      isPreview: false,
-    });
-    updatePekerjaan(item.id, {
-      suratTugas: `ST-${item.id}.pdf`,
-      suratTugasData: finalBase64,
-      suratStatus: "published",
-    });
-    setShowPublishKonfirm(null); load();
+    if (!item.id_surat_tugas) { alert("ID surat tugas tidak ditemukan."); return; }
+    try {
+      await publishSuratTugas(item.id_surat_tugas);
+      setShowPublishKonfirm(null); load();
+    } catch (e: any) { alert("Gagal publish: " + e.message); }
   };
 
   const openSuratPDF = (item: Pekerjaan) => {
-    if (!item.suratTugasData) { alert("Surat tugas belum tersedia."); return; }
-    openHtmlInTab(item.suratTugasData);
+    if (!item.id_surat_tugas) { alert("Surat tugas belum tersedia."); return; }
+    window.open(urlPdfSuratTugas(item.id_surat_tugas), "_blank");
   };
 
-  // ─── Buka PDF Surat Masuk ───
   const openSuratMasuk = (item: Pekerjaan) => {
-    if (!item.suratMasuk) return;
-    if ((item as any).suratMasukData) {
-      try {
-        const byteChars = atob((item as any).suratMasukData);
-        const byteArr = new Uint8Array(byteChars.length);
-        for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
-        const blob = new Blob([byteArr], { type: "application/pdf" });
-        window.open(URL.createObjectURL(blob), "_blank");
-      } catch { alert(`File: ${item.suratMasuk}`); }
-    } else {
-      alert(`File surat masuk: ${item.suratMasuk}`);
-    }
+    if (!item.id_dokumen_surat) { alert("Dokumen surat masuk tidak tersedia."); return; }
+    window.open(urlDokumen(item.id_dokumen_surat), "_blank");
   };
 
   // Ambil assignee terbaru (terakhir) untuk staf yang login - hindari deteksi entri lama
@@ -623,12 +439,10 @@ export default function PekerjaanPage() {
     item.assignees.every(a => a.statusKonfirmasi === "accepted") &&
     item.suratStatus !== "published";
 
-  // ─── Buka PDF Laporan ───
   const openLaporan = (item: Pekerjaan) => {
     if (item.status !== "done") return;
-    const dokumentasiList = getDokumentasiByRef(item.id).filter(d => !d.judul.startsWith("Surat Masuk:"));
-    const surveyList = getHasilSurveyByRef(item.id);
-    openLaporanInTab({ item, jenis: "PEKERJAAN", dokumentasiList, surveyList });
+    if (!item.id_tinjauan) { alert("Laporan belum tersedia."); return; }
+    window.open(urlLaporanPdf(item.id_tinjauan), "_blank");
   };
 
   // ─── Hitung kolom header & colspan berdasarkan role ───
@@ -914,27 +728,24 @@ export default function PekerjaanPage() {
             </div>
             <div className="form-group">
               <label>Unit Peminta *</label>
-              <select value={form.unitPeminta} onChange={(e) => setForm({ ...form, unitPeminta: e.target.value })}>
+              <select value={form.id_unit} onChange={(e) => setForm({ ...form, id_unit: e.target.value })}>
                 <option value="">-- Pilih Unit Peminta --</option>
-                {unitPemintaList.map((u) => <option key={u} value={u}>{u}</option>)}
+                {unitKerjaList.map((u) => <option key={u.id_unit} value={u.id_unit}>{u.nama_unit}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Divisi Penanggungjawab *</label>
+              <select value={form.id_divisi} onChange={(e) => setForm({ ...form, id_divisi: e.target.value })}>
+                <option value="">-- Pilih Divisi --</option>
+                {divisiList.filter(d => d.nama_divisi !== "UPA TIK (Pusat)").map((d) => (
+                  <option key={d.uuid} value={d.uuid}>{d.nama_divisi}</option>
+                ))}
               </select>
             </div>
             <div className="form-group">
               <label>Lokasi *</label>
               <textarea value={form.lokasi} onChange={(e) => setForm({ ...form, lokasi: e.target.value })}
                 placeholder="Contoh: Gedung Rektorat Lantai 2, Ruang Sidang" rows={2} />
-            </div>
-            <div className="form-group">
-              <label>Divisi *</label>
-              <div className="checkbox-group">
-                {divisiList.map((d) => (
-                  <label key={d} className="checkbox-item">
-                    <input type="checkbox" checked={form.divisi.includes(d)}
-                      onChange={(e) => setForm({ ...form, divisi: e.target.checked ? [...form.divisi, d] : form.divisi.filter((x) => x !== d) })} />
-                    {d}
-                  </label>
-                ))}
-              </div>
             </div>
             <div className="form-group">
               <label>Target Selesai *</label>
@@ -959,16 +770,16 @@ export default function PekerjaanPage() {
                     <path d="M8 2v8M4 6l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
-                  {formUploadProgress ? "Membaca file..." : form.filePath ? "Ganti File" : "Pilih File PDF"}
+                  {form.file ? "Ganti File" : "Pilih File PDF"}
                 </label>
-                {form.filePath && <div className="file-upload-preview"><span>{form.filePath}</span><span className="file-size-label">{fmt(form.fileSize)}</span></div>}
+                {form.file && <div className="file-upload-preview"><span>{form.file.name}</span></div>}
               </div>
             </div>
             <div className="modal-actions">
-              <button type="button" onClick={handleTambah} disabled={formUploadProgress}>Simpan</button>
+              <button type="button" onClick={handleTambah}>Simpan</button>
               <button type="button" className="btn-secondary" onClick={() => {
                 setShowTambah(false);
-                setForm({ namaPekerjaan: "", divisi: [], deskripsi: "", targetSelesai: "", lokasi: "", unitPeminta: "", nomorSurat: "", perihalSurat: "", lokasiSurat: "", filePath: "", fileData: "", fileSize: 0 });
+                setForm({ namaPekerjaan: "", targetSelesai: "", lokasi: "", id_unit: "", id_divisi: "", nomorSurat: "", perihalSurat: "", file: null });
               }}>Batal</button>
             </div>
           </div>
@@ -986,26 +797,14 @@ export default function PekerjaanPage() {
             </div>
             <div className="form-group">
               <label>Unit Peminta *</label>
-              <select value={editForm.unitPeminta} onChange={(e) => setEditForm({ ...editForm, unitPeminta: e.target.value })}>
+              <select value={editForm.id_unit} onChange={(e) => setEditForm({ ...editForm, id_unit: e.target.value })}>
                 <option value="">-- Pilih Unit Peminta --</option>
-                {unitPemintaList.map((u) => <option key={u} value={u}>{u}</option>)}
+                {unitKerjaList.map((u) => <option key={u.id_unit} value={u.id_unit}>{u.nama_unit}</option>)}
               </select>
             </div>
             <div className="form-group">
               <label>Lokasi *</label>
               <textarea value={editForm.lokasi} onChange={(e) => setEditForm({ ...editForm, lokasi: e.target.value })} rows={2} />
-            </div>
-            <div className="form-group">
-              <label>Divisi *</label>
-              <div className="checkbox-group">
-                {divisiList.map((d) => (
-                  <label key={d} className="checkbox-item">
-                    <input type="checkbox" checked={editForm.divisi.includes(d)}
-                      onChange={(e) => setEditForm({ ...editForm, divisi: e.target.checked ? [...editForm.divisi, d] : editForm.divisi.filter((x) => x !== d) })} />
-                    {d}
-                  </label>
-                ))}
-              </div>
             </div>
             <div className="form-group">
               <label>Target Selesai *</label>
@@ -1029,14 +828,14 @@ export default function PekerjaanPage() {
                     <path d="M8 2v8M4 6l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
-                  {editUploadProgress ? "Membaca file..." : editForm.filePath ? "Ganti File" : "Pilih File PDF Baru"}
+                  {editForm.file ? "Ganti File" : "Pilih File PDF Baru"}
                 </label>
-                {editForm.filePath && <div className="file-upload-preview"><span>{editForm.filePath}</span><span className="file-size-label">{fmt(editForm.fileSize)}</span></div>}
-                {!editForm.filePath && showEdit.suratMasuk && <div className="file-upload-preview"><span>{showEdit.suratMasuk}</span><span className="file-size-label text-muted">File saat ini</span></div>}
+                {editForm.file && <div className="file-upload-preview"><span>{editForm.file.name}</span></div>}
+                {!editForm.file && showEdit.suratMasuk && <div className="file-upload-preview"><span>{showEdit.suratMasuk}</span><span className="file-size-label text-muted">File saat ini</span></div>}
               </div>
             </div>
             <div className="modal-actions">
-              <button type="button" onClick={handleSaveEdit} disabled={editUploadProgress}>Simpan Perubahan</button>
+              <button type="button" onClick={handleSaveEdit}>Simpan Perubahan</button>
               <button type="button" className="btn-secondary" onClick={() => setShowEdit(null)}>Batal</button>
             </div>
           </div>
@@ -1171,7 +970,12 @@ function DisposisiModal({
   onSave: (finalAssignees: Assignee[]) => void;
   isReassign: boolean;
 }) {
-  const allStaf = USERS.filter((u: import("@/types").User) => u.role === "staf");
+  const [allStaf, setAllStaf] = useState<any[]>([]);
+  useEffect(() => {
+    getMasterStaf()
+      .then((res: any) => setAllStaf(extractList(res)))
+      .catch(console.error);
+  }, []);
 
   // ── Initial disposisi: dropdown + table ──
   const [selectedMap, setSelectedMap] = useState<Record<string, { masukSurat: boolean }>>({});
@@ -1232,10 +1036,17 @@ function DisposisiModal({
       const valid = Object.keys(selectedMap);
       if (valid.length === 0) return alert("Pilih minimal satu staf.");
       onSave(valid.map(id => {
-        const s = allStaf.find(u => u.id === id)!;
-        return { stafId: id, nama: s.nama, nip: s.nip, jabatan: s.jabatan, divisi: s.divisi,
-          statusPekerjaan: "assigned" as const, statusKonfirmasi: "pending" as const,
-          masukSurat: selectedMap[id].masukSurat };
+        const s = allStaf.find(u => (u.uuid ?? u.id) === id) ?? {};
+        return {
+          stafId: id,
+          nama: s.nama_lengkap ?? s.nama ?? "",
+          nip: s.NIP ?? s.nip ?? "",
+          jabatan: s.peran ?? s.jabatan ?? "",
+          divisi: s.divisi?.nama_divisi ?? (typeof s.divisi === "string" ? s.divisi : ""),
+          statusPekerjaan: "assigned" as const,
+          statusKonfirmasi: "pending" as const,
+          masukSurat: selectedMap[id].masukSurat,
+        };
       }));
       return;
     }
@@ -1246,15 +1057,15 @@ function DisposisiModal({
       const ea = existingActions[i];
       if (ea.action === "keep") { final.push(a); return; }
       if (ea.action === "replace" && ea.replacementId) {
-        const s = allStaf.find(u => u.id === ea.replacementId)!;
-        final.push({ stafId: s.id, nama: s.nama, nip: s.nip, jabatan: s.jabatan, divisi: s.divisi,
+        const s = allStaf.find((u: any) => (u.uuid ?? u.id) === ea.replacementId) ?? {};
+        final.push({ stafId: ea.replacementId, nama: s.nama_lengkap ?? s.nama ?? "", nip: s.NIP ?? s.nip ?? "", jabatan: s.peran ?? s.jabatan ?? "", divisi: s.divisi?.nama_divisi ?? (typeof s.divisi === "string" ? s.divisi : ""),
           statusPekerjaan: "assigned" as const, statusKonfirmasi: "pending" as const, masukSurat: ea.replacementMasukSurat });
       }
     });
     addRows.forEach(r => {
       if (!r.stafId) return;
-      const s = allStaf.find(u => u.id === r.stafId)!;
-      final.push({ stafId: s.id, nama: s.nama, nip: s.nip, jabatan: s.jabatan, divisi: s.divisi,
+      const s = allStaf.find((u: any) => (u.uuid ?? u.id) === r.stafId) ?? {};
+      final.push({ stafId: r.stafId, nama: s.nama_lengkap ?? s.nama ?? "", nip: s.NIP ?? s.nip ?? "", jabatan: s.peran ?? s.jabatan ?? "", divisi: s.divisi?.nama_divisi ?? (typeof s.divisi === "string" ? s.divisi : ""),
         statusPekerjaan: "assigned" as const, statusKonfirmasi: "pending" as const, masukSurat: r.masukSurat });
     });
     if (final.length === 0) return alert("Minimal harus ada satu staf.");
@@ -1271,9 +1082,11 @@ function DisposisiModal({
   };
 
   const q = search.toLowerCase();
-  const filteredStaf = allStaf.filter(s =>
-    !q || s.nama.toLowerCase().includes(q) || s.nip.includes(q) || s.divisi.toLowerCase().includes(q)
-  );
+  const filteredStaf = allStaf.filter((s: any) => {
+    const nm = (s.nama_lengkap ?? s.nama ?? "").toLowerCase();
+    const np = (s.NIP ?? s.nip ?? "");
+    return !q || nm.includes(q) || np.includes(q) || (s.divisi?.nama_divisi ?? s.divisi ?? "").toLowerCase().includes(q);
+  });
 
   const handleAddStaf = () => {
     if (!pendingStafId) return;
@@ -1282,8 +1095,8 @@ function DisposisiModal({
     setSearch("");
   };
 
-  const pendingStaf = pendingStafId ? allStaf.find(s => s.id === pendingStafId) : null;
-  const selectedEntries = Object.keys(selectedMap).map(id => ({ id, ...selectedMap[id], staf: allStaf.find(s => s.id === id)! })).filter(e => e.staf);
+  const pendingStaf = pendingStafId ? allStaf.find((s: any) => (s.uuid ?? s.id) === pendingStafId) : null;
+  const selectedEntries = Object.keys(selectedMap).map(id => ({ id, ...selectedMap[id], staf: allStaf.find((s: any) => (s.uuid ?? s.id) === id)! })).filter(e => e.staf);
 
   return (
     <div className="modal-overlay">
@@ -1308,21 +1121,25 @@ function DisposisiModal({
                 />
                 {dropdownOpen && (
                   <div className="disposisi-dropdown" style={{ position: "static", marginTop: 4 }}>
-                    {filteredStaf.filter(s => !selectedMap[s.id]).map(s => (
-                      <div key={s.id} className="disposisi-option"
-                        onMouseDown={e => { e.preventDefault(); setPendingStafId(s.id); setSearch(s.nama); setDropdownOpen(false); }}>
+                    {filteredStaf.filter((s: any) => !selectedMap[s.uuid ?? s.id]).map((s: any) => {
+                      const sid = s.uuid ?? s.id;
+                      const snama = s.nama_lengkap ?? s.nama ?? "";
+                      return (
+                      <div key={sid} className="disposisi-option"
+                        onMouseDown={e => { e.preventDefault(); setPendingStafId(sid); setSearch(snama); setDropdownOpen(false); }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy-100)", color: "var(--navy-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
-                            {avatarInitials(s.nama)}
+                            {avatarInitials(snama)}
                           </div>
                           <div>
-                            <div className="font-semibold text-small">{s.nama}</div>
-                            <div className="text-muted text-xsmall">{s.nip} · {s.divisi}</div>
+                            <div className="font-semibold text-small">{snama}</div>
+                            <div className="text-muted text-xsmall">{s.NIP ?? s.nip} · {s.divisi?.nama_divisi ?? s.divisi ?? ""}</div>
                           </div>
                         </div>
                       </div>
-                    ))}
-                    {filteredStaf.filter(s => !selectedMap[s.id]).length === 0 && (
+                      );
+                    })}
+                    {filteredStaf.filter((s: any) => !selectedMap[s.uuid ?? s.id]).length === 0 && (
                       <div style={{ padding: "10px 14px", color: "var(--text-muted)", fontSize: 13 }}>Tidak ada staf yang sesuai.</div>
                     )}
                   </div>
@@ -1333,12 +1150,12 @@ function DisposisiModal({
               {pendingStaf && (
                 <div style={{ marginTop: 10, padding: "12px 14px", border: "1.5px solid var(--navy-200)", borderRadius: 10, background: "var(--navy-50)", display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--navy-600)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
-                    {avatarInitials(pendingStaf.nama)}
+                    {avatarInitials((pendingStaf as any).nama_lengkap ?? (pendingStaf as any).nama ?? "")}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{pendingStaf.nama}</div>
-                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{pendingStaf.jabatan}</div>
-                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{pendingStaf.divisi} · NIP: {pendingStaf.nip}</div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{(pendingStaf as any).nama_lengkap ?? (pendingStaf as any).nama}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{(pendingStaf as any).peran ?? (pendingStaf as any).jabatan}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{(pendingStaf as any).divisi?.nama_divisi ?? (pendingStaf as any).divisi ?? ""} · NIP: {(pendingStaf as any).NIP ?? (pendingStaf as any).nip}</div>
                   </div>
                   <button type="button" className="btn-edit btn-sm" style={{ flexShrink: 0 }} onClick={handleAddStaf}>
                     + Tambah ke Daftar
@@ -1367,9 +1184,9 @@ function DisposisiModal({
                       {selectedEntries.map((e, i) => (
                         <tr key={e.id}>
                           <td className="td-center text-small">{i + 1}</td>
-                          <td><strong>{e.staf.nama}</strong></td>
-                          <td className="text-small">{e.staf.nip}</td>
-                          <td className="text-small">{e.staf.divisi}</td>
+                          <td><strong>{(e.staf as any).nama_lengkap ?? (e.staf as any).nama}</strong></td>
+                          <td className="text-small">{(e.staf as any).NIP ?? (e.staf as any).nip}</td>
+                          <td className="text-small">{(e.staf as any).divisi?.nama_divisi ?? (e.staf as any).divisi ?? ""}</td>
                           <td className="td-center">
                             <input
                               type="checkbox"
@@ -1457,30 +1274,38 @@ function DisposisiModal({
                           />
                           {(ea.replacementOpen || (!!ea.replacementSearch && !ea.replacementId)) && (
                             <div className="disposisi-dropdown" style={{ position: "static", marginTop: 4 }}>
-                              {allStaf.filter(s =>
-                                (!occupiedIds.has(s.id) || s.id === ea.replacementId) &&
-                                (!ea.replacementSearch || s.id === ea.replacementId ||
-                                  s.nama.toLowerCase().includes(ea.replacementSearch.toLowerCase()) ||
-                                  s.nip.includes(ea.replacementSearch))
-                              ).map(s => (
-                                <div key={s.id} className="disposisi-option"
-                                  onMouseDown={e => { e.preventDefault(); updateExisting(i, { replacementId: s.id, replacementSearch: s.nama, replacementOpen: false }); }}>
-                                  <div className="font-semibold text-small">{s.nama}</div>
-                                  <div className="text-muted text-xsmall">{s.nip} · {s.divisi}</div>
+                              {allStaf.filter((s: any) => {
+                                const sid = s.uuid ?? s.id;
+                                const snama = (s.nama_lengkap ?? s.nama ?? "").toLowerCase();
+                                const snip = s.NIP ?? s.nip ?? "";
+                                return (!occupiedIds.has(sid) || sid === ea.replacementId) &&
+                                  (!ea.replacementSearch || sid === ea.replacementId ||
+                                    snama.includes(ea.replacementSearch.toLowerCase()) ||
+                                    snip.includes(ea.replacementSearch));
+                              }).map((s: any) => {
+                                const sid = s.uuid ?? s.id;
+                                const snama = s.nama_lengkap ?? s.nama ?? "";
+                                return (
+                                <div key={sid} className="disposisi-option"
+                                  onMouseDown={e => { e.preventDefault(); updateExisting(i, { replacementId: sid, replacementSearch: snama, replacementOpen: false }); }}>
+                                  <div className="font-semibold text-small">{snama}</div>
+                                  <div className="text-muted text-xsmall">{s.NIP ?? s.nip} · {s.divisi?.nama_divisi ?? s.divisi ?? ""}</div>
                                 </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           )}
                         </div>
                         {ea.replacementId && (() => {
-                          const rs = allStaf.find(s => s.id === ea.replacementId);
+                          const rs = allStaf.find((s: any) => (s.uuid ?? s.id) === ea.replacementId);
                           if (!rs) return null;
+                          const rsnama = (rs as any).nama_lengkap ?? (rs as any).nama ?? "";
                           return (
                             <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, padding: "8px 12px", background: "var(--navy-50)", borderRadius: 8, border: "1px solid var(--navy-100)" }}>
-                              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy-600)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{avatarInitials(rs.nama)}</div>
+                              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy-600)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{avatarInitials(rsnama)}</div>
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontWeight: 700, fontSize: 13 }}>{rs.nama}</div>
-                                <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{rs.nip} · {rs.divisi}</div>
+                                <div style={{ fontWeight: 700, fontSize: 13 }}>{rsnama}</div>
+                                <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{(rs as any).NIP ?? (rs as any).nip} · {(rs as any).divisi?.nama_divisi ?? (rs as any).divisi ?? ""}</div>
                               </div>
                               <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--text-soft)", cursor: "pointer", whiteSpace: "nowrap" }}>
                                 <input type="checkbox" checked={ea.replacementMasukSurat} onChange={() => updateExisting(i, { replacementMasukSurat: !ea.replacementMasukSurat })} />
@@ -1496,7 +1321,8 @@ function DisposisiModal({
               })}
 
               {addRows.map(r => {
-                const sel = r.stafId ? allStaf.find(s => s.id === r.stafId) : null;
+                const sel = r.stafId ? allStaf.find((s: any) => (s.uuid ?? s.id) === r.stafId) : null;
+                const selNama = sel ? ((sel as any).nama_lengkap ?? (sel as any).nama ?? "") : "";
                 return (
                   <div key={r.uid} style={{ border: "1.5px dashed var(--navy-200)", borderRadius: 10, padding: "12px 14px", background: "var(--navy-50)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -1506,7 +1332,7 @@ function DisposisiModal({
                     <div style={{ position: "relative" }}>
                       <input
                         placeholder="Cari nama atau NIP..."
-                        value={r.stafId ? (sel?.nama || r.search) : r.search}
+                        value={r.stafId ? (selNama || r.search) : r.search}
                         onFocus={() => updateAddRow(r.uid, { open: true })}
                         onBlur={() => setTimeout(() => updateAddRow(r.uid, { open: false }), 180)}
                         onChange={e => updateAddRow(r.uid, { search: e.target.value, stafId: "" })}
@@ -1514,24 +1340,31 @@ function DisposisiModal({
                       />
                       {(r.open || (!!r.search && !r.stafId)) && (
                         <div className="disposisi-dropdown" style={{ position: "static", marginTop: 4 }}>
-                          {allStaf.filter(s =>
-                            (!occupiedIds.has(s.id) || s.id === r.stafId) &&
-                            (!r.search || s.id === r.stafId || s.nama.toLowerCase().includes(r.search.toLowerCase()) || s.nip.includes(r.search))
-                          ).map(s => (
-                            <div key={s.id} className="disposisi-option" onMouseDown={e => { e.preventDefault(); updateAddRow(r.uid, { stafId: s.id, search: s.nama, open: false }); }}>
-                              <div className="font-semibold text-small">{s.nama}</div>
-                              <div className="text-muted text-xsmall">{s.nip} · {s.divisi}</div>
+                          {allStaf.filter((s: any) => {
+                            const sid = s.uuid ?? s.id;
+                            const snama = (s.nama_lengkap ?? s.nama ?? "").toLowerCase();
+                            const snip = s.NIP ?? s.nip ?? "";
+                            return (!occupiedIds.has(sid) || sid === r.stafId) &&
+                              (!r.search || sid === r.stafId || snama.includes(r.search.toLowerCase()) || snip.includes(r.search));
+                          }).map((s: any) => {
+                            const sid = s.uuid ?? s.id;
+                            const snama = s.nama_lengkap ?? s.nama ?? "";
+                            return (
+                            <div key={sid} className="disposisi-option" onMouseDown={e => { e.preventDefault(); updateAddRow(r.uid, { stafId: sid, search: snama, open: false }); }}>
+                              <div className="font-semibold text-small">{snama}</div>
+                              <div className="text-muted text-xsmall">{s.NIP ?? s.nip} · {s.divisi?.nama_divisi ?? s.divisi ?? ""}</div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
                     {sel && (
                       <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, padding: "8px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border-soft)" }}>
-                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy-600)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{avatarInitials(sel.nama)}</div>
+                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy-600)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{avatarInitials(selNama)}</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, fontSize: 13 }}>{sel.nama}</div>
-                          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{sel.nip} · {sel.divisi}</div>
+                          <div style={{ fontWeight: 700, fontSize: 13 }}>{selNama}</div>
+                          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{(sel as any).NIP ?? (sel as any).nip} · {(sel as any).divisi?.nama_divisi ?? (sel as any).divisi ?? ""}</div>
                         </div>
                         <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--text-soft)", cursor: "pointer", whiteSpace: "nowrap" }}>
                           <input type="checkbox" checked={r.masukSurat} onChange={() => updateAddRow(r.uid, { masukSurat: !r.masukSurat })} />
