@@ -1173,9 +1173,11 @@ function DisposisiModal({
 }) {
   const allStaf = USERS.filter((u: import("@/types").User) => u.role === "staf");
 
-  // ── Initial disposisi: card grid selection ──
+  // ── Initial disposisi: dropdown + table ──
   const [selectedMap, setSelectedMap] = useState<Record<string, { masukSurat: boolean }>>({});
   const [search, setSearch] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [pendingStafId, setPendingStafId] = useState("");
 
   // ── Reassign mode state ──
   type ExistingAction = {
@@ -1273,85 +1275,118 @@ function DisposisiModal({
     !q || s.nama.toLowerCase().includes(q) || s.nip.includes(q) || s.divisi.toLowerCase().includes(q)
   );
 
+  const handleAddStaf = () => {
+    if (!pendingStafId) return;
+    setSelectedMap(prev => ({ ...prev, [pendingStafId]: { masukSurat: true } }));
+    setPendingStafId("");
+    setSearch("");
+  };
+
+  const pendingStaf = pendingStafId ? allStaf.find(s => s.id === pendingStafId) : null;
+  const selectedEntries = Object.keys(selectedMap).map(id => ({ id, ...selectedMap[id], staf: allStaf.find(s => s.id === id)! })).filter(e => e.staf);
+
   return (
     <div className="modal-overlay">
       <div className="modal-box modal-wide">
         <h2>{isReassign ? "Penugasan Ulang" : "Disposisi Staf"}</h2>
         <div className="form-group"><label>Pekerjaan</label><input readOnly value={pekerjaan.namaPekerjaan} /></div>
 
-        {/* ── Initial disposisi: card grid ── */}
+        {/* ── Initial disposisi: dropdown + summary + table ── */}
         {!isReassign && (
           <>
             <div className="form-group">
               <label>Pilih Staf *</label>
-              <input
-                type="text"
-                placeholder="Cari nama, NIP, atau divisi..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                style={{ marginBottom: 10 }}
-              />
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8, maxHeight: 300, overflowY: "auto", padding: "2px 2px 4px" }}>
-                {filteredStaf.map(s => {
-                  const sel = !!selectedMap[s.id];
-                  return (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedMap(prev => {
-                        if (prev[s.id]) { const n = { ...prev }; delete n[s.id]; return n; }
-                        return { ...prev, [s.id]: { masukSurat: true } };
-                      })}
-                      style={{
-                        border: sel ? "2px solid var(--navy-600)" : "1.5px solid var(--border-soft)",
-                        borderRadius: 10, padding: "10px 12px", cursor: "pointer",
-                        background: sel ? "var(--navy-50)" : "var(--surface)",
-                        transition: "border-color 0.14s, background 0.14s", position: "relative",
-                      }}
-                    >
-                      {sel && (
-                        <span style={{ position: "absolute", top: 8, right: 8, width: 18, height: 18, borderRadius: "50%", background: "var(--navy-600)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>✓</span>
-                      )}
-                      <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 4 }}>
-                        <div style={{ width: 30, height: 30, borderRadius: "50%", flexShrink: 0, background: sel ? "var(--navy-600)" : "var(--navy-100)", color: sel ? "#fff" : "var(--navy-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700 }}>
-                          {avatarInitials(s.nama)}
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, fontSize: 12, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.nama}</div>
-                          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>{s.divisi}</div>
+              <div>
+                <input
+                  type="text"
+                  placeholder="Cari nama, NIP, atau divisi..."
+                  value={search}
+                  onChange={e => { setSearch(e.target.value); setPendingStafId(""); setDropdownOpen(true); }}
+                  onFocus={() => setDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setDropdownOpen(false), 180)}
+                  style={{ width: "100%" }}
+                />
+                {dropdownOpen && (
+                  <div className="disposisi-dropdown" style={{ position: "static", marginTop: 4 }}>
+                    {filteredStaf.filter(s => !selectedMap[s.id]).map(s => (
+                      <div key={s.id} className="disposisi-option"
+                        onMouseDown={e => { e.preventDefault(); setPendingStafId(s.id); setSearch(s.nama); setDropdownOpen(false); }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy-100)", color: "var(--navy-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
+                            {avatarInitials(s.nama)}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-small">{s.nama}</div>
+                            <div className="text-muted text-xsmall">{s.nip} · {s.divisi}</div>
+                          </div>
                         </div>
                       </div>
-                      <div style={{ fontSize: 10, color: "var(--text-muted)", paddingLeft: 39 }}>{s.nip}</div>
-                      {sel && (
-                        <label onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 7, paddingTop: 7, borderTop: "1px solid var(--border-soft)", fontSize: 11, color: "var(--text-soft)", cursor: "pointer" }}>
-                          <input type="checkbox" checked={selectedMap[s.id]?.masukSurat !== false}
-                            onChange={() => setSelectedMap(prev => ({ ...prev, [s.id]: { masukSurat: !prev[s.id]?.masukSurat } }))} />
-                          Masuk Surat Tugas
-                        </label>
-                      )}
-                    </div>
-                  );
-                })}
-                {filteredStaf.length === 0 && (
-                  <div style={{ gridColumn: "1/-1", textAlign: "center", color: "var(--text-muted)", padding: 20, fontSize: 13 }}>
-                    Tidak ada staf yang sesuai.
+                    ))}
+                    {filteredStaf.filter(s => !selectedMap[s.id]).length === 0 && (
+                      <div style={{ padding: "10px 14px", color: "var(--text-muted)", fontSize: 13 }}>Tidak ada staf yang sesuai.</div>
+                    )}
                   </div>
                 )}
               </div>
+
+              {/* Ringkasan staf yang dipilih dari dropdown */}
+              {pendingStaf && (
+                <div style={{ marginTop: 10, padding: "12px 14px", border: "1.5px solid var(--navy-200)", borderRadius: 10, background: "var(--navy-50)", display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--navy-600)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                    {avatarInitials(pendingStaf.nama)}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{pendingStaf.nama}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{pendingStaf.jabatan}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{pendingStaf.divisi} · NIP: {pendingStaf.nip}</div>
+                  </div>
+                  <button type="button" className="btn-edit btn-sm" style={{ flexShrink: 0 }} onClick={handleAddStaf}>
+                    + Tambah ke Daftar
+                  </button>
+                </div>
+              )}
             </div>
-            {Object.keys(selectedMap).length > 0 && (
-              <div className="notice-card notice-info" style={{ marginBottom: 12 }}>
-                <div className="notice-card-title">{Object.keys(selectedMap).length} staf terpilih</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
-                  {Object.keys(selectedMap).map(id => {
-                    const s = allStaf.find(u => u.id === id); if (!s) return null;
-                    return (
-                      <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "var(--navy-50)", border: "1px solid var(--navy-100)", borderRadius: 20, padding: "3px 8px 3px 10px", fontSize: 12, fontWeight: 600 }}>
-                        {s.nama}
-                        <button type="button" onClick={() => setSelectedMap(prev => { const n = { ...prev }; delete n[id]; return n; })}
-                          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 15, color: "var(--text-muted)", lineHeight: 1, display: "flex", alignItems: "center" }}>×</button>
-                      </span>
-                    );
-                  })}
+
+            {/* Tabel ringkasan staf yang sudah ditambahkan */}
+            {selectedEntries.length > 0 && (
+              <div className="form-group">
+                <label>Daftar Staf Ditugaskan ({selectedEntries.length})</label>
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>No</th>
+                        <th>Nama</th>
+                        <th>NIP</th>
+                        <th>Divisi / Jabatan</th>
+                        <th className="th-center">Masuk Surat Tugas</th>
+                        <th className="th-center">Hapus</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedEntries.map((e, i) => (
+                        <tr key={e.id}>
+                          <td className="td-center text-small">{i + 1}</td>
+                          <td><strong>{e.staf.nama}</strong></td>
+                          <td className="text-small">{e.staf.nip}</td>
+                          <td className="text-small">{e.staf.divisi}</td>
+                          <td className="td-center">
+                            <input
+                              type="checkbox"
+                              checked={e.masukSurat !== false}
+                              onChange={() => setSelectedMap(prev => ({ ...prev, [e.id]: { masukSurat: !prev[e.id]?.masukSurat } }))}
+                            />
+                          </td>
+                          <td className="td-center">
+                            <button type="button" className="btn-delete btn-icon-sm" title="Hapus"
+                              onClick={() => setSelectedMap(prev => { const n = { ...prev }; delete n[e.id]; return n; })}>
+                              <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
@@ -1421,7 +1456,7 @@ function DisposisiModal({
                             style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box" }}
                           />
                           {(ea.replacementOpen || (!!ea.replacementSearch && !ea.replacementId)) && (
-                            <div className="disposisi-dropdown">
+                            <div className="disposisi-dropdown" style={{ position: "static", marginTop: 4 }}>
                               {allStaf.filter(s =>
                                 (!occupiedIds.has(s.id) || s.id === ea.replacementId) &&
                                 (!ea.replacementSearch || s.id === ea.replacementId ||
@@ -1478,7 +1513,7 @@ function DisposisiModal({
                         style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box" }}
                       />
                       {(r.open || (!!r.search && !r.stafId)) && (
-                        <div className="disposisi-dropdown">
+                        <div className="disposisi-dropdown" style={{ position: "static", marginTop: 4 }}>
                           {allStaf.filter(s =>
                             (!occupiedIds.has(s.id) || s.id === r.stafId) &&
                             (!r.search || s.id === r.stafId || s.nama.toLowerCase().includes(r.search.toLowerCase()) || s.nip.includes(r.search))
