@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRole } from "@/components/providers/RoleProvider";
@@ -17,8 +17,8 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  assigned: "#7C3AED",
-  in_progress: "#3B6BDB",
+  assigned: "#0891B2",
+  in_progress: "#2563EB",
   review: "#D97706",
   done: "#16a34a",
 };
@@ -28,7 +28,7 @@ const BULAN_SINGKAT = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Ok
 // ─── Komponen chart primitif ──────────────────────────────────────────────────
 
 /** Bar chart horizontal dengan label kiri & nilai kanan */
-function HBarChart({ data, color = "#3B6BDB", maxItems = 6 }: {
+function HBarChart({ data, color = "#2563EB", maxItems = 6 }: {
   data: [string, number][];
   color?: string;
   maxItems?: number;
@@ -50,7 +50,7 @@ function HBarChart({ data, color = "#3B6BDB", maxItems = 6 }: {
               opacity: 1 - i * 0.1,
             }} />
           </div>
-          <span style={{ fontSize: 12, fontWeight: 700, minWidth: 20, textAlign: "right", color: "#1E3A5F" }}>{val}</span>
+          <span style={{ fontSize: 12, fontWeight: 700, minWidth: 20, textAlign: "right", color: "#0B1E4B" }}>{val}</span>
         </div>
       ))}
     </div>
@@ -58,7 +58,7 @@ function HBarChart({ data, color = "#3B6BDB", maxItems = 6 }: {
 }
 
 /** Column chart vertikal untuk tren bulanan */
-function VBarChart({ data, color = "#3B6BDB", height = 120 }: {
+function VBarChart({ data, color = "#2563EB", height = 120 }: {
   data: { label: string; val: number }[];
   color?: string;
   height?: number;
@@ -106,9 +106,9 @@ function StackedVBarChart({ pekerjaan, proyek, height = 120 }: {
           return (
             <div key={b} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
               {total > 0 && <span style={{ fontSize: 9, fontWeight: 700, color: "#475569" }}>{total}</span>}
-              <div style={{ width: "100%", height: `${totalPct}%`, minHeight: total > 0 ? 6 : 2, borderRadius: "4px 4px 2px 2px", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                <div style={{ flex: pk, background: "#3B6BDB", transition: "flex .4s" }} />
-                <div style={{ flex: pr, background: "#2EA86B", transition: "flex .4s" }} />
+              <div style={{ width: "100%", height: `${totalPct}%`, minHeight: total > 0 ? 32 : 3, borderRadius: "4px 4px 2px 2px", overflow: "hidden", display: "flex", flexDirection: "column", background: total === 0 ? "#EEF2F7" : "transparent" }}>
+                <div style={{ flex: pk, background: "#0B1E4B", transition: "flex .4s" }} />
+                <div style={{ flex: pr, background: "#2563EB", transition: "flex .4s" }} />
               </div>
               <span style={{ fontSize: 9, color: "#94A3B8" }}>{b}</span>
             </div>
@@ -116,7 +116,7 @@ function StackedVBarChart({ pekerjaan, proyek, height = 120 }: {
         })}
       </div>
       <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
-        {[["#3B6BDB", "Pekerjaan"], ["#2EA86B", "Proyek"]].map(([c, l]) => (
+        {[["#0B1E4B", "Pekerjaan"], ["#2563EB", "Proyek"]].map(([c, l]) => (
           <span key={l} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#64748B" }}>
             <span style={{ width: 10, height: 10, borderRadius: 2, background: c, display: "inline-block" }} />{l}
           </span>
@@ -158,14 +158,18 @@ function DonutChart({ segments, size = 96 }: {
           <path key={i} d={d} fill={color} opacity={0.9} />
         ))}
         <circle cx={cx} cy={cy} r={18} fill="white" />
-        <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle" fontSize="9" fontWeight="700" fill="#1E3A5F">{total}</text>
+        <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle" fontSize="9" fontWeight="700" fill="#0B1E4B">{total}</text>
       </svg>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {segments.map(({ label, val, color }) => (
-          <div key={label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
-            <span style={{ width: 9, height: 9, borderRadius: "50%", background: color, flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: "#475569" }}>{label}</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#1E3A5F", marginLeft: "auto", paddingLeft: 8 }}>{val}</span>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        {segments.map(({ label, val, color }, i) => (
+          <div key={label} style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "7px 0",
+            borderBottom: i < segments.length - 1 ? "1px solid #F1F5F9" : "none",
+          }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: "#64748B", flex: 1 }}>{label}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#0B1E4B", minWidth: 24, textAlign: "right" }}>{val}</span>
           </div>
         ))}
       </div>
@@ -178,7 +182,7 @@ function GaugeMeter({ value, max = 5 }: { value: number; max?: number }) {
   const pct = value / max;
   const circumference = 2 * Math.PI * 30;
   const dash = pct * circumference;
-  const color = value >= 4 ? "#16a34a" : value >= 3 ? "#D97706" : "#D94040";
+  const color = value >= 4 ? "#16a34a" : value >= 3 ? "#D97706" : "#E11D48";
   return (
     <div style={{ position: "relative", width: 100, height: 100 }}>
       <svg viewBox="0 0 80 80" width={100} height={100} style={{ transform: "rotate(-90deg)" }}>
@@ -201,17 +205,17 @@ function StatCard({ label, value, color, icon, sub }: {
 }) {
   return (
     <div style={{
-      background: `linear-gradient(135deg, ${color} 0%, ${color}CC 100%)`,
-      borderRadius: 16,
-      border: "none",
-      padding: "18px 20px",
-      boxShadow: `0 4px 16px ${color}44`,
-      display: "flex", flexDirection: "column", gap: 4,
+      background: "#fff",
+      borderRadius: 14,
+      border: "1px solid #D4E3FF",
+      borderTop: `3px solid ${color}`,
+      padding: "18px 20px 16px",
+      boxShadow: "0 2px 12px rgba(11,30,75,0.07)",
+      display: "flex", flexDirection: "column", gap: 3,
     }}>
-      <span style={{ fontSize: 22 }}>{icon}</span>
-      <span style={{ fontSize: 11, color: "rgba(255,255,255,0.70)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.6px", marginTop: 4 }}>{label}</span>
-      <span style={{ fontSize: 30, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>{value}</span>
-      {sub && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.65)" }}>{sub}</span>}
+      <span style={{ fontSize: 10, color: "#7A90B0", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.7px" }}>{label}</span>
+      <span style={{ fontSize: 28, fontWeight: 800, color: "#0B1E4B", lineHeight: 1.1 }}>{value}</span>
+      {sub && <span style={{ fontSize: 11, color, fontWeight: 600 }}>{sub}</span>}
     </div>
   );
 }
@@ -228,7 +232,7 @@ function ChartCard({ title, subtitle, children }: {
       boxShadow: "0 3px 14px rgba(15,23,42,0.09)",
     }}>
       <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: "1.5px solid #EEF2FA" }}>
-        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1E3A5F" }}>{title}</h3>
+        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0B1E4B" }}>{title}</h3>
         {subtitle && <p style={{ margin: "3px 0 0", fontSize: 12, color: "#94A3B8" }}>{subtitle}</p>}
       </div>
       {children}
@@ -250,7 +254,7 @@ function AlertBanner({ color, icon, title, desc, href, linkLabel }: {
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
         <span style={{ fontSize: 20 }}>{icon}</span>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#1E3A5F" }}>{title}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#0B1E4B" }}>{title}</div>
           <div style={{ fontSize: 12, color: "#475569", marginTop: 2 }}>{desc}</div>
         </div>
       </div>
@@ -323,18 +327,19 @@ function DashboardOperator({ pk, pr }: { pk: Pekerjaan[]; pr: Proyek[] }) {
   return (
     <div className="dashboard-stack">
       <div className="dashboard-hero">
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.6, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>Panel Operator</div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800 }}>Manajemen Layanan UPA TIK</h1>
-          <p style={{ margin: "8px 0 0", opacity: 0.75, fontSize: 14 }}>Pantau pekerjaan, proyek, dan administrasi surat tugas dari satu tempat.</p>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Dashboard Operator</h1>
+            <p style={{ margin: "6px 0 0", opacity: 0.7, fontSize: 13 }}>Pantau pekerjaan, proyek, dan administrasi surat tugas dari satu tempat.</p>
+          </div>
         </div>
       </div>
 
       {/* Stat cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16 }}>
-        <StatCard icon="" label="Total Pekerjaan" value={totalPk} color="#3B6BDB" />
-        <StatCard icon="" label="Total Proyek" value={totalPr} color="#7C3AED" />
-        <StatCard icon="" label="Belum Ada Surat" value={belumSurat} color="#D94040" sub="perlu dibuat surat tugas" />
+        <StatCard icon="" label="Total Pekerjaan" value={totalPk} color="#2563EB" />
+        <StatCard icon="" label="Total Proyek" value={totalPr} color="#0891B2" />
+        <StatCard icon="" label="Belum Ada Surat" value={belumSurat} color="#E11D48" sub="perlu dibuat surat tugas" />
         <StatCard icon="" label="Surat Preview" value={preview} color="#D97706" />
         <StatCard icon="" label="Surat Published" value={published} color="#16a34a" />
         <StatCard icon="" label="Laporan Siap" value={laporanSiap} color="#0D9488" />
@@ -355,12 +360,12 @@ function DashboardOperator({ pk, pr }: { pk: Pekerjaan[]; pr: Proyek[] }) {
       </div>
 
       {/* Charts row 2 */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <ChartCard title="Volume Layanan per Bulan" subtitle="Pekerjaan vs Proyek berdasarkan target selesai">
           <StackedVBarChart pekerjaan={pkByMonth} proyek={prByMonth} height={130} />
         </ChartCard>
         <ChartCard title="Top Unit Peminta" subtitle="Unit kerja paling aktif mengajukan layanan">
-          <HBarChart data={topUnit} color="#3B6BDB" maxItems={6} />
+          <HBarChart data={topUnit} color="#0B1E4B" maxItems={6} />
         </ChartCard>
       </div>
 
@@ -431,9 +436,9 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
 
   // Status konfirmasi staf
   const konfSeg = [
-    { label: "Menunggu", val: menungguKonfirmasi, color: "#7C3AED" },
-    { label: "Diterima", val: all.reduce((s, x) => s + x.assignees.filter((a) => a.statusKonfirmasi === "accepted").length, 0), color: "#3B6BDB" },
-    { label: "Ditolak", val: adaPenolakan, color: "#D94040" },
+    { label: "Menunggu", val: menungguKonfirmasi, color: "#0891B2" },
+    { label: "Diterima", val: all.reduce((s, x) => s + x.assignees.filter((a) => a.statusKonfirmasi === "accepted").length, 0), color: "#2563EB" },
+    { label: "Ditolak", val: adaPenolakan, color: "#E11D48" },
   ];
 
   // Penyelesaian per bulan
@@ -456,19 +461,20 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
   return (
     <div className="dashboard-stack">
       <div className="dashboard-hero">
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.6, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>Kepala Divisi</div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800 }}>{divisi || "Dashboard Kadiv"}</h1>
-          <p style={{ margin: "8px 0 0", opacity: 0.75, fontSize: 14 }}>Pantau beban kerja tim, konfirmasi staf, dan tinjauan kinerja divisi Anda.</p>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Dashboard Kepala Divisi</h1>
+            <p style={{ margin: "6px 0 0", opacity: 0.7, fontSize: 13 }}>Pantau beban kerja tim, konfirmasi staf, dan tinjauan kinerja divisi Anda.</p>
+          </div>
         </div>
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 16 }}>
-        <StatCard icon="" label="Belum Disposisi" value={belumDisposisi} color="#D94040" sub="perlu ditugaskan staf" />
-        <StatCard icon="" label="Menunggu Konfirmasi" value={menungguKonfirmasi} color="#7C3AED" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16 }}>
+        <StatCard icon="" label="Belum Disposisi" value={belumDisposisi} color="#E11D48" sub="perlu ditugaskan staf" />
+        <StatCard icon="" label="Menunggu Konfirmasi" value={menungguKonfirmasi} color="#0891B2" />
         <StatCard icon="" label="Penolakan Staf" value={adaPenolakan} color="#D97706" />
-        <StatCard icon="" label="Menunggu ACC" value={menungguACC} color="#D97706" sub="tinjauan kinerja" />
+        <StatCard icon="" label="Menunggu ACC" value={menungguACC} color="#E11D48" sub="tinjauan kinerja" />
         <StatCard icon="" label="Selesai" value={selesai} color="#16a34a" />
       </div>
 
@@ -480,7 +486,7 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
         <ChartCard title="Penyelesaian per Bulan" subtitle="Layanan yang sudah selesai di divisi Anda">
           <VBarChart
             data={BULAN_SINGKAT.map((b, i) => ({ label: b, val: doneByMonth[i] }))}
-            color="#16a34a" height={110}
+            color="#0B1E4B" height={110}
           />
         </ChartCard>
       </div>
@@ -488,14 +494,14 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
       {/* Beban kerja staf */}
       <ChartCard title="Beban Kerja Staf" subtitle="Jumlah tugas aktif per staf di divisi Anda">
         {topStaf.length > 0
-          ? <HBarChart data={topStaf} color="#3B6BDB" maxItems={8} />
+          ? <HBarChart data={topStaf} color="#0B1E4B" maxItems={8} />
           : <p style={{ margin: 0, fontSize: 12, color: "#94A3B8" }}>Belum ada beban kerja staf di divisi ini.</p>
         }
       </ChartCard>
 
       {/* Alert */}
       {adaPenolakan > 0 && (
-        <AlertBanner color="#D94040" icon=""
+        <AlertBanner color="#E11D48" icon=""
           title={`${adaPenolakan} staf menolak penugasan`}
           desc="Lakukan Penugasan Ulang dari kolom Aksi pada tabel Pekerjaan/Proyek."
           href="/pekerjaan" linkLabel="Buka Pekerjaan" />
@@ -579,38 +585,39 @@ function DashboardStaf({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user: 
   return (
     <div className="dashboard-stack">
       <div className="dashboard-hero">
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.6, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>Portal Staf</div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800 }}>Selamat datang, {user?.nama?.split(" ")[0] || "Staf"}</h1>
-          <p style={{ margin: "8px 0 0", opacity: 0.75, fontSize: 14 }}>Lihat ringkasan tugas Anda, status konfirmasi, dan progres pekerjaan hari ini.</p>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Dashboard Staf</h1>
+            <p style={{ margin: "6px 0 0", opacity: 0.7, fontSize: 13 }}>Konfirmasi dan kerjakan tugas yang ditugaskan kepada Anda.</p>
+          </div>
         </div>
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16 }}>
-        <StatCard icon="" label="Menunggu Konfirmasi" value={menunggu} color="#7C3AED" />
-        <StatCard icon="" label="Diterima" value={diterima} color="#3B6BDB" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16 }}>
+        <StatCard icon="" label="Menunggu Konfirmasi" value={menunggu} color="#0891B2" />
+        <StatCard icon="" label="Diterima" value={diterima} color="#2563EB" />
         <StatCard icon="" label="Sedang Dikerjakan" value={berjalan} color="#D97706" />
-        <StatCard icon="" label="Dalam Tinjauan" value={review} color="#D97706" />
+        <StatCard icon="" label="Dalam Tinjauan" value={review} color="#0891B2" />
         <StatCard icon="" label="Selesai" value={done} color="#16a34a" />
       </div>
 
       {/* Charts */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <ChartCard title="Status Tugas Saya" subtitle="Distribusi semua tugas yang ditugaskan">
           <DonutChart segments={statusSeg.filter((s) => s.val > 0)} size={84} />
         </ChartCard>
         <ChartCard title="Distribusi Target Selesai" subtitle="Jumlah tugas berdasarkan bulan target">
           <VBarChart
             data={BULAN_SINGKAT.map((b, i) => ({ label: b, val: tugasByMonth[i] }))}
-            color="#3B6BDB" height={110}
+            color="#0B1E4B" height={110}
           />
         </ChartCard>
       </div>
 
       {/* Alert */}
       {menunggu > 0 && (
-        <AlertBanner color="#7C3AED" icon=""
+        <AlertBanner color="#0891B2" icon=""
           title={`${menunggu} tugas menunggu konfirmasi Anda`}
           desc="Buka halaman Pekerjaan atau Proyek untuk menerima atau menolak penugasan."
           href="/pekerjaan" linkLabel="Lihat Tugas" />
@@ -632,7 +639,7 @@ function DashboardStaf({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user: 
                   <td><strong>{item.nama}</strong></td>
                   <td className="td-center"><span className={`badge ${item.tipe === "Proyek" ? "badge-blue" : "badge-cyan"}`}>{item.tipe}</span></td>
                   <td className="td-center">
-                    <span className="badge" style={{ background: "#7C3AED20", color: "#7C3AED", fontSize: 11 }}>
+                    <span className="badge" style={{ background: "#0891B220", color: "#0891B2", fontSize: 11 }}>
                       {item.statusSaya === "pending" ? "Menunggu Konfirmasi"
                         : item.statusSaya === "accepted" ? "Diterima"
                         : item.statusSaya === "rejected" ? "Ditolak"
@@ -697,9 +704,8 @@ function DashboardKepalaUPA({ pk, pr, surveys }: { pk: Pekerjaan[]; pr: Proyek[]
       <div className="dashboard-hero">
         <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.6, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>Kepala UPA</div>
-            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800 }}>Monitoring Kinerja UPA TIK</h1>
-            <p style={{ margin: "8px 0 0", opacity: 0.75, fontSize: 14 }}>Gambaran menyeluruh kinerja layanan, beban tim, dan kepuasan klien.</p>
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Dashboard Kepala UPA</h1>
+            <p style={{ margin: "6px 0 0", opacity: 0.7, fontSize: 13 }}>Gambaran menyeluruh kinerja layanan, beban tim, dan kepuasan klien.</p>
           </div>
           {avgSurvei > 0 && (
             <div style={{ background: "rgba(255,255,255,0.12)", borderRadius: 16, padding: "12px 20px", textAlign: "center", backdropFilter: "blur(8px)" }}>
@@ -711,17 +717,17 @@ function DashboardKepalaUPA({ pk, pr, surveys }: { pk: Pekerjaan[]; pr: Proyek[]
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16 }}>
-        <StatCard icon="" label="Total Layanan" value={total} color="#3B6BDB" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16 }}>
+        <StatCard icon="" label="Total Layanan" value={total} color="#2563EB" />
         <StatCard icon="" label="Berjalan" value={berjalan} color="#D97706" />
-        <StatCard icon="" label="Dalam Tinjauan" value={tinjauan} color="#7C3AED" />
+        <StatCard icon="" label="Dalam Tinjauan" value={tinjauan} color="#0891B2" />
         <StatCard icon="" label="Selesai" value={selesai} color="#16a34a" />
-        <StatCard icon="" label="Terlambat" value={terlambat} color="#D94040" sub="melebihi target" />
+        <StatCard icon="" label="Terlambat" value={terlambat} color="#E11D48" sub="melebihi target" />
         <StatCard icon="" label="Laporan Siap" value={laporanSiap} color="#0D9488" />
       </div>
 
       {/* Charts row 1 */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <ChartCard title="Status Kinerja Layanan" subtitle="Distribusi semua pekerjaan & proyek">
           <DonutChart segments={statusSeg} size={90} />
         </ChartCard>
@@ -733,10 +739,10 @@ function DashboardKepalaUPA({ pk, pr, surveys }: { pk: Pekerjaan[]; pr: Proyek[]
       {/* Charts row 2 */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <ChartCard title="Top Unit Peminta Layanan" subtitle="Unit kerja paling banyak mengajukan layanan">
-          <HBarChart data={topUnit} color="#3B6BDB" maxItems={7} />
+          <HBarChart data={topUnit} color="#0B1E4B" maxItems={7} />
         </ChartCard>
         <ChartCard title="Beban per Divisi Pelaksana" subtitle="Divisi dengan tugas terbanyak">
-          <HBarChart data={topDivisi} color="#7C3AED" maxItems={6} />
+          <HBarChart data={topDivisi} color="#0B1E4B" maxItems={6} />
         </ChartCard>
       </div>
 
@@ -744,7 +750,7 @@ function DashboardKepalaUPA({ pk, pr, surveys }: { pk: Pekerjaan[]; pr: Proyek[]
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <ChartCard title="Beban Kerja Staf" subtitle="Jumlah tugas aktif per staf">
           {topStaf.length > 0
-            ? <HBarChart data={topStaf} color="#0D9488" maxItems={8} />
+            ? <HBarChart data={topStaf} color="#0B1E4B" maxItems={8} />
             : <p style={{ margin: 0, fontSize: 12, color: "#94A3B8" }}>Belum ada data beban kerja staf.</p>
           }
         </ChartCard>
@@ -763,7 +769,7 @@ function DashboardKepalaUPA({ pk, pr, surveys }: { pk: Pekerjaan[]; pr: Proyek[]
                         <div style={{ flex: 1, height: 6, background: "#F1F5F9", borderRadius: 99 }}>
                           <div style={{ width: `${(avg / 5) * 100}%`, height: "100%", background: avg >= 4 ? "#16a34a" : "#D97706", borderRadius: 99, transition: "width .5s" }} />
                         </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#1E3A5F", minWidth: 26 }}>{avg.toFixed(1)}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "#0B1E4B", minWidth: 26 }}>{avg.toFixed(1)}</span>
                       </div>
                     </div>
                   );
@@ -772,7 +778,15 @@ function DashboardKepalaUPA({ pk, pr, surveys }: { pk: Pekerjaan[]; pr: Proyek[]
               </div>
             </div>
           ) : (
-            <p style={{ margin: 0, fontSize: 12, color: "#94A3B8" }}>Belum ada data survei klien.</p>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 0", gap: 10, textAlign: "center" }}>
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none" style={{ opacity: 0.22 }}>
+                <rect x="4" y="24" width="8" height="16" rx="2" fill="#0B1E4B"/>
+                <rect x="18" y="14" width="8" height="26" rx="2" fill="#0B1E4B"/>
+                <rect x="32" y="8" width="8" height="32" rx="2" fill="#0B1E4B"/>
+              </svg>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#475569" }}>Belum ada survei masuk</div>
+              <div style={{ fontSize: 12, color: "#94A3B8", maxWidth: 200, lineHeight: 1.6 }}>Data kepuasan klien muncul setelah survei pertama dikirimkan</div>
+            </div>
           )}
         </ChartCard>
       </div>
@@ -832,3 +846,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

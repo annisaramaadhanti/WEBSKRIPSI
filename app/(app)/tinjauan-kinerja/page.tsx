@@ -207,29 +207,41 @@ export default function TinjauanKinerjaPage() {
   }).length;
 
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="title">Tinjauan Kinerja</h1>
-        <p className="subtitle">
-          {role === "kepala-divisi"
-            ? "Tinjau hasil pekerjaan dan proyek — berikan ACC untuk menyelesaikan."
-            : "Monitoring status tinjauan pekerjaan dan proyek."}
-        </p>
+    <div className="dashboard-stack">
+      <div className="dashboard-hero">
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Tinjauan Kinerja</h1>
+          <p style={{ margin: "6px 0 0", opacity: 0.7, fontSize: 13 }}>
+            {role === "kepala-divisi" ? "Tinjau hasil pekerjaan dan berikan ACC untuk menyelesaikan."
+              : role === "operator" ? "Pantau status tinjauan dan laporan pekerjaan serta proyek."
+              : "Monitoring status tinjauan kinerja di semua divisi."}
+          </p>
+        </div>
       </div>
 
       {/* Summary cards */}
-      <div className="summary-grid">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16 }}>
         {[
-          { s: "review", label: "Menunggu ACC", cls: "yellow" },
-          { s: "done", label: "Disetujui", cls: "green" },
-        ].map(({ s, label, cls }) => (
+          { s: "review", label: "Menunggu ACC", color: "#D97706" },
+          { s: "done",   label: "Disetujui",    color: "#16a34a" },
+        ].map(({ s, label, color }) => (
           <div
             key={s}
-            className={`summary-card ${cls} ${filterStatus === s ? "active" : ""}`}
             onClick={() => setFilterStatus(filterStatus === s ? "semua" : s)}
+            style={{
+              background: "#fff",
+              borderRadius: 14,
+              border: filterStatus === s ? `1px solid ${color}` : "1px solid #D4E3FF",
+              borderTop: `3px solid ${color}`,
+              padding: "16px 20px 14px",
+              boxShadow: "0 2px 12px rgba(11,30,75,0.07)",
+              cursor: "pointer",
+              transition: "box-shadow 0.15s",
+              outline: filterStatus === s ? `2px solid ${color}40` : "none",
+            }}
           >
-            <p>{label}</p>
-            <h2>{countByStatus(s)}</h2>
+            <div style={{ fontSize: 10, color: "#7A90B0", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.7px", marginBottom: 6 }}>{label}</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "#0B1E4B", lineHeight: 1.1 }}>{countByStatus(s)}</div>
           </div>
         ))}
       </div>

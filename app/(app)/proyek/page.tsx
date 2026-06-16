@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useRole } from "@/components/providers/RoleProvider";
@@ -599,10 +599,17 @@ export default function ProyekPage() {
   };
 
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="title">Manajemen Proyek</h1>
-        <p className="subtitle">Kelola proyek dengan sistem konfirmasi dua arah, progress, dan surat tugas terverifikasi.</p>
+    <div className="dashboard-stack">
+      <div className="dashboard-hero">
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Manajemen Proyek</h1>
+          <p style={{ margin: "6px 0 0", opacity: 0.7, fontSize: 13 }}>
+            {role === "operator" ? "Buat dan kelola proyek beserta surat tugas terverifikasi."
+              : role === "kepala-divisi" ? "Disposisi staf dan pantau progres proyek divisi Anda."
+              : role === "staf" ? "Lihat progres dan dokumentasi proyek yang Anda kerjakan."
+              : "Pantau semua proyek aktif di seluruh divisi UPA TIK."}
+          </p>
+        </div>
       </div>
 
       <div className="search-row">

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -36,7 +36,7 @@ export default function LoginPage() {
           display: grid;
           grid-template-columns: 1fr 1fr;
           font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-          background: #F3F5F9;
+          background: #ffffff;
         }
 
         /* ── Panel kiri — visual ── */
@@ -179,7 +179,7 @@ export default function LoginPage() {
         .lp-right {
           display: flex; align-items: center; justify-content: center;
           padding: 40px 32px;
-          background: #F3F5F9;
+          background: #ffffff;
           position: relative;
         }
         .lp-back-btn {
@@ -192,7 +192,7 @@ export default function LoginPage() {
           box-shadow: 0 2px 8px rgba(11,30,75,0.22);
           transition: all 0.15s;
         }
-        .lp-back-btn:hover { background: #162F6B; transform: translateY(-1px); }
+        .lp-back-btn:hover { background: #0B1E4B; transform: translateY(-1px); }
         .lp-back-btn svg { transition: transform 0.15s; }
         .lp-back-btn:hover svg { transform: translateX(-3px); }
         .lp-card {
@@ -200,8 +200,8 @@ export default function LoginPage() {
           background: #fff;
           border-radius: 20px;
           padding: 40px 36px 32px;
-          box-shadow: 0 2px 4px rgba(11,30,75,0.04), 0 12px 40px rgba(11,30,75,0.09);
-          border: 1px solid rgba(221,227,239,0.8);
+          box-shadow: 0 3px 14px rgba(15,23,42,0.09), 0 1px 4px rgba(11,30,75,0.04);
+          border: 1px solid rgba(148,163,184,0.25);
         }
         .lp-card-eyebrow {
           font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
@@ -233,7 +233,7 @@ export default function LoginPage() {
           background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%);
           pointer-events: none;
         }
-        .lp-sso-btn:hover:not(:disabled) { background: #162F6B; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(11,30,75,0.36); }
+        .lp-sso-btn:hover:not(:disabled) { background: #0B1E4B; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(11,30,75,0.36); }
         .lp-sso-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
         .lp-sso-icon {
@@ -266,8 +266,8 @@ export default function LoginPage() {
           background: #EEF5FF;
           border: 1px solid #C9DEFF;
         }
-        .lp-note svg { flex-shrink: 0; margin-top: 1px; color: #1A3E8A; }
-        .lp-note p { font-size: 11.5px; color: #1A3E8A; line-height: 1.55; font-weight: 500; }
+        .lp-note svg { flex-shrink: 0; margin-top: 1px; color: #0B1E4B; }
+        .lp-note p { font-size: 11.5px; color: #0B1E4B; line-height: 1.55; font-weight: 500; }
 
         /* Footer */
         .lp-footer {
@@ -316,7 +316,7 @@ export default function LoginPage() {
           font-size: 11px; font-weight: 800;
           display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
-        .lp-dummy-av.upa   { background: #EEF5FF; color: #1A3E8A; }
+        .lp-dummy-av.upa   { background: #EEF5FF; color: #0B1E4B; }
         .lp-dummy-av.kadiv { background: #F0EAFB; color: #5A28AA; }
         .lp-dummy-av.op    { background: #FEF9E7; color: #8A6010; }
         .lp-dummy-av.staf  { background: #E8F5EE; color: #145D30; }
@@ -488,3 +488,4 @@ export default function LoginPage() {
     </>
   );
 }
+

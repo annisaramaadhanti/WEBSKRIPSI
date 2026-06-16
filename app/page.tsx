@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -12,10 +12,10 @@ const STATUS_LABEL: Record<string,string> = {
   review:"Dalam Tinjauan", done:"Selesai",
 };
 const STATUS_COLOR: Record<string,string> = {
-  assigned:"#7C3AED", in_progress:"#2563EB", review:"#D97706", done:"#16A34A",
+  assigned:"#0891B2", in_progress:"#2563EB", review:"#D97706", done:"#16A34A",
 };
 const STATUS_BG: Record<string,string> = {
-  assigned:"#7C3AED", in_progress:"#2563EB", review:"#EA580C", done:"#16A34A",
+  assigned:"#0891B2", in_progress:"#2563EB", review:"#E11D48", done:"#16A34A",
 };
 
 type AnyItem = {
@@ -88,7 +88,7 @@ export default function PublicDashboard() {
   const maxDivisi = topDivisi[0]?.[1] || 1;
 
   const statusData = [
-    { label:"Ditugaskan", val:filtered.filter(x=>x.status==="assigned").length, color:"#7C3AED" },
+    { label:"Ditugaskan", val:filtered.filter(x=>x.status==="assigned").length, color:"#0891B2" },
     { label:"Sedang Berlangsung", val:berjalan, color:"#2563EB" },
     { label:"Dalam Tinjauan", val:tinjauan, color:"#D97706" },
     { label:"Selesai", val:selesai, color:"#16A34A" },
@@ -246,7 +246,7 @@ export default function PublicDashboard() {
                 <div key={label} className="pub-hbar-row">
                   <span className="pub-hbar-lbl" title={label}>{label}</span>
                   <div className="pub-hbar-track">
-                    <div className="pub-hbar-fill" style={{ width:`${(val/maxUnit)*100}%`, background:"#2563EB", opacity:1-i*0.08 }}/>
+                    <div className="pub-hbar-fill" style={{ width:`${(val/maxUnit)*100}%`, background:"#0B1E4B", opacity:1-i*0.08 }}/>
                   </div>
                   <span className="pub-hbar-num">{val}</span>
                 </div>
@@ -259,7 +259,7 @@ export default function PublicDashboard() {
                 <div key={label} className="pub-hbar-row">
                   <span className="pub-hbar-lbl" title={label}>{label}</span>
                   <div className="pub-hbar-track">
-                    <div className="pub-hbar-fill" style={{ width:`${(val/maxDivisi)*100}%`, background:"#7C3AED", opacity:1-i*0.08 }}/>
+                    <div className="pub-hbar-fill" style={{ width:`${(val/maxDivisi)*100}%`, background:"#0B1E4B", opacity:1-i*0.08 }}/>
                   </div>
                   <span className="pub-hbar-num">{val}</span>
                 </div>
@@ -327,3 +327,4 @@ export default function PublicDashboard() {
     </>
   );
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -517,10 +517,17 @@ export default function PekerjaanPage() {
   };
 
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="title">Manajemen Pekerjaan</h1>
-        <p className="subtitle">Kelola pekerjaan dengan alur konfirmasi dua arah dan penugasan ulang.</p>
+    <div className="dashboard-stack">
+      <div className="dashboard-hero">
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Manajemen Pekerjaan</h1>
+          <p style={{ margin: "6px 0 0", opacity: 0.7, fontSize: 13 }}>
+            {role === "operator" ? "Kelola dan distribusikan pekerjaan ke divisi terkait."
+              : role === "kepala-divisi" ? "Disposisi staf dan pantau progres pekerjaan divisi Anda."
+              : role === "staf" ? "Konfirmasi dan kerjakan pekerjaan yang ditugaskan kepada Anda."
+              : "Pantau semua pekerjaan aktif di seluruh divisi UPA TIK."}
+          </p>
+        </div>
       </div>
 
       <div className="search-row">
