@@ -720,9 +720,11 @@ input:focus, textarea:focus { border-color: var(--navy-600); box-shadow: 0 0 0 3
 .checkbox-item:hover { background: var(--navy-50); }
 .checkbox-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--navy-600); cursor: pointer; }
 .form-divider {
+  display: flex; align-items: center; gap: 8px;
   font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
-  color: var(--text-muted); border-top: 1px solid var(--border-soft);
-  padding-top: 16px; margin: 8px 0 16px;
+  color: var(--navy-700); margin: 8px 0 16px;
+  padding: 7px 12px; background: var(--navy-50);
+  border-radius: 8px; border-left: 3px solid var(--navy-600);
 }
 
 /* ======================================================

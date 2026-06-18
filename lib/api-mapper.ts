@@ -51,9 +51,11 @@ export function mapPekerjaan(p: any): Pekerjaan {
   const namaStatus = p.status_kinerja?.nama_status ?? "";
   const status = (STATUS_KINERJA_MAP[namaStatus] ?? p.status ?? "assigned") as import("@/types").StatusPekerjaan;
 
-  const divisiFromPekerjaan = p.divisi?.nama_divisi ? [p.divisi.nama_divisi as string] : [];
+  const divisiFromTujuan = Array.isArray(p.divisi_tujuan)
+    ? p.divisi_tujuan.map((dt: any) => dt.divisi?.nama_divisi).filter(Boolean) as string[]
+    : [];
   const divisiFromStaf = assignees.map((a) => a.divisi).filter(Boolean) as string[];
-  const divisi = [...new Set([...divisiFromPekerjaan, ...divisiFromStaf])];
+  const divisi = [...new Set([...divisiFromTujuan, ...divisiFromStaf])];
 
   const tinjauan = Array.isArray(p.tinjauan_kinerja) ? p.tinjauan_kinerja[0] : (p.tinjauan ?? null);
 

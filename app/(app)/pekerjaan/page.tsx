@@ -185,7 +185,7 @@ export default function PekerjaanPage() {
   // Tambah pekerjaan form
   const [form, setForm] = useState({
     namaPekerjaan: "", targetSelesai: "",
-    lokasi: "", id_unit: "", id_divisi: "",
+    lokasi: "", id_unit: "", id_divisi: [] as string[],
     nomorSurat: "", perihalSurat: "",
     file: null as File | null,
   });
@@ -315,7 +315,7 @@ export default function PekerjaanPage() {
   const handleTambah = async () => {
     if (!form.namaPekerjaan || !form.targetSelesai) return alert("Lengkapi field wajib.");
     if (!form.id_unit) return alert("Pilih Unit Peminta.");
-    if (!form.id_divisi) return alert("Pilih Divisi Penanggungjawab.");
+    if (form.id_divisi.length === 0) return alert("Pilih minimal satu Divisi Penanggungjawab.");
     if (!form.lokasi) return alert("Isi Lokasi pekerjaan.");
     if (!form.nomorSurat) return alert("Isi Nomor Surat Masuk.");
     if (!form.perihalSurat) return alert("Isi Perihal Surat Masuk.");
@@ -333,7 +333,7 @@ export default function PekerjaanPage() {
         dokumen_surat: form.file,
       });
       setShowTambah(false);
-      setForm({ namaPekerjaan: "", targetSelesai: "", lokasi: "", id_unit: "", id_divisi: "", nomorSurat: "", perihalSurat: "", file: null });
+      setForm({ namaPekerjaan: "", targetSelesai: "", lokasi: "", id_unit: "", id_divisi: [], nomorSurat: "", perihalSurat: "", file: null });
       if (fileInputRef.current) fileInputRef.current.value = "";
       load();
     } catch (e: any) { alert("Gagal tambah: " + e.message); }
@@ -742,12 +742,19 @@ export default function PekerjaanPage() {
             </div>
             <div className="form-group">
               <label>Divisi Penanggungjawab *</label>
-              <select value={form.id_divisi} onChange={(e) => setForm({ ...form, id_divisi: e.target.value })}>
-                <option value="">-- Pilih Divisi --</option>
+              <div style={{ border: "1px solid var(--border)", borderRadius: "var(--r-sm)", maxHeight: 160, overflowY: "auto", padding: "4px 0" }}>
                 {divisiList.filter(d => d.nama_divisi !== "UPA TIK (Pusat)").map((d) => (
-                  <option key={d.uuid} value={d.uuid}>{d.nama_divisi}</option>
+                  <label key={d.uuid} className="checkbox-item">
+                    <input type="checkbox"
+                      checked={form.id_divisi.includes(d.uuid)}
+                      onChange={(e) => setForm({ ...form, id_divisi: e.target.checked
+                        ? [...form.id_divisi, d.uuid]
+                        : form.id_divisi.filter(id => id !== d.uuid) })}
+                    />
+                    {d.nama_divisi}
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
             <div className="form-group">
               <label>Lokasi *</label>
@@ -786,7 +793,7 @@ export default function PekerjaanPage() {
               <button type="button" onClick={handleTambah}>Simpan</button>
               <button type="button" className="btn-secondary" onClick={() => {
                 setShowTambah(false);
-                setForm({ namaPekerjaan: "", targetSelesai: "", lokasi: "", id_unit: "", id_divisi: "", nomorSurat: "", perihalSurat: "", file: null });
+                setForm({ namaPekerjaan: "", targetSelesai: "", lokasi: "", id_unit: "", id_divisi: [], nomorSurat: "", perihalSurat: "", file: null });
               }}>Batal</button>
             </div>
           </div>

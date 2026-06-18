@@ -38,7 +38,9 @@
       "PowerShell(Invoke-RestMethod \"http://127.0.0.1:8000/api/master/pengguna/staf\")",
       "Bash(rm -rf /tmp/backendsimprotik)",
       "Bash(git clone *)",
-      "PowerShell(Invoke-RestMethod -Uri \"http://127.0.0.1:8000/api/master/divisi\" -Method GET)"
+      "PowerShell(Invoke-RestMethod -Uri \"http://127.0.0.1:8000/api/master/divisi\" -Method GET)",
+      "Bash(git pull *)",
+      "Bash(git stash *)"
     ],
     "additionalDirectories": [
       "C:\\xampp\\mysql\\data",

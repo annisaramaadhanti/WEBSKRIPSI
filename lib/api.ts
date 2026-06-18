@@ -7,12 +7,15 @@
  * - Edit pekerjaan/proyek → POST /edit (bukan PUT)
  */
 
-const BASE = "http://127.0.0.1:8000/api";
+const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000/api";
+
+const baseHeaders = {
+  Accept: "application/json",
+  "ngrok-skip-browser-warning": "true",
+};
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { Accept: "application/json" },
-  });
+  const res = await fetch(`${BASE}${path}`, { headers: baseHeaders });
   if (!res.ok) throw new Error(`GET ${path} gagal: ${res.status}`);
   return res.json();
 }
@@ -20,7 +23,7 @@ async function get<T>(path: string): Promise<T> {
 async function post<T>(path: string, body: object): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { ...baseHeaders, "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`POST ${path} gagal: ${res.status}`);
@@ -30,7 +33,7 @@ async function post<T>(path: string, body: object): Promise<T> {
 async function postForm<T>(path: string, form: FormData): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
-    headers: { Accept: "application/json" },
+    headers: baseHeaders,
     body: form,
   });
   if (!res.ok) throw new Error(`POST ${path} gagal: ${res.status}`);
@@ -116,7 +119,7 @@ export const getPekerjaanDetail = (id: string) => get(`/pekerjaan/${id}`);
 export const tambahPekerjaan = (payload: {
   id_pengguna: string;
   id_unit: string;
-  id_divisi?: string;
+  id_divisi: string[];
   nama_pekerjaan: string;
   lokasi: string;
   target_selesai: string;
@@ -127,7 +130,7 @@ export const tambahPekerjaan = (payload: {
   const form = new FormData();
   form.append("id_pengguna", payload.id_pengguna);
   form.append("id_unit", payload.id_unit);
-  if (payload.id_divisi) form.append("id_divisi", payload.id_divisi);
+  payload.id_divisi.forEach(id => form.append("id_divisi[]", id));
   form.append("nama_pekerjaan", payload.nama_pekerjaan);
   form.append("lokasi", payload.lokasi);
   form.append("target_selesai", payload.target_selesai);
