@@ -116,7 +116,7 @@ export const PERTANYAAN_SURVEY: PertanyaanSurvey[] = [
 export const USERS: User[] = [
   // ─── Operator ───────────────────────────────────────────────────────────────
   {
-    id: "06d92ca6-ccbe-4a43-a358-f7f3253f51df",
+    id: "fb24cdeb-78de-49f8-a28d-81648d51f9f4",
     nama: "Yeni Farida, A.M.",
     nip: "198610032025212042",
     jabatan: "Operator",

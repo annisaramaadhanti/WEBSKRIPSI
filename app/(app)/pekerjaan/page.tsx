@@ -9,7 +9,7 @@ import {
   tambahPekerjaan as apiTambah, editPekerjaan as apiEdit,
   disposisiPekerjaan, terimaPekerjaan, tolakPekerjaan, mulaiPekerjaan,
   buatSuratTugasPekerjaan, publishSuratTugas, urlPdfSuratTugas, urlDokumen, urlLaporanPdf,
-  getMasterUnitKerja, getMasterStaf, getMasterDivisi,
+  getMasterUnitKerja, getMasterStaf, getMasterDivisi, getMasterPengguna,
 } from "@/lib/api";
 import { mapPekerjaan, extractList } from "@/lib/api-mapper";
 import type { Pekerjaan, Assignee, SuratDetail } from "@/types";
@@ -148,7 +148,7 @@ function RingkasanModal({ item, onClose }: { item: Pekerjaan; onClose: () => voi
         )}
 
         {/* Hasil Laporan — tampil jika Selesai */}
-        {isDone && (
+        {isDone && item.id_tinjauan && (
           <div className="notice-card notice-success mt-4">
             <div className="notice-card-title">Laporan Tersedia</div>
             <div className="text-small mb-2">Pekerjaan telah selesai dan laporan bisa diexport.</div>
@@ -275,6 +275,17 @@ export default function PekerjaanPage() {
     setEditForm((prev) => ({ ...prev, file }));
   };
 
+  const resolveBackendUserId = async () => {
+    if (!user) throw new Error("User belum login.");
+
+    const response: any = await getMasterPengguna();
+    const users = extractList(response);
+    const matched = users.find((item: any) => item.NIP === user.nip)
+      ?? users.find((item: any) => item.peran === "Operator");
+
+    return matched?.uuid ?? user.id;
+  };
+
   const openEdit = (item: Pekerjaan) => {
     const unitMatch = unitKerjaList.find(u => u.nama_unit === item.unitPeminta || u.nama_unit === item.unitPeminta);
     setEditForm({
@@ -321,8 +332,9 @@ export default function PekerjaanPage() {
     if (!form.perihalSurat) return alert("Isi Perihal Surat Masuk.");
     if (!form.file) return alert("Dokumen surat masuk (PDF) wajib diunggah.");
     try {
+      const idPengguna = await resolveBackendUserId();
       await apiTambah({
-        id_pengguna: user!.id,
+        id_pengguna: idPengguna,
         id_unit: form.id_unit,
         id_divisi: form.id_divisi,
         nama_pekerjaan: form.namaPekerjaan,
@@ -453,6 +465,7 @@ export default function PekerjaanPage() {
           <th className="col-nama">Nama Pekerjaan</th>
           <th className="col-unit">Unit Peminta</th>
           <th className="th-center col-status">Status</th>
+          <th className="col-divisi">Divisi</th>
           <th className="col-staf">Staf</th>
           <th className="th-center col-target">Target</th>
           <th className="th-center col-surat">Surat Masuk</th>
@@ -469,6 +482,7 @@ export default function PekerjaanPage() {
           <th className="col-unit">Unit Peminta</th>
           <th className="th-center col-status">Status</th>
           <th className="th-center col-konfirmasi">Konfirmasi Staf</th>
+          <th className="col-divisi">Divisi</th>
           <th className="col-staf">Staf</th>
           <th className="th-center col-target">Target</th>
           <th className="th-center col-surat">Surat Masuk</th>
@@ -510,8 +524,8 @@ export default function PekerjaanPage() {
   };
 
   const getColspan = () => {
-    if (role === "operator") return 9;
-    if (role === "kepala-divisi") return 10;
+    if (role === "operator") return 10;
+    if (role === "kepala-divisi") return 11;
     if (role === "kepala-upa") return 10;
     return 8; // staf
   };
@@ -606,7 +620,7 @@ export default function PekerjaanPage() {
                 };
 
                 // Laporan cell
-                const laporanCell = () => isDone
+                const laporanCell = () => isDone && item.id_tinjauan
                   ? <button type="button" className="btn-link-pdf" onClick={() => openLaporan(item)}>PDF Laporan</button>
                   : <span className="text-muted text-small">Belum Tersedia</span>;
 
@@ -618,6 +632,7 @@ export default function PekerjaanPage() {
                         <td className="td-wrap"><strong>{item.namaPekerjaan}</strong></td>
                         <td>{item.unitPeminta || <span className="text-muted">—</span>}</td>
                         <td className="td-center"><span className={`badge ${STATUS_BADGE[item.status] || "badge-blue"}`}>{STATUS_LABEL[item.status] || item.status}</span></td>
+                        <td className="text-small">{divisiRingkas}</td>
                         <td className="text-small">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
                         <td className="td-center text-small">{item.targetSelesai}</td>
                         <td className="td-center">{item.suratMasuk ? <button type="button" className="btn-link-pdf" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-muted text-small">-</span>}</td>
@@ -645,6 +660,7 @@ export default function PekerjaanPage() {
                           ? <td className="td-center">{konfirmasiStafBadge()}</td>
                           : <td className="td-center"><span className="text-muted text-small">—</span></td>
                         }
+                        <td className="text-small">{divisiRingkas}</td>
                         <td className="text-small">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
                         <td className="td-center text-small">{item.targetSelesai}</td>
                         <td className="td-center">{item.suratMasuk ? <button type="button" className="btn-link-pdf" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-muted text-small">-</span>}</td>
@@ -742,14 +758,18 @@ export default function PekerjaanPage() {
             </div>
             <div className="form-group">
               <label>Divisi Penanggungjawab *</label>
-              <div style={{ border: "1px solid var(--border)", borderRadius: "var(--r-sm)", maxHeight: 160, overflowY: "auto", padding: "4px 0" }}>
+              <div className="checkbox-list">
                 {divisiList.filter(d => d.nama_divisi !== "UPA TIK (Pusat)").map((d) => (
-                  <label key={d.uuid} className="checkbox-item">
-                    <input type="checkbox"
+                  <label key={d.uuid} className="checkbox-row">
+                    <input
+                      type="checkbox"
                       checked={form.id_divisi.includes(d.uuid)}
-                      onChange={(e) => setForm({ ...form, id_divisi: e.target.checked
-                        ? [...form.id_divisi, d.uuid]
-                        : form.id_divisi.filter(id => id !== d.uuid) })}
+                      onChange={() => setForm((prev) => ({
+                        ...prev,
+                        id_divisi: prev.id_divisi.includes(d.uuid)
+                          ? prev.id_divisi.filter((id) => id !== d.uuid)
+                          : [...prev.id_divisi, d.uuid],
+                      }))}
                     />
                     {d.nama_divisi}
                   </label>
