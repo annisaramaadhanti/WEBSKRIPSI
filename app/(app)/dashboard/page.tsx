@@ -25,6 +25,17 @@ const STATUS_COLOR: Record<string, string> = {
 
 const BULAN_SINGKAT = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
 
+const TW_BADGE_BASE = "inline-flex items-center font-semibold whitespace-nowrap gap-[5px] px-[10px] py-[3px] rounded-full text-[11px] tracking-[0.15px] before:content-[''] before:shrink-0 before:w-[5px] before:h-[5px] before:rounded-full before:bg-[rgba(255,255,255,0.85)]";
+const TW_BADGE: Record<string, string> = {
+  blue:   `${TW_BADGE_BASE} bg-[#2563EB] text-white`,
+  cyan:   `${TW_BADGE_BASE} bg-[#0891B2] text-white`,
+  indigo: `${TW_BADGE_BASE} bg-[#6D28D9] text-white`,
+  yellow: `${TW_BADGE_BASE} bg-[#D97706] text-white`,
+  green:  `${TW_BADGE_BASE} bg-[#16A34A] text-white`,
+  red:    `${TW_BADGE_BASE} bg-[#DC2626] text-white`,
+};
+const TW_BADGE_LIGHT = "inline-flex items-center font-semibold whitespace-nowrap gap-[5px] px-[10px] py-[3px] rounded-full text-[11px] tracking-[0.15px]";
+
 // ─── Komponen chart primitif ──────────────────────────────────────────────────
 
 /** Bar chart horizontal dengan label kiri & nilai kanan */
@@ -225,7 +236,7 @@ function ChartCard({ title, subtitle, children }: {
   title: string; subtitle?: string; children: React.ReactNode;
 }) {
   return (
-    <div className="chart-card" style={{
+    <div style={{
       background: "#fff", borderRadius: 16,
       border: "1px solid rgba(148,163,184,0.25)",
       padding: "20px 22px",
@@ -325,8 +336,8 @@ function DashboardOperator({ pk, pr }: { pk: Pekerjaan[]; pr: Proyek[] }) {
   ].slice(0, 8);
 
   return (
-    <div className="dashboard-stack">
-      <div className="dashboard-hero">
+    <div className="flex flex-col gap-[22px]">
+      <div className="relative overflow-hidden isolate text-white py-[18px] px-[28px] rounded-[var(--r-2xl)] shadow-[0_16px_48px_rgba(11,30,75,0.30)] after:content-[''] after:absolute after:-bottom-[60px] after:-right-[40px] after:w-[200px] after:h-[200px] after:rounded-full after:border-[28px] after:border-[rgba(198,168,75,0.14)] after:pointer-events-none" style={{ background: "linear-gradient(135deg, #0B1E4B 0%, #0F2150 52%, #0F2150 100%)" }}>
         <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Dashboard Operator</h1>
@@ -379,30 +390,30 @@ function DashboardOperator({ pk, pr }: { pk: Pekerjaan[]; pr: Proyek[] }) {
 
       {/* Tabel terbaru */}
       <ChartCard title="Pekerjaan & Proyek Terbaru" subtitle="8 layanan terakhir yang masuk ke sistem">
-        <div className="table-wrap">
-          <table className="table">
+        <div className="overflow-x-auto min-w-0 w-full mt-1 mb-5 bg-[var(--surface)] rounded-[var(--r-xl)] border border-[var(--border-soft)] shadow-[var(--shadow-xs)]">
+          <table className="w-full border-collapse min-w-[720px] [&_th]:text-left [&_th]:uppercase [&_th]:whitespace-nowrap [&_th]:px-[14px] [&_th]:py-[12px] [&_th]:bg-[var(--surface-alt)] [&_th]:text-[var(--text-muted)] [&_th]:text-[10px] [&_th]:font-bold [&_th]:tracking-[0.5px] [&_th]:border-b [&_th]:border-[var(--border-soft)] [&_td]:whitespace-nowrap [&_td]:text-left [&_td]:align-middle [&_td]:px-[14px] [&_td]:py-[12px] [&_td]:border-b [&_td]:border-[rgba(221,227,239,0.6)] [&_td]:text-[13px] [&_td]:text-[var(--text)] [&_tbody_tr:last-child_td]:border-b-0 [&_tbody_tr:hover_td]:bg-[rgba(41,80,168,0.03)]">
             <thead>
               <tr>
-                <th>Nama</th><th className="th-center">Tipe</th><th>Unit Peminta</th>
-                <th className="th-center">Status</th><th className="th-center">Surat Tugas</th><th className="th-center">Target</th>
+                <th>Nama</th><th className="text-center">Tipe</th><th>Unit Peminta</th>
+                <th className="text-center">Status</th><th className="text-center">Surat Tugas</th><th className="text-center">Target</th>
               </tr>
             </thead>
             <tbody>
               {terbaru.map((item) => (
                 <tr key={item.id}>
                   <td><strong>{item.nama}</strong></td>
-                  <td className="td-center"><span className={`badge ${item.tipe === "Proyek" ? "badge-blue" : "badge-cyan"}`}>{item.tipe}</span></td>
-                  <td className="text-small">{item.unit}</td>
-                  <td className="td-center"><span className="badge" style={{ background: `${STATUS_COLOR[item.status]}20`, color: STATUS_COLOR[item.status] }}>{STATUS_LABEL[item.status]}</span></td>
-                  <td className="td-center">
-                    {item.suratStatus === "published" ? <span className="badge badge-indigo">Published</span>
-                      : item.suratStatus === "draft" || item.hasSurat ? <span className="badge badge-yellow">Preview</span>
-                      : <span className="text-muted text-small">Belum Ada</span>}
+                  <td className="text-center"><span className={item.tipe === "Proyek" ? TW_BADGE.blue : TW_BADGE.cyan}>{item.tipe}</span></td>
+                  <td className="text-[12px]">{item.unit}</td>
+                  <td className="text-center"><span className={TW_BADGE_LIGHT} style={{ background: `${STATUS_COLOR[item.status]}20`, color: STATUS_COLOR[item.status] }}>{STATUS_LABEL[item.status]}</span></td>
+                  <td className="text-center">
+                    {item.suratStatus === "published" ? <span className={TW_BADGE.indigo}>Published</span>
+                      : item.suratStatus === "draft" || item.hasSurat ? <span className={TW_BADGE.yellow}>Preview</span>
+                      : <span className="text-[var(--text-muted)] text-[12px]">Belum Ada</span>}
                   </td>
-                  <td className="td-center text-small">{item.target}</td>
+                  <td className="text-center text-[12px]">{item.target}</td>
                 </tr>
               ))}
-              {terbaru.length === 0 && <tr className="empty-row"><td colSpan={6}>Belum ada data.</td></tr>}
+              {terbaru.length === 0 && <tr><td colSpan={6} className="text-center py-6 text-[var(--text-muted)]">Belum ada data.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -459,8 +470,8 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
   ).slice(0, 6);
 
   return (
-    <div className="dashboard-stack">
-      <div className="dashboard-hero">
+    <div className="flex flex-col gap-[22px]">
+      <div className="relative overflow-hidden isolate text-white py-[18px] px-[28px] rounded-[var(--r-2xl)] shadow-[0_16px_48px_rgba(11,30,75,0.30)] after:content-[''] after:absolute after:-bottom-[60px] after:-right-[40px] after:w-[200px] after:h-[200px] after:rounded-full after:border-[28px] after:border-[rgba(198,168,75,0.14)] after:pointer-events-none" style={{ background: "linear-gradient(135deg, #0B1E4B 0%, #0F2150 52%, #0F2150 100%)" }}>
         <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Dashboard Kepala Divisi</h1>
@@ -516,10 +527,10 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
       {/* Tabel perlu tindakan */}
       {aksi.length > 0 && (
         <ChartCard title="Perlu Tindakan Segera" subtitle="Layanan yang memerlukan perhatian Anda">
-          <div className="table-wrap">
-            <table className="table">
+          <div className="overflow-x-auto min-w-0 w-full mt-1 mb-5 bg-[var(--surface)] rounded-[var(--r-xl)] border border-[var(--border-soft)] shadow-[var(--shadow-xs)]">
+            <table className="w-full border-collapse min-w-[720px] [&_th]:text-left [&_th]:uppercase [&_th]:whitespace-nowrap [&_th]:px-[14px] [&_th]:py-[12px] [&_th]:bg-[var(--surface-alt)] [&_th]:text-[var(--text-muted)] [&_th]:text-[10px] [&_th]:font-bold [&_th]:tracking-[0.5px] [&_th]:border-b [&_th]:border-[var(--border-soft)] [&_td]:whitespace-nowrap [&_td]:text-left [&_td]:align-middle [&_td]:px-[14px] [&_td]:py-[12px] [&_td]:border-b [&_td]:border-[rgba(221,227,239,0.6)] [&_td]:text-[13px] [&_td]:text-[var(--text)] [&_tbody_tr:last-child_td]:border-b-0 [&_tbody_tr:hover_td]:bg-[rgba(41,80,168,0.03)]">
               <thead>
-                <tr><th>Nama</th><th className="th-center">Tipe</th><th className="th-center">Status</th><th className="th-center">Hal yang Perlu Dilakukan</th></tr>
+                <tr><th>Nama</th><th className="text-center">Tipe</th><th className="text-center">Status</th><th className="text-center">Hal yang Perlu Dilakukan</th></tr>
               </thead>
               <tbody>
                 {aksi.map((item) => {
@@ -532,13 +543,13 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
                   return (
                     <tr key={item.id}>
                       <td><strong>{nama}</strong></td>
-                      <td className="td-center"><span className={`badge ${isPk ? "badge-cyan" : "badge-blue"}`}>{isPk ? "Pekerjaan" : "Proyek"}</span></td>
-                      <td className="td-center"><span className="badge" style={{ background: `${STATUS_COLOR[item.status]}20`, color: STATUS_COLOR[item.status] }}>{STATUS_LABEL[item.status]}</span></td>
-                      <td className="td-center">
-                        {needACC ? <a href="/tinjauan-kinerja" className="btn-success btn-sm">ACC</a>
-                          : needReassign ? <a href={isPk ? "/pekerjaan" : "/proyek"} className="btn-warning btn-sm">Penugasan Ulang</a>
-                          : needDisposisi ? <a href={isPk ? "/pekerjaan" : "/proyek"} className="btn-edit btn-sm">Disposisi</a>
-                          : <span className="text-muted text-small">—</span>}
+                      <td className="text-center"><span className={isPk ? TW_BADGE.cyan : TW_BADGE.blue}>{isPk ? "Pekerjaan" : "Proyek"}</span></td>
+                      <td className="text-center"><span className={TW_BADGE_LIGHT} style={{ background: `${STATUS_COLOR[item.status]}20`, color: STATUS_COLOR[item.status] }}>{STATUS_LABEL[item.status]}</span></td>
+                      <td className="text-center">
+                        {needACC ? <a href="/tinjauan-kinerja" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#16A34A] text-white text-[11px] shadow-[0_2px_8px_rgba(22,163,74,0.28)] transition-all hover:bg-[#15803D] hover:-translate-y-px no-underline">ACC</a>
+                          : needReassign ? <a href={isPk ? "/pekerjaan" : "/proyek"} className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#D97706] text-white text-[11px] shadow-[0_2px_8px_rgba(217,119,6,0.28)] transition-all hover:bg-[#B45309] hover:-translate-y-px no-underline">Penugasan Ulang</a>
+                          : needDisposisi ? <a href={isPk ? "/pekerjaan" : "/proyek"} className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#0EA5E9] text-white text-[11px] shadow-[0_2px_8px_rgba(14,165,233,0.28)] transition-all hover:bg-[#0284C7] hover:-translate-y-px no-underline">Disposisi</a>
+                          : <span className="text-[var(--text-muted)] text-[12px]">—</span>}
                       </td>
                     </tr>
                   );
@@ -583,8 +594,8 @@ function DashboardStaf({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user: 
   });
 
   return (
-    <div className="dashboard-stack">
-      <div className="dashboard-hero">
+    <div className="flex flex-col gap-[22px]">
+      <div className="relative overflow-hidden isolate text-white py-[18px] px-[28px] rounded-[var(--r-2xl)] shadow-[0_16px_48px_rgba(11,30,75,0.30)] after:content-[''] after:absolute after:-bottom-[60px] after:-right-[40px] after:w-[200px] after:h-[200px] after:rounded-full after:border-[28px] after:border-[rgba(198,168,75,0.14)] after:pointer-events-none" style={{ background: "linear-gradient(135deg, #0B1E4B 0%, #0F2150 52%, #0F2150 100%)" }}>
         <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Dashboard Staf</h1>
@@ -625,36 +636,36 @@ function DashboardStaf({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user: 
 
       {/* Tabel tugas */}
       <ChartCard title="Semua Tugas Saya" subtitle="Daftar lengkap pekerjaan & proyek yang ditugaskan">
-        <div className="table-wrap">
-          <table className="table">
+        <div className="overflow-x-auto min-w-0 w-full mt-1 mb-5 bg-[var(--surface)] rounded-[var(--r-xl)] border border-[var(--border-soft)] shadow-[var(--shadow-xs)]">
+          <table className="w-full border-collapse min-w-[720px] [&_th]:text-left [&_th]:uppercase [&_th]:whitespace-nowrap [&_th]:px-[14px] [&_th]:py-[12px] [&_th]:bg-[var(--surface-alt)] [&_th]:text-[var(--text-muted)] [&_th]:text-[10px] [&_th]:font-bold [&_th]:tracking-[0.5px] [&_th]:border-b [&_th]:border-[var(--border-soft)] [&_td]:whitespace-nowrap [&_td]:text-left [&_td]:align-middle [&_td]:px-[14px] [&_td]:py-[12px] [&_td]:border-b [&_td]:border-[rgba(221,227,239,0.6)] [&_td]:text-[13px] [&_td]:text-[var(--text)] [&_tbody_tr:last-child_td]:border-b-0 [&_tbody_tr:hover_td]:bg-[rgba(41,80,168,0.03)]">
             <thead>
               <tr>
-                <th>Nama</th><th className="th-center">Tipe</th><th className="th-center">Status Saya</th>
-                <th className="th-center">Status Tugas</th><th className="th-center">Target</th>
+                <th>Nama</th><th className="text-center">Tipe</th><th className="text-center">Status Saya</th>
+                <th className="text-center">Status Tugas</th><th className="text-center">Target</th>
               </tr>
             </thead>
             <tbody>
               {all.map((item) => (
                 <tr key={item.id}>
                   <td><strong>{item.nama}</strong></td>
-                  <td className="td-center"><span className={`badge ${item.tipe === "Proyek" ? "badge-blue" : "badge-cyan"}`}>{item.tipe}</span></td>
-                  <td className="td-center">
-                    <span className="badge" style={{ background: "#0891B220", color: "#0891B2", fontSize: 11 }}>
+                  <td className="text-center"><span className={item.tipe === "Proyek" ? TW_BADGE.blue : TW_BADGE.cyan}>{item.tipe}</span></td>
+                  <td className="text-center">
+                    <span className={TW_BADGE_LIGHT} style={{ background: "#0891B220", color: "#0891B2", fontSize: 11 }}>
                       {item.statusSaya === "pending" ? "Menunggu Konfirmasi"
                         : item.statusSaya === "accepted" ? "Diterima"
                         : item.statusSaya === "rejected" ? "Ditolak"
                         : item.statusSaya}
                     </span>
                   </td>
-                  <td className="td-center">
-                    <span className="badge" style={{ background: `${STATUS_COLOR[item.status] || "#F3F5F9"}20`, color: STATUS_COLOR[item.status] || "#475569" }}>
+                  <td className="text-center">
+                    <span className={TW_BADGE_LIGHT} style={{ background: `${STATUS_COLOR[item.status] || "#F3F5F9"}20`, color: STATUS_COLOR[item.status] || "#475569" }}>
                       {STATUS_LABEL[item.status] || item.status || "—"}
                     </span>
                   </td>
-                  <td className="td-center text-small">{item.target}</td>
+                  <td className="text-center text-[12px]">{item.target}</td>
                 </tr>
               ))}
-              {all.length === 0 && <tr className="empty-row"><td colSpan={5}>Belum ada tugas yang ditugaskan kepada Anda.</td></tr>}
+              {all.length === 0 && <tr><td colSpan={5} className="text-center py-6 text-[var(--text-muted)]">Belum ada tugas yang ditugaskan kepada Anda.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -700,8 +711,8 @@ function DashboardKepalaUPA({ pk, pr, surveys }: { pk: Pekerjaan[]; pr: Proyek[]
   const topStaf = Object.entries(staffMap).sort((a, b) => b[1] - a[1]);
 
   return (
-    <div className="dashboard-stack">
-      <div className="dashboard-hero">
+    <div className="flex flex-col gap-[22px]">
+      <div className="relative overflow-hidden isolate text-white py-[18px] px-[28px] rounded-[var(--r-2xl)] shadow-[0_16px_48px_rgba(11,30,75,0.30)] after:content-[''] after:absolute after:-bottom-[60px] after:-right-[40px] after:w-[200px] after:h-[200px] after:rounded-full after:border-[28px] after:border-[rgba(198,168,75,0.14)] after:pointer-events-none" style={{ background: "linear-gradient(135deg, #0B1E4B 0%, #0F2150 52%, #0F2150 100%)" }}>
         <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Dashboard Kepala UPA</h1>
@@ -826,8 +837,8 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, [role, user?.id]);
 
-  if (loading) return <div className="dashboard-stack"><p className="text-muted">Memuat dashboard...</p></div>;
-  if (error) return <div className="dashboard-stack"><p className="text-danger">Gagal memuat data: {error}</p></div>;
+  if (loading) return <div className="flex flex-col gap-[22px]"><p className="text-[var(--text-muted)] text-[12px]">Memuat dashboard...</p></div>;
+  if (error) return <div className="flex flex-col gap-[22px]"><p className="text-[var(--danger-600)]">Gagal memuat data: {error}</p></div>;
 
   if (role === "operator")     return <DashboardOperator pk={pk} pr={pr} />;
   if (role === "kepala-divisi") return <DashboardKadiv pk={pk} pr={pr} user={user} />;
@@ -836,8 +847,8 @@ export default function DashboardPage() {
 
   // Fallback loading / publik
   return (
-    <div className="dashboard-stack">
-      <div className="dashboard-hero">
+    <div className="flex flex-col gap-[22px]">
+      <div className="relative overflow-hidden isolate text-white py-[18px] px-[28px] rounded-[var(--r-2xl)] shadow-[0_16px_48px_rgba(11,30,75,0.30)] after:content-[''] after:absolute after:-bottom-[60px] after:-right-[40px] after:w-[200px] after:h-[200px] after:rounded-full after:border-[28px] after:border-[rgba(198,168,75,0.14)] after:pointer-events-none" style={{ background: "linear-gradient(135deg, #0B1E4B 0%, #0F2150 52%, #0F2150 100%)" }}>
         <div style={{ position: "relative", zIndex: 1 }}>
           <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800 }}>Sistem Manajemen Layanan</h1>
           <p style={{ margin: "8px 0 0", opacity: 0.75 }}>UPA Teknologi Informasi dan Komunikasi — Universitas Lampung</p>

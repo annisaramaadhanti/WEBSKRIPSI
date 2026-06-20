@@ -14,16 +14,19 @@ import {
 import { mapPekerjaan, extractList } from "@/lib/api-mapper";
 import type { Pekerjaan, Assignee, SuratDetail } from "@/types";
 
+const TW_BADGE_BASE = "inline-flex items-center font-semibold whitespace-nowrap gap-[5px] px-[10px] py-[3px] rounded-full text-[11px] tracking-[0.15px] before:content-[''] before:shrink-0 before:w-[5px] before:h-[5px] before:rounded-full before:bg-[rgba(255,255,255,0.85)]";
+const TW_BTN_SM = "inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] text-[11px] shadow-none transition-all no-underline";
+const TW_BTN = "inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[16px] py-[8px] border-none rounded-[var(--r-sm)] text-[12px] transition-all no-underline";
+const INPUT_CLS = "w-full outline-none px-[13px] py-[10px] border border-[var(--border)] rounded-[var(--r-sm)] text-[13px] text-[var(--text)] bg-[var(--surface)] transition-all focus:border-[var(--navy-600)] focus:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]";
+
 const STATUS_BADGE: Record<string, string> = {
-  // StatusKonfirmasi
-  "pending":     "badge-yellow",
-  "accepted":    "badge-cyan",
-  "rejected":    "badge-red",
-  // StatusPekerjaan
-  "assigned":    "badge-purple",
-  "in_progress": "badge-blue",
-  "review":      "badge-orange",
-  "done":        "badge-green",
+  "pending":     `${TW_BADGE_BASE} bg-[#D97706] text-white`,
+  "accepted":    `${TW_BADGE_BASE} bg-[#0891B2] text-white`,
+  "rejected":    `${TW_BADGE_BASE} bg-[#DC2626] text-white`,
+  "assigned":    `${TW_BADGE_BASE} bg-[#7C3AED] text-white`,
+  "in_progress": `${TW_BADGE_BASE} bg-[#2563EB] text-white`,
+  "review":      `${TW_BADGE_BASE} bg-[#EA580C] text-white`,
+  "done":        `${TW_BADGE_BASE} bg-[#16A34A] text-white`,
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -57,49 +60,49 @@ function RingkasanModal({ item, onClose }: { item: Pekerjaan; onClose: () => voi
   const isReviewOrDone = item.status === "review" || item.status === "done";
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-box modal-wide">
+    <div className="fixed inset-0 flex items-center justify-center bg-[rgba(11,30,75,0.50)] z-[9999] p-5 backdrop-blur-[5px] [animation:overlayIn_var(--dur-base)_var(--ease)]">
+      <div className="overflow-y-auto bg-[var(--surface)] rounded-[var(--r-xl)] p-7 w-full max-w-[840px] max-h-[90vh] shadow-[var(--shadow-xl)] border border-[var(--border-soft)] [animation:modalIn_var(--dur-slow)_var(--ease)] [&>h2]:m-0 [&>h2]:font-bold [&>h2]:text-[17px] [&>h2]:text-[var(--navy-900)] [&>h2]:mb-[18px] [&>h2]:pb-[14px] [&>h2]:border-b [&>h2]:border-[var(--border-soft)]">
         <h2>Ringkasan Pekerjaan</h2>
 
-        <div className="info-box">
-          <div className="info-box-title">Data Pekerjaan</div>
+        <div className="bg-[var(--surface-alt)] border border-[var(--border-soft)] rounded-[var(--r-lg)] px-5 pt-5 pb-4 mb-3 text-[13px] overflow-hidden [&_table]:w-full [&_table]:border-collapse [&_td]:py-[7px] [&_td]:px-2 [&_td]:text-[var(--text)] [&_td]:align-top">
+          <div className="uppercase font-bold text-[10px] tracking-[0.6px] text-[var(--text-muted)] mb-3 pb-2 border-b border-[var(--border-soft)]">Data Pekerjaan</div>
           <table><tbody>
-            <tr><td className="info-label">Nama</td><td>: <strong>{item.namaPekerjaan}</strong></td></tr>
-            <tr><td className="info-label">Unit Peminta</td><td>: {item.unitPeminta || "-"}</td></tr>
-            <tr><td className="info-label">Lokasi</td><td>: {item.lokasi || "-"}</td></tr>
-            <tr><td className="info-label">Target Selesai</td><td>: {item.targetSelesai}</td></tr>
-            <tr><td className="info-label">Status</td><td>: <span className={`badge ${STATUS_BADGE[item.status]}`}>{STATUS_LABEL[item.status]}</span></td></tr>
+            <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Nama</td><td>: <strong>{item.namaPekerjaan}</strong></td></tr>
+            <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Unit Peminta</td><td>: {item.unitPeminta || "-"}</td></tr>
+            <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Lokasi</td><td>: {item.lokasi || "-"}</td></tr>
+            <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Target Selesai</td><td>: {item.targetSelesai}</td></tr>
+            <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Status</td><td>: <span className={STATUS_BADGE[item.status] ?? STATUS_BADGE.assigned}>{STATUS_LABEL[item.status]}</span></td></tr>
           </tbody></table>
         </div>
 
         {(
-          <div className="info-box mt-4">
-            <div className="info-box-title">Data Surat Masuk</div>
+          <div className="mt-4 bg-[var(--surface-alt)] border border-[var(--border-soft)] rounded-[var(--r-lg)] px-5 pt-5 pb-4 mb-3 text-[13px] overflow-hidden [&_table]:w-full [&_table]:border-collapse [&_td]:py-[7px] [&_td]:px-2 [&_td]:text-[var(--text)] [&_td]:align-top">
+            <div className="uppercase font-bold text-[10px] tracking-[0.6px] text-[var(--text-muted)] mb-3 pb-2 border-b border-[var(--border-soft)]">Data Surat Masuk</div>
             <table><tbody>
-              <tr><td className="info-label">Nomor Surat Masuk</td><td>: {item.nomorSuratMasuk || "—"}</td></tr>
-              <tr><td className="info-label">Perihal Surat Masuk</td><td>: {item.perihalSuratMasuk || "—"}</td></tr>
-              {item.lokasiSuratMasuk && <tr><td className="info-label">Lokasi Surat</td><td>: {item.lokasiSuratMasuk}</td></tr>}
+              <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Nomor Surat Masuk</td><td>: {item.nomorSuratMasuk || "—"}</td></tr>
+              <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Perihal Surat Masuk</td><td>: {item.perihalSuratMasuk || "—"}</td></tr>
+              {item.lokasiSuratMasuk && <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Lokasi Surat</td><td>: {item.lokasiSuratMasuk}</td></tr>}
               {item.suratMasuk && (
-                <tr><td className="info-label">PDF Surat Masuk</td><td>: <span className="text-muted text-small"> {item.suratMasuk}</span></td></tr>
+                <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">PDF Surat Masuk</td><td>: <span className="text-[var(--text-muted)] text-[12px]"> {item.suratMasuk}</span></td></tr>
               )}
             </tbody></table>
           </div>
         )}
 
         {item.assignees.length > 0 && (
-          <div className="info-box mt-4">
-            <div className="info-box-title">Data Staf</div>
-            <div className="table-wrap">
-              <table className="table">
-                <thead><tr><th className="th-center">Nama</th><th className="th-center">NIP</th><th className="th-center">Divisi</th><th className="th-center">Konfirmasi Staf</th><th className="th-center">Surat Tugas</th></tr></thead>
+          <div className="mt-4 bg-[var(--surface-alt)] border border-[var(--border-soft)] rounded-[var(--r-lg)] px-5 pt-5 pb-4 mb-3 text-[13px] overflow-hidden [&_table]:w-full [&_table]:border-collapse [&_td]:py-[7px] [&_td]:px-2 [&_td]:text-[var(--text)] [&_td]:align-top">
+            <div className="uppercase font-bold text-[10px] tracking-[0.6px] text-[var(--text-muted)] mb-3 pb-2 border-b border-[var(--border-soft)]">Data Staf</div>
+            <div className="overflow-x-auto min-w-0 w-full mt-1 mb-5 bg-[var(--surface)] rounded-[var(--r-xl)] border border-[var(--border-soft)] shadow-[var(--shadow-xs)]">
+              <table className="w-full border-collapse min-w-[720px] [&_th]:text-left [&_th]:uppercase [&_th]:whitespace-nowrap [&_th]:px-[14px] [&_th]:py-[12px] [&_th]:bg-[var(--surface-alt)] [&_th]:text-[var(--text-muted)] [&_th]:text-[10px] [&_th]:font-bold [&_th]:tracking-[0.5px] [&_th]:border-b [&_th]:border-[var(--border-soft)] [&_td]:whitespace-nowrap [&_td]:text-left [&_td]:align-middle [&_td]:px-[14px] [&_td]:py-[12px] [&_td]:border-b [&_td]:border-[rgba(221,227,239,0.6)] [&_td]:text-[13px] [&_td]:text-[var(--text)] [&_tbody_tr:last-child_td]:border-b-0 [&_tbody_tr:hover_td]:bg-[rgba(41,80,168,0.03)]">
+                <thead><tr><th className="text-center">Nama</th><th className="text-center">NIP</th><th className="text-center">Divisi</th><th className="text-center">Konfirmasi Staf</th><th className="text-center">Surat Tugas</th></tr></thead>
                 <tbody>
                   {item.assignees.map((a, i) => (
                     <tr key={i}>
                       <td><strong>{a.nama}</strong></td>
-                      <td className="text-small">{a.nip}</td>
-                      <td className="text-small">{a.divisi}</td>
-                      <td className="td-center"><span className={`badge ${STATUS_BADGE[a.statusKonfirmasi]}`}>{STATUS_LABEL[a.statusKonfirmasi]}</span></td>
-                      <td className="td-center">{a.masukSurat !== false ? "✓" : "—"}</td>
+                      <td className="text-[12px]">{a.nip}</td>
+                      <td className="text-[12px]">{a.divisi}</td>
+                      <td className="text-center"><span className={STATUS_BADGE[a.statusKonfirmasi] ?? STATUS_BADGE.pending}>{STATUS_LABEL[a.statusKonfirmasi]}</span></td>
+                      <td className="text-center">{a.masukSurat !== false ? "✓" : "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -109,38 +112,38 @@ function RingkasanModal({ item, onClose }: { item: Pekerjaan; onClose: () => voi
         )}
 
         {item.suratDetail && (
-          <div className="info-box mt-4">
-            <div className="info-box-title">Data Surat Tugas</div>
+          <div className="mt-4 bg-[var(--surface-alt)] border border-[var(--border-soft)] rounded-[var(--r-lg)] px-5 pt-5 pb-4 mb-3 text-[13px] overflow-hidden [&_table]:w-full [&_table]:border-collapse [&_td]:py-[7px] [&_td]:px-2 [&_td]:text-[var(--text)] [&_td]:align-top">
+            <div className="uppercase font-bold text-[10px] tracking-[0.6px] text-[var(--text-muted)] mb-3 pb-2 border-b border-[var(--border-soft)]">Data Surat Tugas</div>
             <table><tbody>
-              <tr><td className="info-label">Nomor Surat</td><td>: {item.suratDetail.nomorSurat}</td></tr>
-              <tr><td className="info-label">Status</td><td>: <span className={`badge ${item.suratStatus === "published" ? "badge-indigo" : "badge-yellow"}`}>{item.suratStatus === "published" ? "Published" : "Preview"}</span></td></tr>
-              <tr><td className="info-label">Tanggal Surat</td><td>: {item.suratDetail.tanggalSuratKeluar}</td></tr>
-              <tr><td className="info-label">Tanggal Pelaksanaan</td><td>: {item.suratDetail.tanggalPelaksanaan}</td></tr>
-              <tr><td className="info-label">Lokasi Pelaksanaan</td><td>: {item.suratDetail.lokasiPembuatan}</td></tr>
+              <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Nomor Surat</td><td>: {item.suratDetail.nomorSurat}</td></tr>
+              <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Status</td><td>: <span className={item.suratStatus === "published" ? `${TW_BADGE_BASE} bg-[#6D28D9] text-white` : `${TW_BADGE_BASE} bg-[#D97706] text-white`}>{item.suratStatus === "published" ? "Published" : "Preview"}</span></td></tr>
+              <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Tanggal Surat</td><td>: {item.suratDetail.tanggalSuratKeluar}</td></tr>
+              <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Tanggal Pelaksanaan</td><td>: {item.suratDetail.tanggalPelaksanaan}</td></tr>
+              <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Lokasi Pelaksanaan</td><td>: {item.suratDetail.lokasiPembuatan}</td></tr>
             </tbody></table>
             {item.suratStatus === "draft" && (
-              <button type="button" className="btn-secondary btn-sm mt-3" onClick={openSuratPreview}> Buka PDF Preview</button>
+              <button type="button" className="mt-3 inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[12px] py-[6px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[11px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={openSuratPreview}> Buka PDF Preview</button>
             )}
             {item.suratStatus === "published" && (
-              <button type="button" className="btn-secondary btn-sm mt-3" onClick={openSurat}> Buka PDF Surat Tugas</button>
+              <button type="button" className="mt-3 inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[12px] py-[6px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[11px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={openSurat}> Buka PDF Surat Tugas</button>
             )}
           </div>
         )}
 
         {/* Data Tinjauan — tampil jika Dalam Tinjauan atau Selesai */}
         {isReviewOrDone && (
-          <div className="info-box mt-4">
-            <div className="info-box-title">Data Tinjauan</div>
+          <div className="mt-4 bg-[var(--surface-alt)] border border-[var(--border-soft)] rounded-[var(--r-lg)] px-5 pt-5 pb-4 mb-3 text-[13px] overflow-hidden [&_table]:w-full [&_table]:border-collapse [&_td]:py-[7px] [&_td]:px-2 [&_td]:text-[var(--text)] [&_td]:align-top">
+            <div className="uppercase font-bold text-[10px] tracking-[0.6px] text-[var(--text-muted)] mb-3 pb-2 border-b border-[var(--border-soft)]">Data Tinjauan</div>
             <table><tbody>
               <tr>
-                <td className="info-label">Status Tinjauan</td>
-                <td>: {isDone ? <span className="badge badge-green">Disetujui</span> : <span className="badge badge-yellow">Menunggu ACC</span>}</td>
+                <td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Status Tinjauan</td>
+                <td>: {isDone ? <span className={STATUS_BADGE.done}>Disetujui</span> : <span className={STATUS_BADGE.pending}>Menunggu ACC</span>}</td>
               </tr>
               {isDone && item.accBy && (
                 <>
-                  <tr><td className="info-label">Disetujui Oleh</td><td>: {item.accBy.nama}</td></tr>
-                  <tr><td className="info-label">Tanggal ACC</td><td>: {item.accAt}</td></tr>
-                  {item.catatanKadiv && <tr><td className="info-label">Catatan Kadiv</td><td>: {item.catatanKadiv}</td></tr>}
+                  <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Disetujui Oleh</td><td>: {item.accBy.nama}</td></tr>
+                  <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Tanggal ACC</td><td>: {item.accAt}</td></tr>
+                  {item.catatanKadiv && <tr><td className="w-[180px] text-[var(--text-muted)] text-[12px] whitespace-nowrap">Catatan Kadiv</td><td>: {item.catatanKadiv}</td></tr>}
                 </>
               )}
             </tbody></table>
@@ -149,17 +152,17 @@ function RingkasanModal({ item, onClose }: { item: Pekerjaan; onClose: () => voi
 
         {/* Hasil Laporan — tampil jika Selesai */}
         {isDone && item.id_tinjauan && (
-          <div className="notice-card notice-success mt-4">
-            <div className="notice-card-title">Laporan Tersedia</div>
-            <div className="text-small mb-2">Pekerjaan telah selesai dan laporan bisa diexport.</div>
-            <button type="button" className="btn-link-pdf" onClick={handleOpenLaporan}>
+          <div className="mt-4 bg-[var(--success-50)] border border-[#A8DFC0] rounded-[var(--r-lg)] p-4 [&_p]:m-0 [&_a]:font-bold">
+            <div className="font-bold text-[13px] mb-1">Laporan Tersedia</div>
+            <div className="text-[12px] mb-2">Pekerjaan telah selesai dan laporan bisa diexport.</div>
+            <button type="button" className="inline-flex items-center no-underline whitespace-nowrap font-semibold cursor-pointer gap-[5px] text-[12px] text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] rounded-[var(--r-sm)] px-[10px] py-[5px] transition-all hover:bg-[#EDE9FE] hover:border-[#C4B5FD] hover:text-[#6D28D9]" onClick={handleOpenLaporan}>
               PDF Laporan
             </button>
           </div>
         )}
 
-        <div className="modal-actions">
-          <button type="button" className="btn-secondary" onClick={onClose}>Tutup</button>
+        <div className="flex flex-wrap items-center gap-2 mt-5 pt-[14px] border-t border-[var(--border-soft)]">
+          <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[14px] py-[7px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[12px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={onClose}>Tutup</button>
         </div>
       </div>
     </div>
@@ -462,63 +465,63 @@ export default function PekerjaanPage() {
     if (role === "operator") {
       return (
         <tr>
-          <th className="col-nama">Nama Pekerjaan</th>
-          <th className="col-unit">Unit Peminta</th>
-          <th className="th-center col-status">Status</th>
-          <th className="col-divisi">Divisi</th>
-          <th className="col-staf">Staf</th>
-          <th className="th-center col-target">Target</th>
-          <th className="th-center col-surat">Surat Masuk</th>
-          <th className="th-center col-surat">Surat Tugas</th>
-          <th className="th-center col-laporan">Laporan</th>
-          <th className="th-center col-aksi">Aksi</th>
+          <th className="text-left min-w-[240px]">Nama Pekerjaan</th>
+          <th className="text-left w-[160px]">Unit Peminta</th>
+          <th className="text-center w-[110px]">Status</th>
+          <th className="text-left min-w-[220px]">Divisi</th>
+          <th className="text-left min-w-[140px]">Staf</th>
+          <th className="text-center w-[90px]">Target</th>
+          <th className="text-center w-[90px]">Surat Masuk</th>
+          <th className="text-center w-[90px]">Surat Tugas</th>
+          <th className="text-center w-[80px]">Laporan</th>
+          <th className="text-center w-[100px]">Aksi</th>
         </tr>
       );
     }
     if (role === "kepala-divisi") {
       return (
         <tr>
-          <th className="col-nama">Nama Pekerjaan</th>
-          <th className="col-unit">Unit Peminta</th>
-          <th className="th-center col-status">Status</th>
-          <th className="th-center col-konfirmasi">Konfirmasi Staf</th>
-          <th className="col-divisi">Divisi</th>
-          <th className="col-staf">Staf</th>
-          <th className="th-center col-target">Target</th>
-          <th className="th-center col-surat">Surat Masuk</th>
-          <th className="th-center col-surat">Surat Tugas</th>
-          <th className="th-center col-laporan">Laporan</th>
-          <th className="th-center col-aksi">Aksi</th>
+          <th className="text-left min-w-[240px]">Nama Pekerjaan</th>
+          <th className="text-left w-[160px]">Unit Peminta</th>
+          <th className="text-center w-[110px]">Status</th>
+          <th className="text-center w-[120px]">Konfirmasi Staf</th>
+          <th className="text-left min-w-[220px]">Divisi</th>
+          <th className="text-left min-w-[140px]">Staf</th>
+          <th className="text-center w-[90px]">Target</th>
+          <th className="text-center w-[90px]">Surat Masuk</th>
+          <th className="text-center w-[90px]">Surat Tugas</th>
+          <th className="text-center w-[80px]">Laporan</th>
+          <th className="text-center w-[140px]">Aksi</th>
         </tr>
       );
     }
     if (role === "kepala-upa") {
       return (
         <tr>
-          <th className="col-nama">Nama Pekerjaan</th>
-          <th className="col-unit">Unit Peminta</th>
-          <th className="th-center col-status">Status</th>
-          <th className="col-divisi">Divisi</th>
-          <th className="col-staf">Staf</th>
-          <th className="th-center col-target">Target</th>
-          <th className="th-center col-surat">Surat Masuk</th>
-          <th className="th-center col-surat">Surat Tugas</th>
-          <th className="th-center col-laporan">Laporan</th>
-          <th className="th-center col-aksi">Aksi</th>
+          <th className="text-left min-w-[240px]">Nama Pekerjaan</th>
+          <th className="text-left w-[160px]">Unit Peminta</th>
+          <th className="text-center w-[110px]">Status</th>
+          <th className="text-left min-w-[220px]">Divisi</th>
+          <th className="text-left min-w-[140px]">Staf</th>
+          <th className="text-center w-[90px]">Target</th>
+          <th className="text-center w-[90px]">Surat Masuk</th>
+          <th className="text-center w-[90px]">Surat Tugas</th>
+          <th className="text-center w-[80px]">Laporan</th>
+          <th className="text-center w-[100px]">Aksi</th>
         </tr>
       );
     }
     // staf
     return (
       <tr>
-        <th className="col-nama">Nama Pekerjaan</th>
-        <th className="col-unit">Unit Peminta</th>
-        <th className="th-center col-status">Status Tugas</th>
-        <th className="th-center col-status">Status Saya</th>
-        <th className="th-center col-target">Target</th>
-        <th className="th-center col-surat">Surat Tugas</th>
-        <th className="th-center col-laporan">Laporan</th>
-        <th className="th-center col-aksi">Aksi</th>
+        <th className="text-left min-w-[240px]">Nama Pekerjaan</th>
+        <th className="text-left w-[160px]">Unit Peminta</th>
+        <th className="text-center w-[110px]">Status Tugas</th>
+        <th className="text-center w-[110px]">Status Saya</th>
+        <th className="text-center w-[90px]">Target</th>
+        <th className="text-center w-[90px]">Surat Tugas</th>
+        <th className="text-center w-[80px]">Laporan</th>
+        <th className="text-center w-[100px]">Aksi</th>
       </tr>
     );
   };
@@ -531,8 +534,8 @@ export default function PekerjaanPage() {
   };
 
   return (
-    <div className="dashboard-stack">
-      <div className="dashboard-hero">
+    <div className="flex flex-col gap-[22px]">
+      <div className="relative overflow-hidden isolate text-white py-[18px] px-[28px] rounded-[var(--r-2xl)] shadow-[0_16px_48px_rgba(11,30,75,0.30)] after:content-[''] after:absolute after:-bottom-[60px] after:-right-[40px] after:w-[200px] after:h-[200px] after:rounded-full after:border-[28px] after:border-[rgba(198,168,75,0.14)] after:pointer-events-none" style={{ background: "linear-gradient(135deg, #0B1E4B 0%, #0F2150 52%, #0F2150 100%)" }}>
         <div style={{ position: "relative", zIndex: 1 }}>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Manajemen Pekerjaan</h1>
           <p style={{ margin: "6px 0 0", opacity: 0.7, fontSize: 13 }}>
@@ -544,20 +547,20 @@ export default function PekerjaanPage() {
         </div>
       </div>
 
-      <div className="search-row">
+      <div className="flex flex-wrap items-center gap-[10px] mb-4">
         <input
-          type="text" className="search-box"
+          type="text" className="outline-none w-[min(100%,300px)] px-[13px] py-[9px] rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] text-[13px] focus:border-[var(--navy-600)] focus:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]"
           placeholder="Cari pekerjaan, lokasi, unit, divisi, atau staf..."
           value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
         />
         {role === "operator" && (
-          <button type="button" onClick={() => setShowTambah(true)}>+ Tambah Pekerjaan</button>
+          <button type="button" className={`${TW_BTN} bg-[#0B1E4B] text-white shadow-[0_2px_8px_rgba(11,30,75,0.22)] hover:bg-[#0F2150] hover:-translate-y-px`} onClick={() => setShowTambah(true)}>+ Tambah Pekerjaan</button>
         )}
       </div>
 
-      <div className="card">
-        <div className="table-wrap">
-          <table className="table">
+      <div className="bg-[var(--surface)] border border-[var(--border-soft)] rounded-[var(--r-xl)] p-[22px] shadow-[var(--shadow-sm)]">
+        <div className="overflow-x-auto min-w-0 w-full mt-1 mb-5 bg-[var(--surface)] rounded-[var(--r-xl)] border border-[var(--border-soft)] shadow-[var(--shadow-xs)]">
+          <table className="w-full border-collapse min-w-[1100px] [&_th]:uppercase [&_th]:whitespace-nowrap [&_th]:px-[14px] [&_th]:py-[12px] [&_th]:bg-[var(--surface-alt)] [&_th]:text-[var(--text-muted)] [&_th]:text-[10px] [&_th]:font-bold [&_th]:tracking-[0.5px] [&_th]:border-b [&_th]:border-[var(--border-soft)] [&_td]:whitespace-nowrap [&_td]:align-middle [&_td]:px-[14px] [&_td]:py-[12px] [&_td]:border-b [&_td]:border-[rgba(221,227,239,0.6)] [&_td]:text-[13px] [&_td]:text-[var(--text)] [&_tbody_tr:last-child_td]:border-b-0 [&_tbody_tr:hover_td]:bg-[rgba(41,80,168,0.03)]">
             <thead>{renderHeader()}</thead>
             <tbody>
               {filteredData.length > 0 ? filteredData.map((item) => {
@@ -582,67 +585,67 @@ export default function PekerjaanPage() {
 
                 const konfirmasiStafBadge = () => {
                   const total = item.assignees.length;
-                  if (total === 0) return <span className="text-muted text-small">—</span>;
+                  if (total === 0) return <span className="text-[var(--text-muted)] text-[12px]">—</span>;
                   const rejected = item.assignees.filter(a => a.statusKonfirmasi === "rejected").length;
                   const accepted = item.assignees.filter(a => a.statusKonfirmasi === "accepted").length;
-                  if (rejected > 0) return <span className="badge badge-red">{rejected} Ditolak</span>;
-                  if (accepted === total) return <span className="badge badge-cyan">Semua Diterima</span>;
-                  return <span className="badge badge-purple">Menunggu</span>;
+                  if (rejected > 0) return <span className={STATUS_BADGE.rejected}>{rejected} Ditolak</span>;
+                  if (accepted === total) return <span className={STATUS_BADGE.accepted}>Semua Diterima</span>;
+                  return <span className={STATUS_BADGE.assigned}>Menunggu</span>;
                 };
 
-                const divisiRingkas = item.divisi.length > 0 ? item.divisi.join(", ") : <span className="text-muted">—</span>;
+                const divisiRingkas = item.divisi.length > 0 ? item.divisi.join(", ") : <span className="text-[var(--text-muted)] text-[12px]">—</span>;
 
                 // Surat tugas cell per role
                 const suratTugasCell = (roleView: string) => {
                   if (roleView === "operator") {
                     if (!item.suratStatus && canBuatPreview(item))
-                      return <button type="button" className="btn-secondary btn-sm" onClick={() => openSuratModal(item, "buat")}>Buat Preview</button>;
+                      return <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[12px] py-[6px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[11px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => openSuratModal(item, "buat")}>Buat Preview</button>;
                     if (!item.suratStatus)
-                      return <span className="text-muted text-small">Belum Ada</span>;
+                      return <span className="text-[var(--text-muted)] text-[12px]">Belum Ada</span>;
                     if (item.suratStatus === "draft")
-                      return <div className="cell-action-group">
-                        <button type="button" className="btn-link-pdf" onClick={() => openSuratPDF(item)}>PDF Preview</button>
-                        <button type="button" className="btn-secondary btn-sm" onClick={() => openSuratModal(item, "edit")}>Edit Preview</button>
-                        <button type="button" className="btn-warning btn-sm" onClick={() => setShowPublishKonfirm(item)}>Publish</button>
+                      return <div className="flex flex-col items-center gap-1">
+                        <button type="button" className="inline-flex items-center no-underline whitespace-nowrap font-semibold cursor-pointer gap-[5px] text-[12px] text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] rounded-[var(--r-sm)] px-[10px] py-[5px] transition-all hover:bg-[#EDE9FE] hover:border-[#C4B5FD] hover:text-[#6D28D9]" onClick={() => openSuratPDF(item)}>PDF Preview</button>
+                        <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[12px] py-[6px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[11px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => openSuratModal(item, "edit")}>Edit Preview</button>
+                        <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#D97706] text-white text-[11px] shadow-[0_2px_8px_rgba(217,119,6,0.28)] transition-all hover:bg-[#B45309] hover:-translate-y-px" onClick={() => setShowPublishKonfirm(item)}>Publish</button>
                       </div>;
-                    return <button type="button" className="btn-link-pdf" onClick={() => openSuratPDF(item)}>PDF</button>;
+                    return <button type="button" className="inline-flex items-center no-underline whitespace-nowrap font-semibold cursor-pointer gap-[5px] text-[12px] text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] rounded-[var(--r-sm)] px-[10px] py-[5px] transition-all hover:bg-[#EDE9FE] hover:border-[#C4B5FD] hover:text-[#6D28D9]" onClick={() => openSuratPDF(item)}>PDF</button>;
                   }
                   if (roleView === "kadiv" || roleView === "kepala-upa") {
-                    if (!item.suratStatus) return <span className="text-muted text-small">—</span>;
+                    if (!item.suratStatus) return <span className="text-[var(--text-muted)] text-[12px]">—</span>;
                     if (item.suratStatus === "draft")
-                      return <button type="button" className="btn-link-pdf" onClick={() => openSuratPDF(item)}>PDF Preview</button>;
-                    return <button type="button" className="btn-link-pdf" onClick={() => openSuratPDF(item)}>PDF</button>;
+                      return <button type="button" className="inline-flex items-center no-underline whitespace-nowrap font-semibold cursor-pointer gap-[5px] text-[12px] text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] rounded-[var(--r-sm)] px-[10px] py-[5px] transition-all hover:bg-[#EDE9FE] hover:border-[#C4B5FD] hover:text-[#6D28D9]" onClick={() => openSuratPDF(item)}>PDF Preview</button>;
+                    return <button type="button" className="inline-flex items-center no-underline whitespace-nowrap font-semibold cursor-pointer gap-[5px] text-[12px] text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] rounded-[var(--r-sm)] px-[10px] py-[5px] transition-all hover:bg-[#EDE9FE] hover:border-[#C4B5FD] hover:text-[#6D28D9]" onClick={() => openSuratPDF(item)}>PDF</button>;
                   }
                   // staf - hanya lihat kalau published
                   if (item.suratStatus === "published")
-                    return <button type="button" className="btn-link-pdf" onClick={() => openSuratPDF(item)}>PDF</button>;
-                  return <span className="text-muted text-small">Belum Terbit</span>;
+                    return <button type="button" className="inline-flex items-center no-underline whitespace-nowrap font-semibold cursor-pointer gap-[5px] text-[12px] text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] rounded-[var(--r-sm)] px-[10px] py-[5px] transition-all hover:bg-[#EDE9FE] hover:border-[#C4B5FD] hover:text-[#6D28D9]" onClick={() => openSuratPDF(item)}>PDF</button>;
+                  return <span className="text-[var(--text-muted)] text-[12px]">Belum Terbit</span>;
                 };
 
                 // Laporan cell
                 const laporanCell = () => isDone && item.id_tinjauan
-                  ? <button type="button" className="btn-link-pdf" onClick={() => openLaporan(item)}>PDF Laporan</button>
-                  : <span className="text-muted text-small">Belum Tersedia</span>;
+                  ? <button type="button" className="inline-flex items-center no-underline whitespace-nowrap font-semibold cursor-pointer gap-[5px] text-[12px] text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] rounded-[var(--r-sm)] px-[10px] py-[5px] transition-all hover:bg-[#EDE9FE] hover:border-[#C4B5FD] hover:text-[#6D28D9]" onClick={() => openLaporan(item)}>PDF Laporan</button>
+                  : <span className="text-[var(--text-muted)] text-[12px]">Belum Tersedia</span>;
 
                 return (
                   <tr key={item.id}>
                     {/* ─── OPERATOR ─── */}
                     {role === "operator" && (
                       <>
-                        <td className="td-wrap"><strong>{item.namaPekerjaan}</strong></td>
-                        <td>{item.unitPeminta || <span className="text-muted">—</span>}</td>
-                        <td className="td-center"><span className={`badge ${STATUS_BADGE[item.status] || "badge-blue"}`}>{STATUS_LABEL[item.status] || item.status}</span></td>
-                        <td className="text-small">{divisiRingkas}</td>
-                        <td className="text-small">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
-                        <td className="td-center text-small">{item.targetSelesai}</td>
-                        <td className="td-center">{item.suratMasuk ? <button type="button" className="btn-link-pdf" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-muted text-small">-</span>}</td>
-                        <td className="td-center">{suratTugasCell("operator")}</td>
-                        <td className="td-center">{laporanCell()}</td>
-                        <td className="td-center">
-                          <div className="table-actions table-actions--center">
-                            <button type="button" className="btn-secondary btn-sm" onClick={() => setShowRingkasan(item)}>Ringkasan</button>
+                        <td className="!whitespace-normal max-w-[280px]"><div className="line-clamp-2"><strong>{item.namaPekerjaan}</strong></div></td>
+                        <td>{item.unitPeminta || <span className="text-[var(--text-muted)] text-[12px]">—</span>}</td>
+                        <td className="text-center"><span className={STATUS_BADGE[item.status] ?? STATUS_BADGE.in_progress}>{STATUS_LABEL[item.status] || item.status}</span></td>
+                        <td className="!whitespace-normal text-[12px] max-w-[260px]"><div className="line-clamp-2">{divisiRingkas}</div></td>
+                        <td className="text-[12px]">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-[var(--text-muted)] text-[12px]">Belum ditugaskan</span>}</td>
+                        <td className="text-center text-[12px]">{item.targetSelesai}</td>
+                        <td className="text-center">{item.suratMasuk ? <button type="button" className="inline-flex items-center no-underline whitespace-nowrap font-semibold cursor-pointer gap-[5px] text-[12px] text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] rounded-[var(--r-sm)] px-[10px] py-[5px] transition-all hover:bg-[#EDE9FE] hover:border-[#C4B5FD] hover:text-[#6D28D9]" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-[var(--text-muted)] text-[12px]">-</span>}</td>
+                        <td className="text-center">{suratTugasCell("operator")}</td>
+                        <td className="text-center">{laporanCell()}</td>
+                        <td className="text-center">
+                          <div className="flex items-center flex-wrap justify-center gap-[6px]">
+                            <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[12px] py-[6px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[11px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => setShowRingkasan(item)}>Ringkasan</button>
                             {isAssigned && item.suratStatus !== "published" && (
-                              <button type="button" className="btn-edit btn-sm" onClick={() => openEdit(item)}>Edit</button>
+                              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#0EA5E9] text-white text-[11px] shadow-[0_2px_8px_rgba(14,165,233,0.28)] transition-all hover:bg-[#0284C7] hover:-translate-y-px" onClick={() => openEdit(item)}>Edit</button>
                             )}
                           </div>
                         </td>
@@ -652,30 +655,30 @@ export default function PekerjaanPage() {
                     {/* ─── KEPALA DIVISI ─── */}
                     {role === "kepala-divisi" && (
                       <>
-                        <td className="td-wrap"><strong>{item.namaPekerjaan}</strong></td>
-                        <td>{item.unitPeminta || <span className="text-muted">—</span>}</td>
-                        <td className="td-center"><span className={`badge ${STATUS_BADGE[item.status] || "badge-blue"}`}>{STATUS_LABEL[item.status] || item.status}</span></td>
+                        <td className="!whitespace-normal max-w-[280px]"><div className="line-clamp-2"><strong>{item.namaPekerjaan}</strong></div></td>
+                        <td>{item.unitPeminta || <span className="text-[var(--text-muted)] text-[12px]">—</span>}</td>
+                        <td className="text-center"><span className={STATUS_BADGE[item.status] ?? STATUS_BADGE.in_progress}>{STATUS_LABEL[item.status] || item.status}</span></td>
                         {/* Konfirmasi Staf: hanya tampil saat assigned */}
                         {isAssigned
-                          ? <td className="td-center">{konfirmasiStafBadge()}</td>
-                          : <td className="td-center"><span className="text-muted text-small">—</span></td>
+                          ? <td className="text-center">{konfirmasiStafBadge()}</td>
+                          : <td className="text-center"><span className="text-[var(--text-muted)] text-[12px]">—</span></td>
                         }
-                        <td className="text-small">{divisiRingkas}</td>
-                        <td className="text-small">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
-                        <td className="td-center text-small">{item.targetSelesai}</td>
-                        <td className="td-center">{item.suratMasuk ? <button type="button" className="btn-link-pdf" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-muted text-small">-</span>}</td>
-                        <td className="td-center">{suratTugasCell("kadiv")}</td>
-                        <td className="td-center">{laporanCell()}</td>
-                        <td className="td-center">
-                          <div className="table-actions table-actions--center">
-                            <button type="button" className="btn-secondary btn-sm" onClick={() => setShowRingkasan(item)}>Ringkasan</button>
+                        <td className="!whitespace-normal text-[12px] max-w-[260px]"><div className="line-clamp-2">{divisiRingkas}</div></td>
+                        <td className="text-[12px]">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-[var(--text-muted)] text-[12px]">Belum ditugaskan</span>}</td>
+                        <td className="text-center text-[12px]">{item.targetSelesai}</td>
+                        <td className="text-center">{item.suratMasuk ? <button type="button" className="inline-flex items-center no-underline whitespace-nowrap font-semibold cursor-pointer gap-[5px] text-[12px] text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] rounded-[var(--r-sm)] px-[10px] py-[5px] transition-all hover:bg-[#EDE9FE] hover:border-[#C4B5FD] hover:text-[#6D28D9]" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-[var(--text-muted)] text-[12px]">-</span>}</td>
+                        <td className="text-center">{suratTugasCell("kadiv")}</td>
+                        <td className="text-center">{laporanCell()}</td>
+                        <td className="text-center">
+                          <div className="flex items-center flex-wrap justify-center gap-[6px]">
+                            <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[12px] py-[6px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[11px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => setShowRingkasan(item)}>Ringkasan</button>
                             {/* Disposisi: belum ada staf, masih assigned, surat belum published */}
                             {item.assignees.length === 0 && isAssigned && item.suratStatus !== "published" && (
-                              <button type="button" className="btn-edit btn-sm" onClick={() => setShowDisposisi(item)}>Disposisi</button>
+                              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#0EA5E9] text-white text-[11px] shadow-[0_2px_8px_rgba(14,165,233,0.28)] transition-all hover:bg-[#0284C7] hover:-translate-y-px" onClick={() => setShowDisposisi(item)}>Disposisi</button>
                             )}
                             {/* Penugasan Ulang: ada yang ditolak, masih assigned, surat belum published */}
                             {hasRejected && isAssigned && item.suratStatus !== "published" && (
-                              <button type="button" className="btn-warning btn-sm" onClick={() => setShowDisposisi(item)}>Penugasan Ulang</button>
+                              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#D97706] text-white text-[11px] shadow-[0_2px_8px_rgba(217,119,6,0.28)] transition-all hover:bg-[#B45309] hover:-translate-y-px" onClick={() => setShowDisposisi(item)}>Penugasan Ulang</button>
                             )}
                           </div>
                         </td>
@@ -685,46 +688,46 @@ export default function PekerjaanPage() {
                     {/* ─── KEPALA UPA ─── */}
                     {role === "kepala-upa" && (
                       <>
-                        <td className="td-wrap"><strong>{item.namaPekerjaan}</strong></td>
-                        <td>{item.unitPeminta || <span className="text-muted">—</span>}</td>
-                        <td className="td-center"><span className={`badge ${STATUS_BADGE[item.status] || "badge-blue"}`}>{STATUS_LABEL[item.status] || item.status}</span></td>
-                        <td className="text-small">{divisiRingkas}</td>
-                        <td className="text-small">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-muted">Belum ditugaskan</span>}</td>
-                        <td className="td-center text-small">{item.targetSelesai}</td>
-                        <td className="td-center">{item.suratMasuk ? <button type="button" className="btn-link-pdf" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-muted text-small">-</span>}</td>
-                        <td className="td-center">{suratTugasCell("kepala-upa")}</td>
-                        <td className="td-center">{laporanCell()}</td>
-                        <td className="td-center"><button type="button" className="btn-secondary btn-sm" onClick={() => setShowRingkasan(item)}>Ringkasan</button></td>
+                        <td className="!whitespace-normal max-w-[280px]"><div className="line-clamp-2"><strong>{item.namaPekerjaan}</strong></div></td>
+                        <td>{item.unitPeminta || <span className="text-[var(--text-muted)] text-[12px]">—</span>}</td>
+                        <td className="text-center"><span className={STATUS_BADGE[item.status] ?? STATUS_BADGE.in_progress}>{STATUS_LABEL[item.status] || item.status}</span></td>
+                        <td className="!whitespace-normal text-[12px] max-w-[260px]"><div className="line-clamp-2">{divisiRingkas}</div></td>
+                        <td className="text-[12px]">{stafRingkas ? <span title={activeAssignees.map(a => a.nama).join(", ")}>{stafRingkas}</span> : <span className="text-[var(--text-muted)] text-[12px]">Belum ditugaskan</span>}</td>
+                        <td className="text-center text-[12px]">{item.targetSelesai}</td>
+                        <td className="text-center">{item.suratMasuk ? <button type="button" className="inline-flex items-center no-underline whitespace-nowrap font-semibold cursor-pointer gap-[5px] text-[12px] text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] rounded-[var(--r-sm)] px-[10px] py-[5px] transition-all hover:bg-[#EDE9FE] hover:border-[#C4B5FD] hover:text-[#6D28D9]" onClick={() => openSuratMasuk(item)}>PDF</button> : <span className="text-[var(--text-muted)] text-[12px]">-</span>}</td>
+                        <td className="text-center">{suratTugasCell("kepala-upa")}</td>
+                        <td className="text-center">{laporanCell()}</td>
+                        <td className="text-center"><button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[12px] py-[6px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[11px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => setShowRingkasan(item)}>Ringkasan</button></td>
                       </>
                     )}
 
                     {/* ─── STAF ─── */}
                     {role === "staf" && (
                       <>
-                        <td className="td-wrap"><strong>{item.namaPekerjaan}</strong></td>
-                        <td>{item.unitPeminta || <span className="text-muted">—</span>}</td>
-                        <td className="td-center"><span className={`badge ${STATUS_BADGE[item.status] || "badge-blue"}`}>{STATUS_LABEL[item.status] || item.status}</span></td>
-                        <td className="td-center">
+                        <td className="!whitespace-normal max-w-[280px]"><div className="line-clamp-2"><strong>{item.namaPekerjaan}</strong></div></td>
+                        <td>{item.unitPeminta || <span className="text-[var(--text-muted)] text-[12px]">—</span>}</td>
+                        <td className="text-center"><span className={STATUS_BADGE[item.status] ?? STATUS_BADGE.in_progress}>{STATUS_LABEL[item.status] || item.status}</span></td>
+                        <td className="text-center">
                           {assignee
-                            ? <span className={`badge ${STATUS_BADGE[assignee.statusKonfirmasi] || "badge-blue"}`}>{STATUS_LABEL[assignee.statusKonfirmasi] || assignee.statusKonfirmasi}</span>
-                            : <span className="text-muted text-small">-</span>}
+                            ? <span className={STATUS_BADGE[assignee.statusKonfirmasi] ?? STATUS_BADGE.in_progress}>{STATUS_LABEL[assignee.statusKonfirmasi] || assignee.statusKonfirmasi}</span>
+                            : <span className="text-[var(--text-muted)] text-[12px]">-</span>}
                         </td>
-                        <td className="td-center text-small">{item.targetSelesai}</td>
-                        <td className="td-center">{suratTugasCell("staf")}</td>
-                        <td className="td-center">{laporanCell()}</td>
-                        <td className="td-center">
-                          <div className="table-actions table-actions--center">
-                            <button type="button" className="btn-secondary btn-sm" onClick={() => setShowRingkasan(item)}>Ringkasan</button>
+                        <td className="text-center text-[12px]">{item.targetSelesai}</td>
+                        <td className="text-center">{suratTugasCell("staf")}</td>
+                        <td className="text-center">{laporanCell()}</td>
+                        <td className="text-center">
+                          <div className="flex items-center flex-wrap justify-center gap-[6px]">
+                            <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[12px] py-[6px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[11px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => setShowRingkasan(item)}>Ringkasan</button>
                             {/* Terima/Tolak: pending & masih assigned */}
                             {assignee?.statusKonfirmasi === "pending" && isAssigned && (
                               <>
-                                <button type="button" className="btn-success btn-icon-sm" title="Terima" onClick={() => handleTerima(item)}><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7l3 3 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
-                                <button type="button" className="btn-delete btn-icon-sm" title="Tolak" onClick={() => openTolak(item)}><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></button>
+                                <button type="button" className="inline-flex items-center justify-center cursor-pointer shrink-0 w-[28px] h-[28px] p-0 border-none rounded-[var(--r-sm)] bg-[#16A34A] text-white shadow-[0_1px_4px_rgba(22,163,74,0.25)] transition-all hover:bg-[#15803D] hover:-translate-y-px" title="Terima" onClick={() => handleTerima(item)}><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7l3 3 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                                <button type="button" className="inline-flex items-center justify-center cursor-pointer shrink-0 w-[28px] h-[28px] p-0 border-none rounded-[var(--r-sm)] bg-[#DC2626] text-white shadow-[0_1px_4px_rgba(220,38,38,0.25)] transition-all hover:bg-[#B91C1C] hover:-translate-y-px" title="Tolak" onClick={() => openTolak(item)}><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></button>
                               </>
                             )}
                             {/* Mulai: accepted + published + assigned */}
                             {assignee?.statusKonfirmasi === "accepted" && item.suratStatus === "published" && isAssigned && (
-                              <button type="button" className="btn-edit btn-sm" onClick={() => handleMulai(item)}>Mulai</button>
+                              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#0EA5E9] text-white text-[11px] shadow-[0_2px_8px_rgba(14,165,233,0.28)] transition-all hover:bg-[#0284C7] hover:-translate-y-px" onClick={() => handleMulai(item)}>Mulai</button>
                             )}
                           </div>
                         </td>
@@ -733,7 +736,7 @@ export default function PekerjaanPage() {
                   </tr>
                 );
               }) : (
-                <tr className="empty-row"><td colSpan={getColspan()}>Belum ada data pekerjaan.</td></tr>
+                <tr className=""><td colSpan={getColspan()}>Belum ada data pekerjaan.</td></tr>
               )}
             </tbody>
           </table>
@@ -742,25 +745,25 @@ export default function PekerjaanPage() {
 
       {/* ─── MODAL TAMBAH PEKERJAAN ─── */}
       {showTambah && (
-        <div className="modal-overlay">
-          <div className="modal-box">
+        <div className="fixed inset-0 flex items-center justify-center bg-[rgba(11,30,75,0.50)] z-[9999] p-5 backdrop-blur-[5px] [animation:overlayIn_var(--dur-base)_var(--ease)]">
+          <div className="overflow-y-auto bg-[var(--surface)] rounded-[var(--r-xl)] p-7 w-full max-w-[520px] max-h-[90vh] shadow-[var(--shadow-xl)] border border-[var(--border-soft)] [animation:modalIn_var(--dur-slow)_var(--ease)] [&>h2]:m-0 [&>h2]:font-bold [&>h2]:text-[17px] [&>h2]:text-[var(--navy-900)] [&>h2]:mb-[18px] [&>h2]:pb-[14px] [&>h2]:border-b [&>h2]:border-[var(--border-soft)]">
             <h2>+ Tambah Pekerjaan</h2>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Nama Pekerjaan *</label>
               <input value={form.namaPekerjaan} onChange={(e) => setForm({ ...form, namaPekerjaan: e.target.value })} placeholder="Nama pekerjaan" />
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Unit Peminta *</label>
               <select value={form.id_unit} onChange={(e) => setForm({ ...form, id_unit: e.target.value })}>
                 <option value="">-- Pilih Unit Peminta --</option>
                 {unitKerjaList.map((u) => <option key={u.id_unit} value={u.id_unit}>{u.nama_unit}</option>)}
               </select>
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Divisi Penanggungjawab *</label>
-              <div className="checkbox-list">
+              <div className="flex flex-col gap-[6px] mt-[4px]">
                 {divisiList.filter(d => d.nama_divisi !== "UPA TIK (Pusat)").map((d) => (
-                  <label key={d.uuid} className="checkbox-row">
+                  <label key={d.uuid} className="flex items-center gap-[8px] cursor-pointer text-[13px] text-[var(--text)] py-[2px]">
                     <input
                       type="checkbox"
                       checked={form.id_divisi.includes(d.uuid)}
@@ -776,42 +779,42 @@ export default function PekerjaanPage() {
                 ))}
               </div>
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Lokasi *</label>
               <textarea value={form.lokasi} onChange={(e) => setForm({ ...form, lokasi: e.target.value })}
                 placeholder="Contoh: Gedung Rektorat Lantai 2, Ruang Sidang" rows={2} />
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Target Selesai *</label>
               <input type="date" value={form.targetSelesai} onChange={(e) => setForm({ ...form, targetSelesai: e.target.value })} />
             </div>
-            <div className="form-divider">Surat Masuk</div>
-            <div className="form-group">
+            <div className="flex items-center uppercase font-bold gap-2 text-[10px] tracking-[0.8px] text-[var(--navy-700)] my-2 mb-4 px-3 py-[7px] bg-[var(--navy-50)] rounded-lg border-l-[3px] border-[var(--navy-600)]">Surat Masuk</div>
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Nomor Surat Masuk *</label>
               <input value={form.nomorSurat} onChange={(e) => setForm({ ...form, nomorSurat: e.target.value })} placeholder="Contoh: 001/UN26/TI/2026" />
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Perihal Surat Masuk *</label>
               <textarea value={form.perihalSurat} onChange={(e) => setForm({ ...form, perihalSurat: e.target.value })}
                 placeholder="Perihal surat masuk" rows={2} />
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Dokumen Surat Masuk (PDF) *</label>
-              <div className="file-upload-area">
-                <input ref={fileInputRef} type="file" accept="application/pdf" id="form-pekerjaan-file" className="hidden-input" onChange={handleFormFile} />
-                <label htmlFor="form-pekerjaan-file" className="file-upload-btn">
+              <div className="flex flex-col gap-[7px]">
+                <input ref={fileInputRef} type="file" accept="application/pdf" id="form-pekerjaan-file" className="hidden" onChange={handleFormFile} />
+                <label htmlFor="form-pekerjaan-file" className="inline-flex items-center cursor-pointer font-semibold gap-[7px] px-[16px] py-[9px] border-[1.5px] border-dashed border-[var(--navy-500)] rounded-[var(--r-md)] bg-[var(--navy-50)] text-[var(--navy-700)] text-[13px] transition-all w-fit hover:bg-[var(--navy-100)] hover:border-[var(--navy-700)]">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path d="M8 2v8M4 6l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                   {form.file ? "Ganti File" : "Pilih File PDF"}
                 </label>
-                {form.file && <div className="file-upload-preview"><span>{form.file.name}</span></div>}
+                {form.file && <div className="flex items-center font-semibold gap-[6px] px-[10px] py-[6px] bg-[#EEF5FF] border border-[#C9DEFF] rounded-[var(--r-sm)] text-[12px] text-[#1A3E8A] [&_span]:break-all"><span>{form.file.name}</span></div>}
               </div>
             </div>
-            <div className="modal-actions">
-              <button type="button" onClick={handleTambah}>Simpan</button>
-              <button type="button" className="btn-secondary" onClick={() => {
+            <div className="flex flex-wrap items-center gap-2 mt-5 pt-[14px] border-t border-[var(--border-soft)]">
+              <button type="button" className={`${TW_BTN} bg-[#0B1E4B] text-white shadow-[0_2px_8px_rgba(11,30,75,0.22)] hover:bg-[#0F2150] hover:-translate-y-px`} onClick={handleTambah}>Simpan</button>
+              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[14px] py-[7px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[12px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => {
                 setShowTambah(false);
                 setForm({ namaPekerjaan: "", targetSelesai: "", lokasi: "", id_unit: "", id_divisi: [], nomorSurat: "", perihalSurat: "", file: null });
               }}>Batal</button>
@@ -822,55 +825,55 @@ export default function PekerjaanPage() {
 
       {/* ─── MODAL EDIT PEKERJAAN ─── */}
       {showEdit && (
-        <div className="modal-overlay">
-          <div className="modal-box">
+        <div className="fixed inset-0 flex items-center justify-center bg-[rgba(11,30,75,0.50)] z-[9999] p-5 backdrop-blur-[5px] [animation:overlayIn_var(--dur-base)_var(--ease)]">
+          <div className="overflow-y-auto bg-[var(--surface)] rounded-[var(--r-xl)] p-7 w-full max-w-[520px] max-h-[90vh] shadow-[var(--shadow-xl)] border border-[var(--border-soft)] [animation:modalIn_var(--dur-slow)_var(--ease)] [&>h2]:m-0 [&>h2]:font-bold [&>h2]:text-[17px] [&>h2]:text-[var(--navy-900)] [&>h2]:mb-[18px] [&>h2]:pb-[14px] [&>h2]:border-b [&>h2]:border-[var(--border-soft)]">
             <h2>Edit Pekerjaan</h2>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Nama Pekerjaan *</label>
               <input value={editForm.namaPekerjaan} onChange={(e) => setEditForm({ ...editForm, namaPekerjaan: e.target.value })} placeholder="Nama pekerjaan" />
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Unit Peminta *</label>
               <select value={editForm.id_unit} onChange={(e) => setEditForm({ ...editForm, id_unit: e.target.value })}>
                 <option value="">-- Pilih Unit Peminta --</option>
                 {unitKerjaList.map((u) => <option key={u.id_unit} value={u.id_unit}>{u.nama_unit}</option>)}
               </select>
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Lokasi *</label>
               <textarea value={editForm.lokasi} onChange={(e) => setEditForm({ ...editForm, lokasi: e.target.value })} rows={2} />
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Target Selesai *</label>
               <input type="date" value={editForm.targetSelesai} onChange={(e) => setEditForm({ ...editForm, targetSelesai: e.target.value })} />
             </div>
-            <div className="form-divider">Surat Masuk</div>
-            <div className="form-group">
+            <div className="flex items-center uppercase font-bold gap-2 text-[10px] tracking-[0.8px] text-[var(--navy-700)] my-2 mb-4 px-3 py-[7px] bg-[var(--navy-50)] rounded-lg border-l-[3px] border-[var(--navy-600)]">Surat Masuk</div>
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Nomor Surat Masuk *</label>
               <input value={editForm.nomorSurat} onChange={(e) => setEditForm({ ...editForm, nomorSurat: e.target.value })} />
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Perihal Surat Masuk *</label>
               <textarea value={editForm.perihalSurat} onChange={(e) => setEditForm({ ...editForm, perihalSurat: e.target.value })} rows={2} />
             </div>
-            <div className="form-group">
-              <label>Ganti Dokumen Surat Masuk (PDF) <span className="text-muted text-small">— biarkan kosong untuk tetap gunakan file saat ini</span></label>
-              <div className="file-upload-area">
-                <input ref={editFileInputRef} type="file" accept="application/pdf" id="edit-pekerjaan-file" className="hidden-input" onChange={handleEditFile} />
-                <label htmlFor="edit-pekerjaan-file" className="file-upload-btn">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
+              <label>Ganti Dokumen Surat Masuk (PDF) <span className="text-[var(--text-muted)] text-[12px]">— biarkan kosong untuk tetap gunakan file saat ini</span></label>
+              <div className="flex flex-col gap-[7px]">
+                <input ref={editFileInputRef} type="file" accept="application/pdf" id="edit-pekerjaan-file" className="hidden" onChange={handleEditFile} />
+                <label htmlFor="edit-pekerjaan-file" className="inline-flex items-center cursor-pointer font-semibold gap-[7px] px-[16px] py-[9px] border-[1.5px] border-dashed border-[var(--navy-500)] rounded-[var(--r-md)] bg-[var(--navy-50)] text-[var(--navy-700)] text-[13px] transition-all w-fit hover:bg-[var(--navy-100)] hover:border-[var(--navy-700)]">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path d="M8 2v8M4 6l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                   {editForm.file ? "Ganti File" : "Pilih File PDF Baru"}
                 </label>
-                {editForm.file && <div className="file-upload-preview"><span>{editForm.file.name}</span></div>}
-                {!editForm.file && showEdit.suratMasuk && <div className="file-upload-preview"><span>{showEdit.suratMasuk}</span><span className="file-size-label text-muted">File saat ini</span></div>}
+                {editForm.file && <div className="flex items-center font-semibold gap-[6px] px-[10px] py-[6px] bg-[#EEF5FF] border border-[#C9DEFF] rounded-[var(--r-sm)] text-[12px] text-[#1A3E8A] [&_span]:break-all"><span>{editForm.file.name}</span></div>}
+                {!editForm.file && showEdit.suratMasuk && <div className="flex items-center font-semibold gap-[6px] px-[10px] py-[6px] bg-[#EEF5FF] border border-[#C9DEFF] rounded-[var(--r-sm)] text-[12px] text-[#1A3E8A] [&_span]:break-all"><span>{showEdit.suratMasuk}</span><span className="ml-auto whitespace-nowrap text-[10px] text-[var(--text-muted)] font-medium">File saat ini</span></div>}
               </div>
             </div>
-            <div className="modal-actions">
-              <button type="button" onClick={handleSaveEdit}>Simpan Perubahan</button>
-              <button type="button" className="btn-secondary" onClick={() => setShowEdit(null)}>Batal</button>
+            <div className="flex flex-wrap items-center gap-2 mt-5 pt-[14px] border-t border-[var(--border-soft)]">
+              <button type="button" className={`${TW_BTN} bg-[#0B1E4B] text-white shadow-[0_2px_8px_rgba(11,30,75,0.22)] hover:bg-[#0F2150] hover:-translate-y-px`} onClick={handleSaveEdit}>Simpan Perubahan</button>
+              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[14px] py-[7px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[12px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => setShowEdit(null)}>Batal</button>
             </div>
           </div>
         </div>
@@ -878,14 +881,14 @@ export default function PekerjaanPage() {
 
       {/* ─── MODAL BUAT / EDIT PREVIEW SURAT TUGAS ─── */}
       {showSuratModal && (
-        <div className="modal-overlay">
-          <div className="modal-box modal-wide">
+        <div className="fixed inset-0 flex items-center justify-center bg-[rgba(11,30,75,0.50)] z-[9999] p-5 backdrop-blur-[5px] [animation:overlayIn_var(--dur-base)_var(--ease)]">
+          <div className="overflow-y-auto bg-[var(--surface)] rounded-[var(--r-xl)] p-7 w-full max-w-[840px] max-h-[90vh] shadow-[var(--shadow-xl)] border border-[var(--border-soft)] [animation:modalIn_var(--dur-slow)_var(--ease)] [&>h2]:m-0 [&>h2]:font-bold [&>h2]:text-[17px] [&>h2]:text-[var(--navy-900)] [&>h2]:mb-[18px] [&>h2]:pb-[14px] [&>h2]:border-b [&>h2]:border-[var(--border-soft)]">
             <h2>{showSuratModal.mode === "buat" ? "Buat Preview Surat Tugas" : "Edit Preview Surat Tugas"}</h2>
-            <p className="text-muted text-small mb-4">
+            <p className="text-[var(--text-muted)] text-[12px] mb-4">
               Preview akan bisa dilihat Kadiv dan Kepala UPA sebelum di-Publish. PDF Preview memiliki watermark PREVIEW.
             </p>
             {/* Info otomatis dari data pekerjaan */}
-            <div className="notice-card notice-blue mb-4 text-small">
+            <div className="mb-4 text-[12px] bg-[#EEF5FF] border border-[#C9DEFF] text-[var(--navy-800)] rounded-[var(--r-lg)] p-4 [&_p]:m-0">
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <tbody>
                   <tr><td style={{ color: "var(--text-muted)", width: 160, paddingBottom: 4 }}>Unit Peminta</td><td>: {showSuratModal.item.unitPeminta}</td></tr>
@@ -894,40 +897,40 @@ export default function PekerjaanPage() {
                 </tbody>
               </table>
             </div>
-            <div className="split-grid">
-              <div className="form-group">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
                 <label>Nomor Surat Tugas *</label>
                 <input value={suratForm.nomorSurat} onChange={(e) => setSuratForm({ ...suratForm, nomorSurat: e.target.value })} placeholder="Contoh: 001/UN26.TIK/ST.PEK/2026" />
               </div>
-              <div className="form-group">
+              <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
                 <label>Tanggal Surat *</label>
                 <input type="date" value={suratForm.tanggalSuratKeluar} onChange={(e) => setSuratForm({ ...suratForm, tanggalSuratKeluar: e.target.value })} />
               </div>
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Tujuan Penugasan *</label>
               <input value={suratForm.tujuan} onChange={(e) => setSuratForm({ ...suratForm, tujuan: e.target.value })} placeholder="Contoh: Melaksanakan perbaikan dan pemasangan jaringan wifi di ruang dosen" />
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Tanggal Pelaksanaan *</label>
               <input type="date" value={suratForm.tanggalPelaksanaan} onChange={(e) => setSuratForm({ ...suratForm, tanggalPelaksanaan: e.target.value })} />
             </div>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Lokasi Surat Dibuat *</label>
               <input value={suratForm.lokasiPembuatan} onChange={(e) => setSuratForm({ ...suratForm, lokasiPembuatan: e.target.value })} placeholder="Contoh: Bandar Lampung" />
             </div>
-            <div className="notice-card notice-info text-small">
-              <div className="notice-card-title">Staf yang masuk surat tugas:</div>
+            <div className="text-[12px] bg-[#EEF5FF] border border-[#BFD4FF] text-[var(--navy-800)] rounded-[var(--r-lg)] p-4 [&_p]:m-0">
+              <div className="font-bold text-[13px] mb-1">Staf yang masuk surat tugas:</div>
               {showSuratModal.item.assignees.filter(a => a.masukSurat !== false && a.statusKonfirmasi !== "rejected").map((a, i) => (
                 <div key={i}>{i + 1}. {a.nama} — NIP: {a.nip}</div>
               ))}
               {showSuratModal.item.assignees.filter(a => a.masukSurat !== false && a.statusKonfirmasi !== "rejected").length === 0 && (
-                <div className="text-muted">Belum ada staf yang dipilih untuk surat tugas. Lakukan Disposisi terlebih dahulu.</div>
+                <div className="text-[var(--text-muted)] text-[12px]">Belum ada staf yang dipilih untuk surat tugas. Lakukan Disposisi terlebih dahulu.</div>
               )}
             </div>
-            <div className="modal-actions">
-              <button type="button" className="btn-edit" onClick={handleSimpanPreview}>Simpan Preview</button>
-              <button type="button" className="btn-secondary" onClick={() => setShowSuratModal(null)}>Batal</button>
+            <div className="flex flex-wrap items-center gap-2 mt-5 pt-[14px] border-t border-[var(--border-soft)]">
+              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[16px] py-[8px] border-none rounded-[var(--r-sm)] bg-[#0EA5E9] text-white text-[12px] shadow-[0_2px_8px_rgba(14,165,233,0.28)] transition-all hover:bg-[#0284C7] hover:-translate-y-px" onClick={handleSimpanPreview}>Simpan Preview</button>
+              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[14px] py-[7px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[12px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => setShowSuratModal(null)}>Batal</button>
             </div>
           </div>
         </div>
@@ -935,17 +938,17 @@ export default function PekerjaanPage() {
 
       {/* ─── POP-UP KONFIRMASI PUBLISH ─── */}
       {showPublishKonfirm && (
-        <div className="modal-overlay">
-          <div className="modal-box">
+        <div className="fixed inset-0 flex items-center justify-center bg-[rgba(11,30,75,0.50)] z-[9999] p-5 backdrop-blur-[5px] [animation:overlayIn_var(--dur-base)_var(--ease)]">
+          <div className="overflow-y-auto bg-[var(--surface)] rounded-[var(--r-xl)] p-7 w-full max-w-[520px] max-h-[90vh] shadow-[var(--shadow-xl)] border border-[var(--border-soft)] [animation:modalIn_var(--dur-slow)_var(--ease)] [&>h2]:m-0 [&>h2]:font-bold [&>h2]:text-[17px] [&>h2]:text-[var(--navy-900)] [&>h2]:mb-[18px] [&>h2]:pb-[14px] [&>h2]:border-b [&>h2]:border-[var(--border-soft)]">
             <h2>Konfirmasi Publish Surat Tugas</h2>
-            <p className="text-muted mt-4">Surat tugas akan diterbitkan sebagai dokumen final.</p>
-            <div className="notice-card notice-warning mt-4">
+            <p className="text-[var(--text-muted)] text-[12px] mt-4">Surat tugas akan diterbitkan sebagai dokumen final.</p>
+            <div className="mt-4 bg-[#FEFBF0] border border-[#FAE8A0] rounded-[var(--r-lg)] p-4 [&_p]:m-0">
               Setelah dipublish, data surat tugas <strong>tidak dapat diedit lagi</strong>.<br/>
               Pastikan nomor surat, tanggal, lokasi, tujuan, dan daftar staf sudah benar.
             </div>
-            <div className="modal-actions">
-              <button type="button" className="btn-edit" onClick={handlePublish}>Ya, Publish</button>
-              <button type="button" className="btn-secondary" onClick={() => setShowPublishKonfirm(null)}>Batal</button>
+            <div className="flex flex-wrap items-center gap-2 mt-5 pt-[14px] border-t border-[var(--border-soft)]">
+              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[16px] py-[8px] border-none rounded-[var(--r-sm)] bg-[#0EA5E9] text-white text-[12px] shadow-[0_2px_8px_rgba(14,165,233,0.28)] transition-all hover:bg-[#0284C7] hover:-translate-y-px" onClick={handlePublish}>Ya, Publish</button>
+              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[14px] py-[7px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[12px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => setShowPublishKonfirm(null)}>Batal</button>
             </div>
           </div>
         </div>
@@ -963,24 +966,24 @@ export default function PekerjaanPage() {
 
       {/* ─── MODAL TOLAK ─── */}
       {showTolakModal && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <h2 className="text-danger">Tolak Penugasan</h2>
+        <div className="fixed inset-0 flex items-center justify-center bg-[rgba(11,30,75,0.50)] z-[9999] p-5 backdrop-blur-[5px] [animation:overlayIn_var(--dur-base)_var(--ease)]">
+          <div className="overflow-y-auto bg-[var(--surface)] rounded-[var(--r-xl)] p-7 w-full max-w-[520px] max-h-[90vh] shadow-[var(--shadow-xl)] border border-[var(--border-soft)] [animation:modalIn_var(--dur-slow)_var(--ease)] [&>h2]:m-0 [&>h2]:font-bold [&>h2]:text-[17px] [&>h2]:text-[var(--navy-900)] [&>h2]:mb-[18px] [&>h2]:pb-[14px] [&>h2]:border-b [&>h2]:border-[var(--border-soft)]">
+            <h2 className="text-[var(--danger-600)]">Tolak Penugasan</h2>
             <p className="mt-4 text-muted">
               Anda menolak penugasan: <strong>{showTolakModal.namaPekerjaan}</strong>
             </p>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Alasan Penolakan *</label>
               <textarea value={alasanTolak} onChange={(e) => setAlasanTolak(e.target.value)}
                 placeholder="Contoh: sedang sakit, kecelakaan, bentrok jadwal, dll."
-                rows={4} className="no-resize" />
-              <div className="micro-text mt-4">
+                rows={4} className="resize-none" />
+              <div className="text-[11px] text-[var(--text-muted)] mt-4">
                 Alasan ini akan dilihat oleh Kepala Divisi untuk melakukan penugasan ulang.
               </div>
             </div>
-            <div className="modal-actions">
-              <button type="button" className="btn-delete" onClick={handleTolak}>Kirim Penolakan</button>
-              <button type="button" className="btn-secondary" onClick={() => setShowTolakModal(null)}>Batal</button>
+            <div className="flex flex-wrap items-center gap-2 mt-5 pt-[14px] border-t border-[var(--border-soft)]">
+              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[16px] py-[8px] border-none rounded-[var(--r-sm)] bg-[#DC2626] text-white text-[12px] shadow-[0_2px_8px_rgba(220,38,38,0.28)] transition-all hover:bg-[#B91C1C] hover:-translate-y-px" onClick={handleTolak}>Kirim Penolakan</button>
+              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[14px] py-[7px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[12px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => setShowTolakModal(null)}>Batal</button>
             </div>
           </div>
         </div>
@@ -1110,9 +1113,9 @@ function DisposisiModal({
     nama.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase();
 
   const statusBadge = (a: Assignee) => {
-    if (a.statusKonfirmasi === "accepted") return <span className="badge badge-cyan">Diterima</span>;
-    if (a.statusKonfirmasi === "rejected") return <span className="badge badge-red">Ditolak</span>;
-    return <span className="badge badge-purple">Menunggu</span>;
+    if (a.statusKonfirmasi === "accepted") return <span className={STATUS_BADGE.accepted}>Diterima</span>;
+    if (a.statusKonfirmasi === "rejected") return <span className={STATUS_BADGE.rejected}>Ditolak</span>;
+    return <span className={STATUS_BADGE.assigned}>Menunggu</span>;
   };
 
   const q = search.toLowerCase();
@@ -1133,15 +1136,15 @@ function DisposisiModal({
   const selectedEntries = Object.keys(selectedMap).map(id => ({ id, ...selectedMap[id], staf: allStaf.find((s: any) => (s.uuid ?? s.id) === id)! })).filter(e => e.staf);
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-box modal-wide">
+    <div className="fixed inset-0 flex items-center justify-center bg-[rgba(11,30,75,0.50)] z-[9999] p-5 backdrop-blur-[5px] [animation:overlayIn_var(--dur-base)_var(--ease)]">
+      <div className="overflow-y-auto bg-[var(--surface)] rounded-[var(--r-xl)] p-7 w-full max-w-[840px] max-h-[90vh] shadow-[var(--shadow-xl)] border border-[var(--border-soft)] [animation:modalIn_var(--dur-slow)_var(--ease)] [&>h2]:m-0 [&>h2]:font-bold [&>h2]:text-[17px] [&>h2]:text-[var(--navy-900)] [&>h2]:mb-[18px] [&>h2]:pb-[14px] [&>h2]:border-b [&>h2]:border-[var(--border-soft)]">
         <h2>{isReassign ? "Penugasan Ulang" : "Disposisi Staf"}</h2>
-        <div className="form-group"><label>Pekerjaan</label><input readOnly value={pekerjaan.namaPekerjaan} /></div>
+        <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]"><label>Pekerjaan</label><input readOnly value={pekerjaan.namaPekerjaan} /></div>
 
         {/* ── Initial disposisi: dropdown + summary + table ── */}
         {!isReassign && (
           <>
-            <div className="form-group">
+            <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
               <label>Pilih Staf *</label>
               <div>
                 <input
@@ -1151,15 +1154,15 @@ function DisposisiModal({
                   onChange={e => { setSearch(e.target.value); setPendingStafId(""); setDropdownOpen(true); }}
                   onFocus={() => setDropdownOpen(true)}
                   onBlur={() => setTimeout(() => setDropdownOpen(false), 180)}
-                  style={{ width: "100%" }}
+                  className="w-full outline-none px-[13px] py-[10px] border border-[var(--border)] rounded-[var(--r-sm)] text-[13px] text-[var(--text)] bg-[var(--surface)] focus:border-[var(--navy-600)] focus:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]"
                 />
                 {dropdownOpen && (
-                  <div className="disposisi-dropdown" style={{ position: "static", marginTop: 4 }}>
+                  <div className="absolute overflow-y-auto top-[calc(100%+4px)] left-0 right-0 z-[9999] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] shadow-[0_8px_24px_rgba(11,30,75,0.15)] max-h-[320px]" style={{ position: "static", marginTop: 4 }}>
                     {filteredStaf.filter((s: any) => !selectedMap[s.uuid ?? s.id]).map((s: any) => {
                       const sid = s.uuid ?? s.id;
                       const snama = s.nama_lengkap ?? s.nama ?? "";
                       return (
-                      <div key={sid} className="disposisi-option"
+                      <div key={sid} className="cursor-pointer flex flex-col px-[13px] py-[10px] border-b border-[var(--border-soft)] transition-all gap-0.5 hover:bg-[var(--navy-50)] last:border-b-0"
                         onMouseDown={e => { e.preventDefault(); setPendingStafId(sid); setSearch(snama); setDropdownOpen(false); }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy-100)", color: "var(--navy-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
@@ -1167,7 +1170,7 @@ function DisposisiModal({
                           </div>
                           <div>
                             <div className="font-semibold text-small">{snama}</div>
-                            <div className="text-muted text-xsmall">{s.NIP ?? s.nip} · {s.divisi?.nama_divisi ?? s.divisi ?? ""}</div>
+                            <div className="text-[var(--text-muted)] text-[11px]">{s.NIP ?? s.nip} · {s.divisi?.nama_divisi ?? s.divisi ?? ""}</div>
                           </div>
                         </div>
                       </div>
@@ -1191,7 +1194,7 @@ function DisposisiModal({
                     <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{(pendingStaf as any).peran ?? (pendingStaf as any).jabatan}</div>
                     <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{(pendingStaf as any).divisi?.nama_divisi ?? (pendingStaf as any).divisi ?? ""} · NIP: {(pendingStaf as any).NIP ?? (pendingStaf as any).nip}</div>
                   </div>
-                  <button type="button" className="btn-edit btn-sm" style={{ flexShrink: 0 }} onClick={handleAddStaf}>
+                  <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#0EA5E9] text-white text-[11px] shadow-[0_2px_8px_rgba(14,165,233,0.28)] transition-all hover:bg-[#0284C7] hover:-translate-y-px" style={{ flexShrink: 0 }} onClick={handleAddStaf}>
                     + Tambah ke Daftar
                   </button>
                 </div>
@@ -1200,36 +1203,36 @@ function DisposisiModal({
 
             {/* Tabel ringkasan staf yang sudah ditambahkan */}
             {selectedEntries.length > 0 && (
-              <div className="form-group">
+              <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
                 <label>Daftar Staf Ditugaskan ({selectedEntries.length})</label>
-                <div className="table-wrap">
-                  <table className="table">
+                <div className="overflow-x-auto min-w-0 w-full mt-1 mb-5 bg-[var(--surface)] rounded-[var(--r-xl)] border border-[var(--border-soft)] shadow-[var(--shadow-xs)]">
+                  <table className="w-full border-collapse min-w-[720px] [&_th]:text-left [&_th]:uppercase [&_th]:whitespace-nowrap [&_th]:px-[14px] [&_th]:py-[12px] [&_th]:bg-[var(--surface-alt)] [&_th]:text-[var(--text-muted)] [&_th]:text-[10px] [&_th]:font-bold [&_th]:tracking-[0.5px] [&_th]:border-b [&_th]:border-[var(--border-soft)] [&_td]:whitespace-nowrap [&_td]:text-left [&_td]:align-middle [&_td]:px-[14px] [&_td]:py-[12px] [&_td]:border-b [&_td]:border-[rgba(221,227,239,0.6)] [&_td]:text-[13px] [&_td]:text-[var(--text)] [&_tbody_tr:last-child_td]:border-b-0 [&_tbody_tr:hover_td]:bg-[rgba(41,80,168,0.03)]">
                     <thead>
                       <tr>
                         <th>No</th>
                         <th>Nama</th>
                         <th>NIP</th>
                         <th>Divisi / Jabatan</th>
-                        <th className="th-center">Masuk Surat Tugas</th>
-                        <th className="th-center">Hapus</th>
+                        <th className="text-center">Masuk Surat Tugas</th>
+                        <th className="text-center">Hapus</th>
                       </tr>
                     </thead>
                     <tbody>
                       {selectedEntries.map((e, i) => (
                         <tr key={e.id}>
-                          <td className="td-center text-small">{i + 1}</td>
+                          <td className="text-center text-[12px]">{i + 1}</td>
                           <td><strong>{(e.staf as any).nama_lengkap ?? (e.staf as any).nama}</strong></td>
-                          <td className="text-small">{(e.staf as any).NIP ?? (e.staf as any).nip}</td>
-                          <td className="text-small">{(e.staf as any).divisi?.nama_divisi ?? (e.staf as any).divisi ?? ""}</td>
-                          <td className="td-center">
+                          <td className="text-[12px]">{(e.staf as any).NIP ?? (e.staf as any).nip}</td>
+                          <td className="text-[12px]">{(e.staf as any).divisi?.nama_divisi ?? (e.staf as any).divisi ?? ""}</td>
+                          <td className="text-center">
                             <input
                               type="checkbox"
                               checked={e.masukSurat !== false}
                               onChange={() => setSelectedMap(prev => ({ ...prev, [e.id]: { masukSurat: !prev[e.id]?.masukSurat } }))}
                             />
                           </td>
-                          <td className="td-center">
-                            <button type="button" className="btn-delete btn-icon-sm" title="Hapus"
+                          <td className="text-center">
+                            <button type="button" className="inline-flex items-center justify-center cursor-pointer shrink-0 w-[28px] h-[28px] p-0 border-none rounded-[var(--r-sm)] bg-[#DC2626] text-white shadow-[0_1px_4px_rgba(220,38,38,0.25)] transition-all hover:bg-[#B91C1C] hover:-translate-y-px" title="Hapus"
                               onClick={() => setSelectedMap(prev => { const n = { ...prev }; delete n[e.id]; return n; })}>
                               <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                             </button>
@@ -1246,7 +1249,7 @@ function DisposisiModal({
 
         {/* ── Penugasan Ulang: card list ── */}
         {isReassign && (
-          <div className="form-group">
+          <div className="flex flex-col gap-[5px] mb-4 [&>label]:uppercase [&>label]:font-bold [&>label]:text-[12px] [&>label]:text-[var(--text)] [&>label]:tracking-[0.4px] [&>input]:w-full [&>input]:outline-none [&>input]:px-[13px] [&>input]:py-[10px] [&>input]:border [&>input]:border-[var(--border)] [&>input]:rounded-[var(--r-sm)] [&>input]:text-[13px] [&>input]:text-[var(--text)] [&>input]:bg-[var(--surface)] [&>input:focus]:border-[var(--navy-600)] [&>input:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>input[readonly]]:bg-[var(--surface-alt)] [&>input[readonly]]:cursor-default [&>textarea]:w-full [&>textarea]:outline-none [&>textarea]:px-[13px] [&>textarea]:py-[10px] [&>textarea]:border [&>textarea]:border-[var(--border)] [&>textarea]:rounded-[var(--r-sm)] [&>textarea]:text-[13px] [&>textarea]:text-[var(--text)] [&>textarea]:bg-[var(--surface)] [&>textarea]:resize-y [&>textarea]:min-h-[80px] [&>textarea:focus]:border-[var(--navy-600)] [&>textarea:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)] [&>select]:w-full [&>select]:outline-none [&>select]:px-[13px] [&>select]:py-[10px] [&>select]:border [&>select]:border-[var(--border)] [&>select]:rounded-[var(--r-sm)] [&>select]:text-[13px] [&>select]:text-[var(--text)] [&>select]:bg-[var(--surface)] [&>select:focus]:border-[var(--navy-600)] [&>select:focus]:shadow-[0_0_0_3px_rgba(41,80,168,0.10)]">
             <label>Staf Saat Ini</label>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {pekerjaan.assignees.map((a, i) => {
@@ -1265,7 +1268,7 @@ function DisposisiModal({
                         <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                           <span style={{ fontWeight: 700, fontSize: 13 }}>{a.nama}</span>
                           {statusBadge(a)}
-                          {isRemoved && <span className="badge badge-red">Akan Dihapus</span>}
+                          {isRemoved && <span className={STATUS_BADGE.rejected}>Akan Dihapus</span>}
                         </div>
                         <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{a.nip} · {a.divisi}</div>
                         {a.statusKonfirmasi === "rejected" && a.alasanPenolakan && (
@@ -1273,24 +1276,24 @@ function DisposisiModal({
                         )}
                       </div>
                       <div style={{ display: "flex", gap: 5, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                        {a.statusKonfirmasi === "accepted" && <span className="text-xsmall text-muted" style={{ alignSelf: "center" }}>Terkunci</span>}
+                        {a.statusKonfirmasi === "accepted" && <span className="text-[11px] text-[var(--text-muted)]" style={{ alignSelf: "center" }}>Terkunci</span>}
                         {a.statusKonfirmasi === "pending" && ea.action === "keep" && (
-                          <button type="button" className="btn-delete btn-sm" onClick={() => updateExisting(i, { action: "remove" })}>Hapus</button>
+                          <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#DC2626] text-white text-[11px] shadow-[0_2px_8px_rgba(220,38,38,0.28)] transition-all hover:bg-[#B91C1C] hover:-translate-y-px" onClick={() => updateExisting(i, { action: "remove" })}>Hapus</button>
                         )}
                         {a.statusKonfirmasi === "pending" && ea.action === "remove" && (
-                          <button type="button" className="btn-secondary btn-sm" onClick={() => updateExisting(i, { action: "keep" })}>Batalkan</button>
+                          <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[12px] py-[6px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[11px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => updateExisting(i, { action: "keep" })}>Batalkan</button>
                         )}
                         {a.statusKonfirmasi === "rejected" && ea.action === "keep" && (
                           <>
-                            <button type="button" className="btn-edit btn-sm" onClick={() => updateExisting(i, { action: "replace" })}>Ganti</button>
-                            <button type="button" className="btn-delete btn-sm" onClick={() => updateExisting(i, { action: "remove" })}>Hapus</button>
+                            <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#0EA5E9] text-white text-[11px] shadow-[0_2px_8px_rgba(14,165,233,0.28)] transition-all hover:bg-[#0284C7] hover:-translate-y-px" onClick={() => updateExisting(i, { action: "replace" })}>Ganti</button>
+                            <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#DC2626] text-white text-[11px] shadow-[0_2px_8px_rgba(220,38,38,0.28)] transition-all hover:bg-[#B91C1C] hover:-translate-y-px" onClick={() => updateExisting(i, { action: "remove" })}>Hapus</button>
                           </>
                         )}
                         {a.statusKonfirmasi === "rejected" && ea.action === "remove" && (
-                          <button type="button" className="btn-secondary btn-sm" onClick={() => updateExisting(i, { action: "keep" })}>Batalkan</button>
+                          <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[12px] py-[6px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[11px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => updateExisting(i, { action: "keep" })}>Batalkan</button>
                         )}
                         {isReplacing && (
-                          <button type="button" className="btn-secondary btn-sm" onClick={() => updateExisting(i, { action: "keep", replacementId: "", replacementSearch: "" })}>Batal</button>
+                          <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[12px] py-[6px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[11px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={() => updateExisting(i, { action: "keep", replacementId: "", replacementSearch: "" })}>Batal</button>
                         )}
                       </div>
                     </div>
@@ -1307,7 +1310,7 @@ function DisposisiModal({
                             style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box" }}
                           />
                           {(ea.replacementOpen || (!!ea.replacementSearch && !ea.replacementId)) && (
-                            <div className="disposisi-dropdown" style={{ position: "static", marginTop: 4 }}>
+                            <div className="absolute overflow-y-auto top-[calc(100%+4px)] left-0 right-0 z-[9999] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] shadow-[0_8px_24px_rgba(11,30,75,0.15)] max-h-[320px]" style={{ position: "static", marginTop: 4 }}>
                               {allStaf.filter((s: any) => {
                                 const sid = s.uuid ?? s.id;
                                 const snama = (s.nama_lengkap ?? s.nama ?? "").toLowerCase();
@@ -1320,10 +1323,10 @@ function DisposisiModal({
                                 const sid = s.uuid ?? s.id;
                                 const snama = s.nama_lengkap ?? s.nama ?? "";
                                 return (
-                                <div key={sid} className="disposisi-option"
+                                <div key={sid} className="cursor-pointer flex flex-col px-[13px] py-[10px] border-b border-[var(--border-soft)] transition-all gap-0.5 hover:bg-[var(--navy-50)] last:border-b-0"
                                   onMouseDown={e => { e.preventDefault(); updateExisting(i, { replacementId: sid, replacementSearch: snama, replacementOpen: false }); }}>
                                   <div className="font-semibold text-small">{snama}</div>
-                                  <div className="text-muted text-xsmall">{s.NIP ?? s.nip} · {s.divisi?.nama_divisi ?? s.divisi ?? ""}</div>
+                                  <div className="text-[var(--text-muted)] text-[11px]">{s.NIP ?? s.nip} · {s.divisi?.nama_divisi ?? s.divisi ?? ""}</div>
                                 </div>
                                 );
                               })}
@@ -1361,7 +1364,7 @@ function DisposisiModal({
                   <div key={r.uid} style={{ border: "1.5px dashed var(--navy-200)", borderRadius: 10, padding: "12px 14px", background: "var(--navy-50)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: "var(--navy-700)" }}>Staf Tambahan</span>
-                      <button type="button" className="btn-delete btn-sm" onClick={() => removeAddRow(r.uid)}>Hapus</button>
+                      <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[12px] py-[6px] border-none rounded-[var(--r-sm)] bg-[#DC2626] text-white text-[11px] shadow-[0_2px_8px_rgba(220,38,38,0.28)] transition-all hover:bg-[#B91C1C] hover:-translate-y-px" onClick={() => removeAddRow(r.uid)}>Hapus</button>
                     </div>
                     <div style={{ position: "relative" }}>
                       <input
@@ -1373,7 +1376,7 @@ function DisposisiModal({
                         style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--border)", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box" }}
                       />
                       {(r.open || (!!r.search && !r.stafId)) && (
-                        <div className="disposisi-dropdown" style={{ position: "static", marginTop: 4 }}>
+                        <div className="absolute overflow-y-auto top-[calc(100%+4px)] left-0 right-0 z-[9999] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] shadow-[0_8px_24px_rgba(11,30,75,0.15)] max-h-[320px]" style={{ position: "static", marginTop: 4 }}>
                           {allStaf.filter((s: any) => {
                             const sid = s.uuid ?? s.id;
                             const snama = (s.nama_lengkap ?? s.nama ?? "").toLowerCase();
@@ -1384,9 +1387,9 @@ function DisposisiModal({
                             const sid = s.uuid ?? s.id;
                             const snama = s.nama_lengkap ?? s.nama ?? "";
                             return (
-                            <div key={sid} className="disposisi-option" onMouseDown={e => { e.preventDefault(); updateAddRow(r.uid, { stafId: sid, search: snama, open: false }); }}>
+                            <div key={sid} className="cursor-pointer flex flex-col px-[13px] py-[10px] border-b border-[var(--border-soft)] transition-all gap-0.5 hover:bg-[var(--navy-50)] last:border-b-0" onMouseDown={e => { e.preventDefault(); updateAddRow(r.uid, { stafId: sid, search: snama, open: false }); }}>
                               <div className="font-semibold text-small">{snama}</div>
-                              <div className="text-muted text-xsmall">{s.NIP ?? s.nip} · {s.divisi?.nama_divisi ?? s.divisi ?? ""}</div>
+                              <div className="text-[var(--text-muted)] text-[11px]">{s.NIP ?? s.nip} · {s.divisi?.nama_divisi ?? s.divisi ?? ""}</div>
                             </div>
                             );
                           })}
@@ -1409,21 +1412,35 @@ function DisposisiModal({
                   </div>
                 );
               })}
-              <button type="button" className="btn-secondary btn-sm" style={{ alignSelf: "flex-start" }} onClick={addNewRow}>+ Tambah Staf Lain</button>
+              <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[12px] py-[6px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[11px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" style={{ alignSelf: "flex-start" }} onClick={addNewRow}>+ Tambah Staf Lain</button>
             </div>
-            <div className="micro-text mt-2">Staf "Terkunci" (sudah Diterima) tidak dapat diubah.</div>
+            <div className="text-[11px] text-[var(--text-muted)] mt-2">Staf "Terkunci" (sudah Diterima) tidak dapat diubah.</div>
           </div>
         )}
 
-        <div className="modal-actions">
-          <button type="button" onClick={handleSave} disabled={
-            isReassign
-              ? existingActions.every(ea => ea.action === "remove") && addRows.every(r => !r.stafId)
-              : Object.keys(selectedMap).length === 0
-          }>
+        <div className="flex flex-wrap items-center gap-3 mt-5 pt-[14px] border-t border-[var(--border-soft)]">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={
+              isReassign
+                ? existingActions.every(ea => ea.action === "remove") && addRows.every(r => !r.stafId)
+                : Object.keys(selectedMap).length === 0
+            }
+            className="inline-flex items-center justify-center gap-[6px] px-[20px] py-[9px] rounded-[var(--r-sm)] bg-[#0B1E4B] text-white text-[13px] font-semibold cursor-pointer border-none shadow-[0_2px_8px_rgba(11,30,75,0.25)] transition-all hover:bg-[#0F2150] hover:-translate-y-px active:translate-y-0 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 7.5L5.5 11L12 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
             {isReassign ? "Simpan Penugasan Ulang" : "Simpan Disposisi"}
           </button>
-          <button type="button" className="btn-secondary" onClick={onClose}>Batal</button>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-[6px] px-[18px] py-[9px] rounded-[var(--r-sm)] bg-transparent text-[#64748B] text-[13px] font-semibold cursor-pointer border border-[1.5px] border-[#CBD5E1] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]"
+            onClick={onClose}
+          >
+            Batal
+          </button>
         </div>
       </div>
     </div>

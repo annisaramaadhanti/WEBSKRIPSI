@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git -C \"d:/FOLDER SKRIPSI FIKS/WEB_SKRIPSI_BISMILLAH\" remote -v)"
+      "Bash(git -C \"d:/FOLDER SKRIPSI FIKS/WEB_SKRIPSI_BISMILLAH\" remote -v)",
+      "Bash(grep -v \"//.*className\")",
+      "Bash(grep -oP 'className=\\\\{?[\"'\\\\''`][^\"'\\\\''`]*[\"'\\\\''`]')",
+      "Bash(grep -oP '\\(?<=[\"'\\\\''`]\\)[^\"'\\\\''`]+\\(?=[\"'\\\\''`]\\)')",
+      "Bash(grep -v '^\\\\$\\\\{')"
     ]
   }
 }

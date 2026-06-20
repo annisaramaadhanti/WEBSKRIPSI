@@ -40,10 +40,10 @@ export default function StatusPieChart() {
   const total = chartData.reduce((s, d) => s + d.value, 0);
 
   return (
-    <div className="card">
-      <div className="section-header">
-        <h3>Status Pekerjaan & Proyek</h3>
-        <p>Distribusi status seluruh item.</p>
+    <div className="bg-white border border-[#E8ECF4] rounded-[20px] p-[22px] shadow-[0_4px_12px_rgba(11,30,75,0.09)]">
+      <div className="flex flex-col gap-1 pb-3 mb-4 border-b border-[#E8ECF4]">
+        <h3 className="m-0 font-bold text-[16px] text-[#0B1E4B]">Status Pekerjaan & Proyek</h3>
+        <p className="m-0 text-[12px] text-[#8A95A3]">Distribusi status seluruh item.</p>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 24 }}>

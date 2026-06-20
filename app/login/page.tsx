@@ -1,8 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { useRole } from "@/components/providers/RoleProvider";
 import { USERS } from "@/lib/data";
 import { getMasterPengguna } from "@/lib/api";
@@ -13,6 +12,13 @@ const PERAN_TO_ROLE: Record<string, Role> = {
   "Operator": "operator",
   "Kepala Divisi": "kepala-divisi",
   "Staf": "staf",
+};
+
+const AV_CLS: Record<string, string> = {
+  upa:   "bg-[#EEF5FF] text-[#0B1E4B]",
+  kadiv: "bg-[#F0EAFB] text-[#5A28AA]",
+  op:    "bg-[#FEF9E7] text-[#8A6010]",
+  staf:  "bg-[#E8F5EE] text-[#145D30]",
 };
 
 export default function LoginPage() {
@@ -61,465 +67,191 @@ export default function LoginPage() {
   };
 
   return (
-    <>
-      <style suppressHydrationWarning>{`
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 bg-white" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
 
-        .lp-root {
-          min-height: 100vh;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-          background: #ffffff;
-        }
+      {/* ── Panel kiri ── */}
+      <div className="hidden md:flex flex-col justify-between px-[48px] py-[40px] bg-[#0B1E4B] relative overflow-hidden before:content-[''] before:absolute before:pointer-events-none before:top-[-120px] before:right-[-120px] before:w-[420px] before:h-[420px] before:rounded-full before:border-[64px] before:border-[rgba(198,168,75,0.08)] after:content-[''] after:absolute after:pointer-events-none after:bottom-[-80px] after:left-[-80px] after:w-[300px] after:h-[300px] after:rounded-full after:border-[40px] after:border-[rgba(255,255,255,0.04)]">
 
-        /* ── Panel kiri — visual ── */
-        .lp-left {
-          background: #0B1E4B;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 40px 48px;
-          position: relative;
-          overflow: hidden;
-        }
-        .lp-left::before {
-          content: '';
-          position: absolute;
-          top: -120px; right: -120px;
-          width: 420px; height: 420px;
-          border-radius: 50%;
-          border: 64px solid rgba(198,168,75,0.08);
-          pointer-events: none;
-        }
-        .lp-left::after {
-          content: '';
-          position: absolute;
-          bottom: -80px; left: -80px;
-          width: 300px; height: 300px;
-          border-radius: 50%;
-          border: 40px solid rgba(255,255,255,0.04);
-          pointer-events: none;
-        }
+        {/* Dot pattern */}
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
 
-        /* grid dots */
-        .lp-left-dots {
-          position: absolute;
-          inset: 0;
-          background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
-          background-size: 28px 28px;
-          pointer-events: none;
-        }
-
-        .lp-left-top {
-          position: relative; z-index: 1;
-          display: flex; align-items: center; gap: 12px;
-        }
-        .lp-left-logo {
-          width: 40px; height: 40px; border-radius: 10px;
-          background: #C6A84B;
-          display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0;
-        }
-        .lp-left-logo svg { color: #0B1E4B; }
-        .lp-left-brand {
-          font-size: 16px; font-weight: 700; letter-spacing: -0.2px; color: #fff;
-        }
-        .lp-left-brand span { display: block; font-size: 10px; font-weight: 400; color: rgba(255,255,255,0.45); margin-top: 1px; }
-
-        .lp-left-mid {
-          position: relative; z-index: 1;
-          flex: 1; display: flex; flex-direction: column; justify-content: center;
-          padding: 40px 0;
-        }
-        .lp-left-accent {
-          display: inline-block;
-          font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-          color: #C6A84B;
-          padding: 5px 14px; background: rgba(198,168,75,0.12); border-radius: 100px;
-          border: 1px solid rgba(198,168,75,0.30);
-          margin-bottom: 20px;
-        }
-        .lp-left-title {
-          font-size: 36px; font-weight: 700; letter-spacing: -1.5px;
-          color: #fff; line-height: 1.1; margin-bottom: 14px;
-        }
-        .lp-left-title span { color: #C6A84B; }
-        .lp-left-sub {
-          font-size: 14px; color: rgba(255,255,255,0.55); line-height: 1.7;
-          max-width: 340px;
-        }
-
-        /* Feature list */
-        .lp-features { margin-top: 36px; display: flex; flex-direction: column; gap: 14px; }
-        .lp-feature {
-          display: flex; align-items: flex-start; gap: 12px;
-        }
-        .lp-feature-dot {
-          width: 32px; height: 32px; flex-shrink: 0;
-          border-radius: 8px; background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.10);
-          display: flex; align-items: center; justify-content: center;
-          color: #C6A84B; margin-top: 1px;
-        }
-        .lp-feature-text strong { display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.90); }
-        .lp-feature-text span { font-size: 12px; color: rgba(255,255,255,0.42); }
-
-        .lp-left-bottom {
-          position: relative; z-index: 1;
-          font-size: 11px; color: rgba(255,255,255,0.30);
-        }
-
-        /* Logo row */
-        .lp-logos-row {
-          display: flex; align-items: center; gap: 16px;
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.12);
-          border-radius: 14px; padding: 14px 20px;
-          width: fit-content;
-        }
-        .lp-logo-img {
-          height: 52px; width: auto;
-          object-fit: contain; display: block;
-          filter: brightness(1);
-        }
-        .lp-logo-sep {
-          width: 1px; height: 40px;
-          background: rgba(255,255,255,0.18); flex-shrink: 0;
-        }
-
-        /* Formal text */
-        .lp-left-sub-formal {
-          font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.90);
-          line-height: 1.4; margin-bottom: 4px;
-        }
-        .lp-divider-gold {
-          width: 40px; height: 2px; background: #C6A84B;
-          border-radius: 2px; margin: 20px 0;
-        }
-        .lp-info-list {
-          display: flex; flex-direction: column; gap: 10px;
-        }
-        .lp-info-item {
-          display: flex; align-items: center; gap: 10px;
-          font-size: 13px; color: rgba(255,255,255,0.55);
-        }
-        .lp-info-dot {
-          width: 5px; height: 5px; border-radius: 50%;
-          background: #C6A84B; flex-shrink: 0;
-        }
-
-        /* ── Panel kanan — form ── */
-        .lp-right {
-          display: flex; align-items: center; justify-content: center;
-          padding: 40px 32px;
-          background: #ffffff;
-          position: relative;
-        }
-        .lp-back-btn {
-          position: absolute; top: 24px; right: 28px;
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 8px 20px; border-radius: 8px;
-          background: #0B1E4B; color: #fff;
-          font-size: 13px; font-weight: 600;
-          border: none; cursor: pointer; text-decoration: none;
-          box-shadow: 0 2px 8px rgba(11,30,75,0.22);
-          transition: all 0.15s;
-        }
-        .lp-back-btn:hover { background: #0B1E4B; transform: translateY(-1px); }
-        .lp-back-btn svg { transition: transform 0.15s; }
-        .lp-back-btn:hover svg { transform: translateX(-3px); }
-        .lp-card {
-          width: 100%; max-width: 400px;
-          background: #fff;
-          border-radius: 20px;
-          padding: 40px 36px 32px;
-          box-shadow: 0 3px 14px rgba(15,23,42,0.09), 0 1px 4px rgba(11,30,75,0.04);
-          border: 1px solid rgba(148,163,184,0.25);
-        }
-        .lp-card-eyebrow {
-          font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-          color: #8A95A3; margin-bottom: 6px;
-        }
-        .lp-card-title {
-          font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
-          color: #0B1E4B; margin-bottom: 4px; line-height: 1.2;
-        }
-        .lp-card-sub {
-          font-size: 13px; color: #8A95A3; line-height: 1.5; margin-bottom: 28px;
-        }
-
-        /* SSO Button */
-        .lp-sso-btn {
-          width: 100%;
-          display: flex; align-items: center; gap: 14px;
-          padding: 14px 18px;
-          border: none; border-radius: 12px; cursor: pointer;
-          background: #0B1E4B;
-          color: #fff;
-          box-shadow: 0 4px 14px rgba(11,30,75,0.28);
-          transition: all 0.18s;
-          position: relative; overflow: hidden;
-        }
-        .lp-sso-btn::after {
-          content: '';
-          position: absolute; inset: 0;
-          background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%);
-          pointer-events: none;
-        }
-        .lp-sso-btn:hover:not(:disabled) { background: #0B1E4B; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(11,30,75,0.36); }
-        .lp-sso-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-
-        .lp-sso-icon {
-          width: 36px; height: 36px; border-radius: 9px;
-          background: rgba(255,255,255,0.10);
-          display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0;
-          border: 1px solid rgba(255,255,255,0.14);
-        }
-        .lp-sso-text { flex: 1; text-align: left; }
-        .lp-sso-main { font-size: 14px; font-weight: 700; line-height: 1; margin-bottom: 3px; }
-        .lp-sso-hint { font-size: 11px; font-weight: 400; opacity: 0.62; }
-        .lp-sso-arr { opacity: 0.60; transition: transform 0.18s, opacity 0.18s; }
-        .lp-sso-btn:hover .lp-sso-arr { transform: translateX(3px); opacity: 1; }
-        .lp-spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,0.25); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Gold accent bar */
-        .lp-accent-bar {
-          height: 3px; background: #C6A84B;
-          border-radius: 100px; margin: 20px 0;
-          width: 48px;
-        }
-
-        /* Note */
-        .lp-note {
-          display: flex; align-items: flex-start; gap: 8px;
-          margin-top: 14px; padding: 10px 13px;
-          border-radius: 9px;
-          background: #EEF5FF;
-          border: 1px solid #C9DEFF;
-        }
-        .lp-note svg { flex-shrink: 0; margin-top: 1px; color: #0B1E4B; }
-        .lp-note p { font-size: 11.5px; color: #0B1E4B; line-height: 1.55; font-weight: 500; }
-
-        /* Footer */
-        .lp-footer {
-          margin-top: 24px; text-align: center;
-          font-size: 11px; color: #B0BCCE;
-        }
-        .lp-dev-toggle {
-          background: none; border: none; cursor: pointer;
-          font-size: 10px; color: #D4DCEC; font-weight: 500;
-          transition: color 0.12s; padding: 3px 6px; border-radius: 4px;
-          display: inline-block; margin-top: 6px;
-        }
-        .lp-dev-toggle:hover { color: #8A95A3; }
-
-        /* Dummy panel */
-        .lp-dummy-panel {
-          position: fixed; bottom: 20px; right: 20px; z-index: 50;
-          background: #fff; border: 1px solid #DDE3EF; border-radius: 14px;
-          width: 292px; max-height: 70vh;
-          display: flex; flex-direction: column;
-          box-shadow: 0 8px 28px rgba(11,30,75,0.14);
-          animation: slideUp 0.18s ease; overflow: hidden;
-        }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .lp-dummy-header {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 12px 14px 10px; border-bottom: 1px solid #F3F5F9; flex-shrink: 0;
-        }
-        .lp-dummy-title { font-size: 10px; font-weight: 700; color: #8A95A3; letter-spacing: 1px; text-transform: uppercase; }
-        .lp-dummy-close { background: none; border: none; cursor: pointer; color: #B0BCCE; font-size: 16px; line-height: 1; padding: 2px 4px; border-radius: 4px; }
-        .lp-dummy-close:hover { color: #4A5568; background: #F3F5F9; }
-        .lp-dummy-scroll { overflow-y: auto; flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .lp-dummy-scroll::-webkit-scrollbar { width: 3px; }
-        .lp-dummy-scroll::-webkit-scrollbar-track { background: transparent; }
-        .lp-dummy-scroll::-webkit-scrollbar-thumb { background: #DDE3EF; border-radius: 3px; }
-        .lp-dummy-group-label { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #B0BCCE; padding: 4px 4px 2px; }
-        .lp-dummy-list { display: flex; flex-direction: column; gap: 4px; }
-        .lp-dummy-item {
-          width: 100%; display: flex; align-items: center; gap: 9px;
-          padding: 8px 10px; border: 1px solid #F3F5F9; border-radius: 9px;
-          background: #F7F9FC; cursor: pointer; transition: all 0.12s; text-align: left;
-        }
-        .lp-dummy-item:hover { background: #EEF5FF; border-color: #C9DEFF; }
-        .lp-dummy-av {
-          width: 28px; height: 28px; border-radius: 7px;
-          font-size: 11px; font-weight: 800;
-          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .lp-dummy-av.upa   { background: #EEF5FF; color: #0B1E4B; }
-        .lp-dummy-av.kadiv { background: #F0EAFB; color: #5A28AA; }
-        .lp-dummy-av.op    { background: #FEF9E7; color: #8A6010; }
-        .lp-dummy-av.staf  { background: #E8F5EE; color: #145D30; }
-        .lp-dummy-name { font-size: 11px; font-weight: 700; color: #0B1E4B; line-height: 1.3; }
-        .lp-dummy-sub  { font-size: 10px; color: #B0BCCE; margin-top: 1px; }
-
-        @media (max-width: 768px) {
-          .lp-root { grid-template-columns: 1fr; }
-          .lp-left { display: none; }
-          .lp-right { padding: 24px 16px; }
-          .lp-card { padding: 28px 22px 22px; }
-        }
-      `}</style>
-
-      <div className="lp-root">
-        {/* ── Panel kiri ── */}
-        <div className="lp-left">
-          <div className="lp-left-dots" />
-
-          {/* Logo area */}
-          <div className="lp-left-top">
-            <div className="lp-logos-row">
-              <img src="/logo-upa.png" alt="UPA TIK" className="lp-logo-img" />
-            </div>
-          </div>
-
-          {/* Center content */}
-          <div className="lp-left-mid">
-            <div className="lp-left-accent">Universitas Lampung</div>
-            <h1 className="lp-left-title">SIMPROTIK</h1>
-            <p className="lp-left-sub-formal">
-              Sistem Informasi Manajemen Proyek &amp; Kinerja
-            </p>
-            <p className="lp-left-sub">
-              UPA Teknologi Informasi dan Komunikasi
-            </p>
-
-            <div className="lp-divider-gold" />
-
-            <div className="lp-info-list">
-              <div className="lp-info-item">
-                <span className="lp-info-dot" />
-                <span>Pengelolaan pekerjaan &amp; proyek terpusat</span>
-              </div>
-              <div className="lp-info-item">
-                <span className="lp-info-dot" />
-                <span>Surat tugas &amp; dokumentasi digital</span>
-              </div>
-              <div className="lp-info-item">
-                <span className="lp-info-dot" />
-                <span>Monitoring kinerja per divisi</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="lp-left-bottom">
-            Jl. Prof. Dr. Sumantri Brojonegoro No.1, Bandar Lampung
+        {/* Logo row */}
+        <div className="relative z-[1] flex items-center gap-3">
+          <div className="flex items-center gap-4 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.12)] rounded-[14px] px-[20px] py-[14px] w-fit">
+            <img src="/logo-upa.png" alt="UPA TIK" className="h-[52px] w-auto object-contain" />
           </div>
         </div>
 
-        {/* ── Panel kanan ── */}
-        <div className="lp-right">
-          {/* Tombol kembali ke dashboard publik */}
-          <button
-            type="button"
-            className="lp-back-btn"
-            onClick={() => router.push("/")}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M11.5 7h-9M6 3.5L2.5 7L6 10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Kembali ke Dashboard
-          </button>
-          <div className="lp-card">
-            <div className="lp-card-eyebrow">Portal Masuk</div>
-            <h2 className="lp-card-title">Masuk ke SIMPROTIK</h2>
-            <p className="lp-card-sub">Gunakan akun SSO Universitas Lampung untuk mengakses sistem.</p>
+        {/* Center content */}
+        <div className="relative z-[1] flex-1 flex flex-col justify-center py-[40px]">
+          <div className="inline-block text-[10px] font-bold tracking-[2px] uppercase text-[#C6A84B] bg-[rgba(198,168,75,0.12)] rounded-full border border-[rgba(198,168,75,0.30)] px-[14px] py-[5px] mb-[20px]">
+            Universitas Lampung
+          </div>
+          <h1 className="text-[36px] font-bold tracking-[-1.5px] text-white leading-[1.1] mb-[14px]">SIMPROTIK</h1>
+          <p className="text-[18px] font-semibold text-[rgba(255,255,255,0.90)] leading-[1.4] mb-[4px]">
+            Sistem Informasi Manajemen Proyek &amp; Kinerja
+          </p>
+          <p className="text-[14px] text-[rgba(255,255,255,0.55)] leading-[1.7] max-w-[340px]">
+            UPA Teknologi Informasi dan Komunikasi
+          </p>
 
-            <button
-              className="lp-sso-btn"
-              type="button"
-              onClick={handleSSOLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span className="lp-spinner" />
-                  <div className="lp-sso-text">
-                    <div className="lp-sso-main">Menghubungkan ke SSO…</div>
-                    <div className="lp-sso-hint">Mohon tunggu sebentar</div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="lp-sso-icon">
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <circle cx="9" cy="6.5" r="3" stroke="white" strokeWidth="1.5"/>
-                      <path d="M3 16c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </div>
-                  <div className="lp-sso-text">
-                    <div className="lp-sso-main">Masuk dengan SSO Unila</div>
-                    <div className="lp-sso-hint">sso.unila.ac.id · akun civitas academica</div>
-                  </div>
-                  <svg className="lp-sso-arr" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M3.5 8h9M9 4.5l3.5 3.5-3.5 3.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </>
-              )}
-            </button>
+          <div className="w-[40px] h-[2px] bg-[#C6A84B] rounded-[2px] my-[20px]" />
 
-            <div className="lp-accent-bar" />
-
-            <div className="lp-note">
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" strokeWidth="1.3"/>
-                <path d="M6.5 5.5v4M6.5 4v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-              </svg>
-              <p>Gunakan email dan password iAIK / SIAKADCLOUD untuk masuk ke sistem ini.</p>
-            </div>
-
-            <div className="lp-footer">
-              <div> 2025 UPA TIK Universitas Lampung</div>
-              <button
-                className="lp-dev-toggle"
-                type="button"
-                onClick={() => setShowDummy(!showDummy)}
-              >
-                {showDummy ? "tutup akses demo" : "akses demo"}
-              </button>
-            </div>
+          <div className="flex flex-col gap-[10px]">
+            {[
+              "Pengelolaan pekerjaan & proyek terpusat",
+              "Surat tugas & dokumentasi digital",
+              "Monitoring kinerja per divisi",
+            ].map((text) => (
+              <div key={text} className="flex items-center gap-[10px] text-[13px] text-[rgba(255,255,255,0.55)]">
+                <span className="w-[5px] h-[5px] rounded-full bg-[#C6A84B] shrink-0" />
+                <span>{text}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* ── Dummy login panel ── */}
-        {showDummy && (
-          <div className="lp-dummy-panel">
-            <div className="lp-dummy-header">
-              <span className="lp-dummy-title">Demo Login</span>
-              <button className="lp-dummy-close" type="button" onClick={() => setShowDummy(false)}>×</button>
-            </div>
-            <div className="lp-dummy-scroll">
-              {(["kepala-upa", "operator", "kepala-divisi", "staf"] as const).map((role) => {
-                const group = USERS.filter((u) => u.role === role);
-                if (!group.length) return null;
-                const groupLabel: Record<string, string> = { "kepala-upa": "Kepala UPA", "operator": "Operator", "kepala-divisi": "Kepala Divisi", "staf": "Staf" };
-                const avClass: Record<string, string> = { "kepala-upa": "upa", "operator": "op", "kepala-divisi": "kadiv", "staf": "staf" };
-                return (
-                  <div key={role}>
-                    <div className="lp-dummy-group-label">{groupLabel[role]}</div>
-                    <div className="lp-dummy-list">
-                      {group.map((u) => (
-                        <button key={u.id} className="lp-dummy-item" type="button" onClick={() => quickLogin(u.nip)}>
-                          <div className={`lp-dummy-av ${avClass[role]}`}>{u.nama.charAt(0)}</div>
-                          <div>
-                            <div className="lp-dummy-name">{u.nama}</div>
-                            <div className="lp-dummy-sub">{u.divisi !== "-" ? u.divisi : groupLabel[role]}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Bottom text */}
+        <div className="relative z-[1] text-[11px] text-[rgba(255,255,255,0.30)]">
+          Jl. Prof. Dr. Sumantri Brojonegoro No.1, Bandar Lampung
+        </div>
       </div>
-    </>
+
+      {/* ── Panel kanan ── */}
+      <div className="flex items-center justify-center p-[24px_16px] md:p-[40px_32px] bg-white relative">
+
+        {/* Tombol kembali ke dashboard publik */}
+        <button
+          type="button"
+          className="group absolute top-[24px] right-[28px] inline-flex items-center gap-[6px] px-[20px] py-[8px] rounded-lg bg-[#0B1E4B] text-white text-[13px] font-semibold border-none cursor-pointer shadow-[0_2px_8px_rgba(11,30,75,0.22)] transition-all hover:bg-[#0F2150] hover:-translate-y-px"
+          onClick={() => router.push("/")}
+        >
+          <svg className="transition-transform group-hover:-translate-x-[3px]" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M11.5 7h-9M6 3.5L2.5 7L6 10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Kembali ke Dashboard
+        </button>
+
+        {/* Card */}
+        <div className="w-full max-w-[400px] bg-white rounded-[20px] p-[28px_22px_22px] md:p-[40px_36px_32px] shadow-[0_3px_14px_rgba(15,23,42,0.09),0_1px_4px_rgba(11,30,75,0.04)] border border-[rgba(148,163,184,0.25)]">
+          <div className="text-[10px] font-bold tracking-[1.5px] uppercase text-[#8A95A3] mb-[6px]">Portal Masuk</div>
+          <h2 className="text-[22px] font-bold tracking-[-0.5px] text-[#0B1E4B] mb-[4px] leading-[1.2]">Masuk ke SIMPROTIK</h2>
+          <p className="text-[13px] text-[#8A95A3] leading-[1.5] mb-[28px]">Gunakan akun SSO Universitas Lampung untuk mengakses sistem.</p>
+
+          {/* SSO Button */}
+          <button
+            className="group relative w-full flex items-center gap-[14px] px-[18px] py-[14px] border-none rounded-[12px] cursor-pointer bg-[#0B1E4B] text-white shadow-[0_4px_14px_rgba(11,30,75,0.28)] transition-all overflow-hidden hover:enabled:-translate-y-px hover:enabled:shadow-[0_6px_20px_rgba(11,30,75,0.36)] disabled:opacity-[0.55] disabled:cursor-not-allowed after:content-[''] after:absolute after:inset-0 after:[background:linear-gradient(180deg,rgba(255,255,255,0.06)_0%,transparent_100%)] after:pointer-events-none"
+            type="button"
+            onClick={handleSSOLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="w-[18px] h-[18px] border-[2.5px] border-[rgba(255,255,255,0.25)] border-t-white rounded-full animate-spin shrink-0" />
+                <div className="flex-1 text-left">
+                  <div className="text-[14px] font-bold leading-none mb-[3px]">Menghubungkan ke SSO…</div>
+                  <div className="text-[11px] opacity-[0.62]">Mohon tunggu sebentar</div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-[36px] h-[36px] rounded-[9px] bg-[rgba(255,255,255,0.10)] flex items-center justify-center shrink-0 border border-[rgba(255,255,255,0.14)]">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <circle cx="9" cy="6.5" r="3" stroke="white" strokeWidth="1.5"/>
+                    <path d="M3 16c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="text-[14px] font-bold leading-none mb-[3px]">Masuk dengan SSO Unila</div>
+                  <div className="text-[11px] opacity-[0.62]">sso.unila.ac.id · akun civitas academica</div>
+                </div>
+                <svg
+                  className="opacity-[0.60] transition-[transform,opacity] group-hover:translate-x-[3px] group-hover:opacity-100"
+                  width="16" height="16" viewBox="0 0 16 16" fill="none"
+                >
+                  <path d="M3.5 8h9M9 4.5l3.5 3.5-3.5 3.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </>
+            )}
+          </button>
+
+          {/* Gold accent bar */}
+          <div className="h-[3px] bg-[#C6A84B] rounded-full my-[20px] w-[48px]" />
+
+          {/* Note */}
+          <div className="flex items-start gap-[8px] mt-[14px] px-[13px] py-[10px] rounded-[9px] bg-[#EEF5FF] border border-[#C9DEFF]">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="shrink-0 mt-[1px] text-[#0B1E4B]">
+              <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M6.5 5.5v4M6.5 4v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            <p className="m-0 text-[11.5px] text-[#0B1E4B] leading-[1.55] font-medium">Gunakan email dan password iAIK / SIAKADCLOUD untuk masuk ke sistem ini.</p>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-[24px] text-center text-[11px] text-[#B0BCCE]">
+            <div>© 2025 UPA TIK Universitas Lampung</div>
+            <button
+              className="bg-transparent border-none cursor-pointer text-[10px] text-[#D4DCEC] font-medium transition-colors px-[6px] py-[3px] rounded-[4px] inline-block mt-[6px] hover:text-[#8A95A3]"
+              type="button"
+              onClick={() => setShowDummy(!showDummy)}
+            >
+              {showDummy ? "tutup akses demo" : "akses demo"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Dummy login panel ── */}
+      {showDummy && (
+        <div className="fixed bottom-[20px] right-[20px] z-50 bg-white border border-[#DDE3EF] rounded-[14px] w-[292px] max-h-[70vh] flex flex-col shadow-[0_8px_28px_rgba(11,30,75,0.14)] overflow-hidden [animation:slideUp_0.18s_ease]">
+          <div className="flex items-center justify-between px-[14px] pt-[12px] pb-[10px] border-b border-[#F3F5F9] shrink-0">
+            <span className="text-[10px] font-bold text-[#8A95A3] tracking-[1px] uppercase">Demo Login</span>
+            <button
+              className="bg-transparent border-none cursor-pointer text-[#B0BCCE] text-[16px] leading-none px-[4px] py-[2px] rounded-[4px] transition-colors hover:text-[#4A5568] hover:bg-[#F3F5F9]"
+              type="button"
+              onClick={() => setShowDummy(false)}
+            >×</button>
+          </div>
+          <div className="overflow-y-auto flex-1 p-[10px] flex flex-col gap-[8px] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#DDE3EF] [&::-webkit-scrollbar-thumb]:rounded-[3px]">
+            {(["kepala-upa", "operator", "kepala-divisi", "staf"] as const).map((role) => {
+              const group = USERS.filter((u) => u.role === role);
+              if (!group.length) return null;
+              const groupLabel: Record<string, string> = {
+                "kepala-upa": "Kepala UPA", "operator": "Operator",
+                "kepala-divisi": "Kepala Divisi", "staf": "Staf",
+              };
+              const avKey: Record<string, string> = {
+                "kepala-upa": "upa", "operator": "op", "kepala-divisi": "kadiv", "staf": "staf",
+              };
+              return (
+                <div key={role}>
+                  <div className="text-[9px] font-bold tracking-[1px] uppercase text-[#B0BCCE] px-[4px] pt-[4px] pb-[2px]">
+                    {groupLabel[role]}
+                  </div>
+                  <div className="flex flex-col gap-[4px]">
+                    {group.map((u) => (
+                      <button
+                        key={u.id}
+                        className="w-full flex items-center gap-[9px] px-[10px] py-[8px] border border-[#F3F5F9] rounded-[9px] bg-[#F7F9FC] cursor-pointer transition-all text-left hover:bg-[#EEF5FF] hover:border-[#C9DEFF]"
+                        type="button"
+                        onClick={() => quickLogin(u.nip)}
+                      >
+                        <div className={`w-[28px] h-[28px] rounded-[7px] text-[11px] font-extrabold flex items-center justify-center shrink-0 ${AV_CLS[avKey[role]]}`}>
+                          {u.nama.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold text-[#0B1E4B] leading-[1.3]">{u.nama}</div>
+                          <div className="text-[10px] text-[#B0BCCE] mt-[1px]">{u.divisi !== "-" ? u.divisi : groupLabel[role]}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
-

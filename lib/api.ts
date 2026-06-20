@@ -26,7 +26,13 @@ async function post<T>(path: string, body: object): Promise<T> {
     headers: { ...baseHeaders, "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`POST ${path} gagal: ${res.status}`);
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    const detail = json.errors
+      ? Object.entries(json.errors).map(([k, v]) => `${k}: ${(v as string[]).join(", ")}`).join(" | ")
+      : json.message ?? "";
+    throw new Error(`POST ${path} gagal: ${res.status}${detail ? " — " + detail : ""}`);
+  }
   return res.json();
 }
 
