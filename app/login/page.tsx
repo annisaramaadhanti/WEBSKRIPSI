@@ -5,6 +5,15 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useRole } from "@/components/providers/RoleProvider";
 import { USERS } from "@/lib/data";
+import { getMasterPengguna } from "@/lib/api";
+import type { Role } from "@/types";
+
+const PERAN_TO_ROLE: Record<string, Role> = {
+  "Kepala UPA": "kepala-upa",
+  "Operator": "operator",
+  "Kepala Divisi": "kepala-divisi",
+  "Staf": "staf",
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,18 +21,43 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showDummy, setShowDummy] = useState(false);
 
-  const handleSSOLogin = () => {
-    setLoading(true);
-    setTimeout(() => {
-      const found = USERS.find((u) => u.role === "kepala-upa");
-      if (found) { setUser(found); router.push("/dashboard"); }
-      setLoading(false);
-    }, 1000);
+  const loginByNip = async (nip: string) => {
+    const res: any = await getMasterPengguna();
+    const list: any[] = res?.data ?? [];
+    const found = list.find((u: any) => u.NIP === nip);
+    if (!found) throw new Error("User tidak ditemukan di database.");
+    const role = PERAN_TO_ROLE[found.peran] ?? "staf";
+    setUser({
+      id: found.uuid,
+      nama: found.nama_lengkap,
+      nip: found.NIP,
+      jabatan: found.peran,
+      email: found.email,
+      password: "",
+      role,
+      divisi: found.divisi?.nama_divisi ?? "-",
+    });
+    router.push("/dashboard");
   };
 
-  const quickLogin = (id: string) => {
-    const found = USERS.find((u) => u.id === id);
-    if (found) { setUser(found); router.push("/dashboard"); }
+  const handleSSOLogin = async () => {
+    setLoading(true);
+    try {
+      const kepalaUpa = USERS.find((u) => u.role === "kepala-upa");
+      if (kepalaUpa) await loginByNip(kepalaUpa.nip);
+    } catch (e: any) {
+      alert("Login gagal: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const quickLogin = async (nip: string) => {
+    try {
+      await loginByNip(nip);
+    } catch (e: any) {
+      alert("Login gagal: " + e.message);
+    }
   };
 
   return (
@@ -469,7 +503,7 @@ export default function LoginPage() {
                     <div className="lp-dummy-group-label">{groupLabel[role]}</div>
                     <div className="lp-dummy-list">
                       {group.map((u) => (
-                        <button key={u.id} className="lp-dummy-item" type="button" onClick={() => quickLogin(u.id)}>
+                        <button key={u.id} className="lp-dummy-item" type="button" onClick={() => quickLogin(u.nip)}>
                           <div className={`lp-dummy-av ${avClass[role]}`}>{u.nama.charAt(0)}</div>
                           <div>
                             <div className="lp-dummy-name">{u.nama}</div>

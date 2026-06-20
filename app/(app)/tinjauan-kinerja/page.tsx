@@ -22,6 +22,39 @@ type TinjauanItem = {
   accAt?: string | null;
 };
 
+function ImgWithFallback({ src, alt, filePath, onOpenFile }: { src: string; alt: string; filePath: string; onOpenFile: () => void }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    fetch(src, { headers: { Accept: "image/*", "ngrok-skip-browser-warning": "true" } })
+      .then(r => { if (!r.ok) throw new Error(); return r.blob(); })
+      .then(blob => { objectUrl = URL.createObjectURL(blob); setBlobUrl(objectUrl); })
+      .catch(() => setFailed(true));
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [src]);
+
+  if (failed) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span className="text-small text-muted">{filePath}</span>
+        <a href="#" onClick={(e) => { e.preventDefault(); onOpenFile(); }} className="btn-link-pdf">Buka File</a>
+      </div>
+    );
+  }
+  if (!blobUrl) {
+    return <div className="text-small text-muted">Memuat gambar...</div>;
+  }
+  return (
+    <img
+      src={blobUrl}
+      alt={alt}
+      style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, border: '1px solid var(--border-soft)', display: 'block' }}
+    />
+  );
+}
+
 const STATUS_BADGE: Record<string, string> = {
   // StatusKonfirmasi
   "pending":     "badge-yellow",
@@ -438,22 +471,39 @@ export default function TinjauanKinerjaPage() {
                     <div key={d.id} style={{ marginBottom: 16, padding: 14, background: 'var(--surface-alt)', borderRadius: 10, border: '1px solid var(--border-soft)' }}>
                       <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)', marginBottom: 2 }}>{d.judul}</div>
                       <div className="text-small text-muted" style={{ marginBottom: 10 }}>{d.uploadedBy} · {d.tanggal}</div>
-                      {isImg && d.fileData ? (
-                        <img
-                          src={`data:${mimeType};base64,${d.fileData}`}
-                          alt={d.judul}
-                          style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, border: '1px solid var(--border-soft)', display: 'block' }}
-                        />
-                      ) : isPdf && d.fileData ? (
-                        <iframe
-                          src={`data:application/pdf;base64,${d.fileData}`}
-                          title={d.judul}
-                          style={{ width: '100%', height: 420, borderRadius: 8, border: '1px solid var(--border-soft)', display: 'block' }}
-                        />
+                      {isImg ? (
+                        d.fileData ? (
+                          <img
+                            src={`data:${mimeType};base64,${d.fileData}`}
+                            alt={d.judul}
+                            style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, border: '1px solid var(--border-soft)', display: 'block' }}
+                          />
+                        ) : d.id ? (
+                          <ImgWithFallback
+                            src={urlDokumen(d.id)}
+                            alt={d.judul}
+                            filePath={d.filePath}
+                            onOpenFile={() => window.open(urlDokumen(d.id), '_blank')}
+                          />
+                        ) : null
+                      ) : isPdf ? (
+                        d.fileData ? (
+                          <iframe
+                            src={`data:application/pdf;base64,${d.fileData}`}
+                            title={d.judul}
+                            style={{ width: '100%', height: 420, borderRadius: 8, border: '1px solid var(--border-soft)', display: 'block' }}
+                          />
+                        ) : d.id ? (
+                          <iframe
+                            src={urlDokumen(d.id)}
+                            title={d.judul}
+                            style={{ width: '100%', height: 420, borderRadius: 8, border: '1px solid var(--border-soft)', display: 'block' }}
+                          />
+                        ) : null
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span className="text-small text-muted">{d.filePath}{d.fileSize ? ` · ${fmt(d.fileSize)}` : ''}</span>
-                          {d.fileData && <a href="#" onClick={(e) => { e.preventDefault(); openPDF(d); }} className="btn-link-pdf">Buka File</a>}
+                          {(d.fileData || d.id) && <a href="#" onClick={(e) => { e.preventDefault(); openPDF(d); }} className="btn-link-pdf">Buka File</a>}
                         </div>
                       )}
                     </div>

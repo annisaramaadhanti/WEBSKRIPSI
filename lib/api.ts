@@ -36,7 +36,13 @@ async function postForm<T>(path: string, form: FormData): Promise<T> {
     headers: baseHeaders,
     body: form,
   });
-  if (!res.ok) throw new Error(`POST ${path} gagal: ${res.status}`);
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    const detail = json.errors
+      ? Object.entries(json.errors).map(([k, v]) => `${k}: ${(v as string[]).join(", ")}`).join(" | ")
+      : json.message ?? "";
+    throw new Error(`POST ${path} gagal: ${res.status}${detail ? " — " + detail : ""}`);
+  }
   return res.json();
 }
 
@@ -70,6 +76,7 @@ export async function loginUser(nip: string, password: string): Promise<LoginRes
 // MASTER DATA
 // ─────────────────────────────────────────────
 
+export const getMasterPengguna = () => get("/master/pengguna");
 export const getMasterUnitKerja = () => get("/master/unit-kerja");
 export const getMasterDivisi = () => get("/master/divisi");
 export const getMasterStatusKinerja = () => get("/master/status-kinerja");
