@@ -5,11 +5,11 @@ import Sidebar from "@/components/layout/Sidebar";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="layout">
+    <div className="flex overflow-hidden h-screen w-screen bg-white">
       <Sidebar />
-      <div className="content">
+      <div className="flex flex-col flex-1 min-w-0 overflow-y-auto">
         <Navbar />
-        <main className="page">{children}</main>
+        <main className="flex-1 min-w-0 px-9 pt-8 pb-12 w-full">{children}</main>
       </div>
     </div>
   );

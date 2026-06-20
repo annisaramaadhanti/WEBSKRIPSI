@@ -1,10 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git rm *)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git -C \"d:/FOLDER SKRIPSI FIKS/WEB_SKRIPSI_BISMILLAH\" remote -v)"
     ]
   }
 }

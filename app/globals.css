@@ -282,19 +282,6 @@
   }
   .btn-icon:hover { background: var(--navy-50) !important; border-color: var(--navy-200) !important; color: var(--navy-700) !important; }
 
-  .logout-btn {
-    @apply w-full flex items-center cursor-pointer font-semibold;
-    gap: 8px;
-    padding: 10px 16px;
-    border-radius: var(--r-sm);
-    background: rgba(255,255,255,0.07);
-    color: rgba(255,255,255,0.75);
-    border: 1px solid rgba(255,255,255,0.10);
-    font-size: 13px;
-    transition: all var(--dur-base) var(--ease);
-  }
-  .logout-btn:hover { background: #E11D48; border-color: #E11D48; color: #fff; }
-
   .login-button {
     @apply w-full flex items-center justify-center cursor-pointer font-bold;
     gap: 8px;
@@ -354,135 +341,8 @@
   .badge-red::before    { background: rgba(255,255,255,0.85); }
 
   /* ======================================================
-     LAYOUT — SIDEBAR & KONTEN
-     ====================================================== */
-
-  .layout {
-    @apply flex overflow-hidden;
-    height: 100vh;
-    width: 100vw;
-    background: var(--bg);
-  }
-
-  .sidebar {
-    @apply flex flex-col overflow-y-auto shrink-0;
-    width: 264px;
-    height: 100vh;
-    background: #0B1E4B;
-    color: #fff;
-    box-shadow: 2px 0 20px rgba(11,30,75,0.30);
-  }
-
-  .sidebar-top {
-    @apply flex flex-col;
-    padding: 22px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-  }
-
-  .sidebar-brand { @apply flex items-center; gap: 10px; margin-bottom: 18px; }
-  .sidebar-brand h2 {
-    @apply m-0 font-bold;
-    font-family: var(--font-display);
-    font-size: 17px;
-    letter-spacing: -0.2px;
-    color: #fff;
-  }
-  .sidebar-brand p { margin: 3px 0 0; color: rgba(255,255,255,0.45); font-size: 10px; font-weight: 500; line-height: 1.3; }
-  .sidebar-brand-icon {
-    @apply flex flex-col items-center justify-center shrink-0;
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    background: rgba(198,168,75,0.12);
-    border: 1px solid rgba(198,168,75,0.25);
-    gap: 1px;
-  }
-
-  .sidebar-user {
-    @apply flex items-center;
-    gap: 10px;
-    padding: 10px 12px;
-    margin: 0 0 8px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.08);
-  }
-  .sidebar-user-avatar {
-    @apply flex items-center justify-center shrink-0 font-extrabold;
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    background: var(--gold);
-    color: var(--navy-900);
-    font-size: 13px;
-  }
-  .sidebar-user-info { @apply min-w-0; }
-  .sidebar-user-name { @apply font-bold whitespace-nowrap overflow-hidden; font-size: 12px; color: #fff; text-overflow: ellipsis; }
-  .sidebar-user-role { font-size: 10px; color: rgba(255,255,255,0.50); margin-top: 1px; }
-
-  .sidebar-menu { @apply list-none m-0 flex-1; margin-top: 10px; padding: 0 10px; }
-  .sidebar-menu li { margin-bottom: 2px; }
-  .sidebar-menu a {
-    @apply flex items-center;
-    gap: 10px;
-    padding: 9px 12px;
-    border-radius: var(--r-sm);
-    color: rgba(255,255,255,0.58);
-    font-size: 13px;
-    font-weight: 500;
-    transition: all var(--dur-base) var(--ease);
-  }
-  .sidebar-menu a:hover { background: rgba(255,255,255,0.08); color: #fff; }
-  .sidebar-menu a.active {
-    background: rgba(255,255,255,0.12);
-    color: #fff;
-    border-left: 3px solid #2563EB;
-    padding-left: 10px;
-  }
-  .sidebar-menu-icon { @apply flex items-center justify-center shrink-0; width: 18px; height: 18px; opacity: 0.65; }
-  .sidebar-menu-icon svg { @apply w-full h-full; }
-  .sidebar-menu a.active .sidebar-menu-icon,
-  .sidebar-menu a:hover .sidebar-menu-icon { opacity: 1; }
-  .sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.07); }
-
-  .content { @apply flex flex-col flex-1 min-w-0 overflow-y-auto; background: transparent; width: 100%; }
-
-  .navbar {
-    @apply flex justify-between items-center sticky top-0 z-[40];
-    gap: 16px;
-    padding: 16px 36px;
-    border-bottom: 1px solid var(--border-soft);
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(16px);
-    box-shadow: 0 1px 0 var(--border-soft);
-  }
-  .navbar-title {
-    font-family: var(--font-display);
-    font-size: 15px; font-weight: 700; color: var(--navy-900);
-  }
-  .navbar-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-  .role-pill {
-    padding: 5px 14px;
-    border-radius: var(--r-full);
-    background: var(--gold-light);
-    color: var(--gold-dark);
-    font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
-    border: 1px solid var(--gold);
-  }
-  .navbar-actions { @apply flex items-center; gap: 10px; }
-  .icon-btn {
-    @apply inline-flex items-center justify-center cursor-pointer;
-    width: 32px; height: 32px;
-    border-radius: var(--r-full);
-    background: rgba(255,255,255,0.08);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.16);
-  }
-  .icon-btn:hover { background: rgba(255,255,255,0.16); }
-
-  /* ======================================================
      HALAMAN
      ====================================================== */
-
-  .page { @apply flex-1 min-w-0; padding: 32px 36px 48px; width: 100%; max-width: none; margin: 0; }
   .page-header { @apply flex flex-wrap justify-between items-end; margin-bottom: 28px; gap: 14px; }
   .title {
     @apply m-0 font-bold;
@@ -1054,9 +914,7 @@
   .hidden-input { @apply hidden; }
   .text-button { @apply cursor-pointer; background: none; border: none; color: var(--danger-600); font-size: 12px; padding: 0; }
   .text-button:hover { @apply underline; }
-  .stat-label { @apply uppercase font-semibold; font-size: 11px; color: var(--text-muted); letter-spacing: 0.4px; margin-bottom: 6px; }
-  .stat-value { @apply font-bold; font-family: var(--font-display); font-size: 30px; color: var(--navy-900); }
-  .role-buttons button {
+.role-buttons button {
     background: var(--surface-alt) !important; color: var(--text) !important;
     border: 1px solid var(--border) !important;
     font-size: 12px !important; font-weight: 600 !important;
