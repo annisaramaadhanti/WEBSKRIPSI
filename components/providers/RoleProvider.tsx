@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Role, User } from "@/types";
+import { getMasterPengguna } from "@/lib/api";
 
 type RoleContextType = {
   role: Role;
@@ -14,6 +15,34 @@ type RoleContextType = {
 
 const RoleContext = createContext<RoleContextType | null>(null);
 
+const roleToPeran: Record<Role, string> = {
+  "operator": "Operator",
+  "staf": "Staf",
+  "kepala-divisi": "Kepala Divisi",
+  "kepala-upa": "Kepala UPA",
+};
+
+function mapBackendUser(user: any, fallback: User): User {
+  return {
+    ...fallback,
+    id: user.uuid,
+    nama: user.nama_lengkap ?? fallback.nama,
+    nip: user.NIP ?? fallback.nip,
+    jabatan: user.peran ?? fallback.jabatan,
+    divisi: user.divisi?.nama_divisi ?? fallback.divisi,
+  };
+}
+
+async function syncBackendUser(saved: User): Promise<User> {
+  const response: any = await getMasterPengguna();
+  const users = Array.isArray(response?.data) ? response.data : [];
+  const expectedPeran = roleToPeran[saved.role];
+  const matched = users.find((item: any) => item.NIP === saved.nip)
+    ?? users.find((item: any) => item.peran === expectedPeran);
+
+  return matched?.uuid ? mapBackendUser(matched, saved) : saved;
+}
+
 export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [role, setRoleState] = useState<Role>("operator");
   const [user, setUserState] = useState<User | null>(null);
@@ -24,7 +53,18 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     const savedUser = window.localStorage.getItem("simprotik-user");
     if (savedRole) setRoleState(savedRole);
     if (savedUser) {
-      try { setUserState(JSON.parse(savedUser)); } catch {}
+      try {
+        const parsed = JSON.parse(savedUser) as User;
+        setUserState(parsed);
+        syncBackendUser(parsed)
+          .then((synced) => {
+            window.localStorage.setItem("simprotik-user", JSON.stringify(synced));
+            window.localStorage.setItem("simprotik-role", synced.role);
+            setUserState(synced);
+            setRoleState(synced.role);
+          })
+          .catch(() => {});
+      } catch {}
     }
     setIsHydrated(true);
   }, []);

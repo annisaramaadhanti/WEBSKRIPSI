@@ -18,14 +18,14 @@ Buka [http://localhost:3000](http://localhost:3000)
 
 ## Akun Demo
 
-| Role | Email | Password |
+| Role | NIP | Password |
 |---|---|---|
-| Operator | operator@upa.id | operator123 |
-| Kepala UPA | kaupa@upa.id | kaupa123 |
-| Kepala Divisi (Infrastruktur Jaringan) | hendri.susanto@staff.unila.ac.id | kadiv123 |
-| Staf (Infrastruktur Jaringan) | nyoman.herman@staff.unila.ac.id | staf123 |
-| Kepala Divisi (Pengembangan & Inovasi TI) | rico.andrian@staff.unila.ac.id | kadiv123 |
-| Staf (Pengembangan & Inovasi TI) | nurrahma@staff.unila.ac.id | staf123 |
+| Operator | 198610032025212042 | upatik123 |
+| Kepala UPA | 197203161999032002 | upatik123 |
+| Kepala Divisi (Infrastruktur Jaringan) | 198105112005011001 | upatik123 |
+| Staf (Infrastruktur Jaringan) | 199402152025211048 | upatik123 |
+| Kepala Divisi (Pengembangan & Inovasi TI) | 197506272005011001 | upatik123 |
+| Staf (Layanan Sistem dan Teknologi Informasi) | 198710052025211077 | upatik123 |
 
 ---
 

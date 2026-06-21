@@ -61,7 +61,6 @@ export interface LoginResponse {
     uuid: string;
     nama_lengkap: string;
     NIP: string;
-    email: string;
     peran: string;
     divisi: { uuid: string; nama_divisi: string } | null;
   };
