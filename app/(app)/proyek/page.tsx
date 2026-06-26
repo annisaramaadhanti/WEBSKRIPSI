@@ -13,6 +13,7 @@ import {
 import { mapProyek, mapProgress, extractList } from "@/lib/api-mapper";
 import type { Assignee, Proyek, Progress, SuratDetail } from "@/types";
 
+
 const TW_BADGE_BASE = "inline-flex items-center font-semibold whitespace-nowrap gap-[5px] px-[10px] py-[3px] rounded-full text-[11px] tracking-[0.15px] before:content-[''] before:shrink-0 before:w-[5px] before:h-[5px] before:rounded-full before:bg-[rgba(255,255,255,0.85)]";
 const TW_BTN = "inline-flex items-center justify-center cursor-pointer font-semibold gap-[4px] px-[16px] py-[8px] border-none rounded-[var(--r-sm)] text-[12px] transition-all no-underline";
 const TW_BTN_PRIMARY = `${TW_BTN} bg-[#0B1E4B] text-white shadow-[0_2px_8px_rgba(11,30,75,0.22)] hover:bg-[#0F2150] hover:-translate-y-px`;

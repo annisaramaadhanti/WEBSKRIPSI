@@ -26,23 +26,27 @@ export default function LoginPage() {
   const { setUser } = useRole();
   const [loading, setLoading] = useState(false);
   const [showDummy, setShowDummy] = useState(false);
+  const [showManual, setShowManual] = useState(false);
+  const [nipInput, setNipInput] = useState("");
+  const [manualLoading, setManualLoading] = useState(false);
+  const [manualError, setManualError] = useState("");
 
   const loginByNip = async (nip: string) => {
-    const res: any = await getMasterPengguna();
-    const list: any[] = res?.data ?? [];
-    const found = list.find((u: any) => u.NIP === nip);
-    if (!found) throw new Error("User tidak ditemukan di database.");
-    const role = PERAN_TO_ROLE[found.peran] ?? "staf";
-    setUser({
-      id: found.uuid,
-      nama: found.nama_lengkap,
-      nip: found.NIP,
-      jabatan: found.peran,
-      email: found.email,
-      password: "",
-      role,
-      divisi: found.divisi?.nama_divisi ?? "-",
-    });
+    try {
+      const res: any = await getMasterPengguna();
+      const list: any[] = res?.data ?? [];
+      const found = list.find((u: any) => u.NIP === nip);
+      if (found) {
+        const role = PERAN_TO_ROLE[found.peran] ?? "staf";
+        setUser({ id: found.uuid, nama: found.nama_lengkap, nip: found.NIP, jabatan: found.peran, email: found.email, password: "", role, divisi: found.divisi?.nama_divisi ?? "-" });
+        router.push("/dashboard");
+        return;
+      }
+    } catch {}
+    // Fallback ke data lokal kalau API mati
+    const local = USERS.find((u) => u.nip === nip);
+    if (!local) throw new Error("User tidak ditemukan.");
+    setUser(local);
     router.push("/dashboard");
   };
 
@@ -63,6 +67,20 @@ export default function LoginPage() {
       await loginByNip(nip);
     } catch (e: any) {
       alert("Login gagal: " + e.message);
+    }
+  };
+
+  const handleManualLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nipInput.trim()) return;
+    setManualLoading(true);
+    setManualError("");
+    try {
+      await loginByNip(nipInput.trim());
+    } catch (e: any) {
+      setManualError(e.message ?? "NIP tidak ditemukan.");
+    } finally {
+      setManualLoading(false);
     }
   };
 
@@ -174,6 +192,36 @@ export default function LoginPage() {
               </>
             )}
           </button>
+
+          {/* Login manual fallback */}
+          <div className="mt-[14px]">
+            <button
+              type="button"
+              className="w-full text-[11.5px] text-[#8A95A3] bg-transparent border-none cursor-pointer py-[6px] transition-colors hover:text-[#0B1E4B]"
+              onClick={() => { setShowManual(!showManual); setManualError(""); setNipInput(""); }}
+            >
+              {showManual ? "↑ Tutup login manual" : "SSO dalam maintenance? Masuk dengan NIP"}
+            </button>
+            {showManual && (
+              <form onSubmit={handleManualLogin} className="mt-[8px] flex flex-col gap-[8px]">
+                <input
+                  type="text"
+                  placeholder="Masukkan NIP"
+                  value={nipInput}
+                  onChange={(e) => setNipInput(e.target.value)}
+                  className="w-full px-[14px] py-[10px] rounded-[10px] border border-[#DDE3EF] text-[13px] text-[#0B1E4B] bg-[#F7F9FC] outline-none focus:border-[#0B1E4B] focus:shadow-[0_0_0_3px_rgba(11,30,75,0.08)] transition-all"
+                />
+                {manualError && <p className="text-[11px] text-red-500 m-0">{manualError}</p>}
+                <button
+                  type="submit"
+                  disabled={manualLoading || !nipInput.trim()}
+                  className="w-full py-[10px] rounded-[10px] bg-[#0B1E4B] text-white text-[13px] font-semibold border-none cursor-pointer transition-all hover:enabled:bg-[#0F2150] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {manualLoading ? "Memproses…" : "Masuk"}
+                </button>
+              </form>
+            )}
+          </div>
 
           {/* Gold accent bar */}
           <div className="h-[3px] bg-[#C6A84B] rounded-full my-[20px] w-[48px]" />

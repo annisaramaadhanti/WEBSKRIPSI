@@ -833,12 +833,11 @@ export default function DashboardPage() {
         setPk(extractList(pkRes).map(mapPekerjaan));
         setPr(extractList(prRes).map(mapProyek));
       })
-      .catch((e) => setError(e.message))
+      .catch(() => { setPk([]); setPr([]); })
       .finally(() => setLoading(false));
   }, [role, user?.id]);
 
   if (loading) return <div className="flex flex-col gap-[22px]"><p className="text-[var(--text-muted)] text-[12px]">Memuat dashboard...</p></div>;
-  if (error) return <div className="flex flex-col gap-[22px]"><p className="text-[var(--danger-600)]">Gagal memuat data: {error}</p></div>;
 
   if (role === "operator")     return <DashboardOperator pk={pk} pr={pr} />;
   if (role === "kepala-divisi") return <DashboardKadiv pk={pk} pr={pr} user={user} />;
