@@ -31,24 +31,39 @@ export default function LoginPage() {
   const [manualLoading, setManualLoading] = useState(false);
   const [manualError, setManualError] = useState("");
 
-  const loginByNip = async (nip: string) => {
-    try {
-      const res: any = await getMasterPengguna();
-      const list: any[] = res?.data ?? [];
-      const found = list.find((u: any) => u.NIP === nip);
-      if (found) {
-        const role = PERAN_TO_ROLE[found.peran] ?? "staf";
-        setUser({ id: found.uuid, nama: found.nama_lengkap, nip: found.NIP, jabatan: found.peran, email: found.email, password: "", role, divisi: found.divisi?.nama_divisi ?? "-" });
-        router.push("/dashboard");
-        return;
-      }
-    } catch {}
-    // Fallback ke data lokal kalau API mati
-    const local = USERS.find((u) => u.nip === nip);
-    if (!local) throw new Error("User tidak ditemukan.");
-    setUser(local);
-    router.push("/dashboard");
-  };
+ const loginByNip = async (nip: string) => {
+  try {
+    const res: any = await getMasterPengguna();
+    const list: any[] = res?.data ?? [];
+    const found = list.find((u: any) => u.NIP === nip);
+
+    if (found) {
+      const role = PERAN_TO_ROLE[found.peran] ?? "staf";
+
+      setUser({
+        id: found.uuid,
+        nama: found.nama_lengkap,
+        nip: found.NIP,
+        jabatan: found.peran,
+        email: found.email,
+        password: "",
+        role,
+        divisi: found.divisi?.nama_divisi ?? "-",
+      });
+
+      router.push("/dashboard");
+      return;
+    }
+  } catch {}
+
+  // Fallback ke data lokal jika API gagal
+  const local = USERS.find((u) => u.nip === nip);
+
+  if (!local) throw new Error("User tidak ditemukan.");
+
+  setUser(local);
+  router.push("/dashboard");
+};
 
   const handleSSOLogin = async () => {
     setLoading(true);
@@ -232,7 +247,7 @@ export default function LoginPage() {
               <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" strokeWidth="1.3"/>
               <path d="M6.5 5.5v4M6.5 4v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
             </svg>
-            <p className="m-0 text-[11.5px] text-[#0B1E4B] leading-[1.55] font-medium">Gunakan email dan password iAIK / SIAKADCLOUD untuk masuk ke sistem ini.</p>
+            <p className="m-0 text-[11.5px] text-[#0B1E4B] leading-[1.55] font-medium">Gunakan NIP dan password iAIK / SIAKADCLOUD untuk masuk ke sistem ini.</p>
           </div>
 
           {/* Footer */}
