@@ -5,9 +5,8 @@ import { useRole } from "@/components/providers/RoleProvider";
 import { getPekerjaanList, getProyekList, getDashboardStaf } from "@/lib/api";
 import { mapPekerjaan, mapProyek, extractList } from "@/lib/api-mapper";
 import { PERTANYAAN_SURVEY } from "@/lib/data";
-import type { Pekerjaan, Proyek, HasilSurvey } from "@/types";
 
-// ─── Konstanta ────────────────────────────────────────────────────────────────
+import type { Pekerjaan, Proyek, HasilSurvey } from "@/types";
 
 const STATUS_LABEL: Record<string, string> = {
   assigned: "Ditugaskan",
@@ -36,9 +35,6 @@ const TW_BADGE: Record<string, string> = {
 };
 const TW_BADGE_LIGHT = "inline-flex items-center font-semibold whitespace-nowrap gap-[5px] px-[10px] py-[3px] rounded-full text-[11px] tracking-[0.15px]";
 
-// ─── Komponen chart primitif ──────────────────────────────────────────────────
-
-/** Bar chart horizontal dengan label kiri & nilai kanan */
 function HBarChart({ data, color = "#2563EB", maxItems = 6 }: {
   data: [string, number][];
   color?: string;
@@ -68,7 +64,6 @@ function HBarChart({ data, color = "#2563EB", maxItems = 6 }: {
   );
 }
 
-/** Column chart vertikal untuk tren bulanan */
 function VBarChart({ data, color = "#2563EB", height = 120 }: {
   data: { label: string; val: number }[];
   color?: string;
@@ -99,7 +94,6 @@ function VBarChart({ data, color = "#2563EB", height = 120 }: {
   );
 }
 
-/** Stacked column chart — pekerjaan vs proyek */
 function StackedVBarChart({ pekerjaan, proyek, height = 120 }: {
   pekerjaan: number[];
   proyek: number[];
@@ -137,7 +131,6 @@ function StackedVBarChart({ pekerjaan, proyek, height = 120 }: {
   );
 }
 
-/** Donut chart SVG kecil dengan legenda */
 function DonutChart({ segments, size = 96 }: {
   segments: { label: string; val: number; color: string }[];
   size?: number;
@@ -188,7 +181,6 @@ function DonutChart({ segments, size = 96 }: {
   );
 }
 
-/** Gauge lingkaran untuk skor survei */
 function GaugeMeter({ value, max = 5 }: { value: number; max?: number }) {
   const pct = value / max;
   const circumference = 2 * Math.PI * 30;
@@ -210,7 +202,6 @@ function GaugeMeter({ value, max = 5 }: { value: number; max?: number }) {
   );
 }
 
-/** Kartu stat sederhana dengan ikon emoji */
 function StatCard({ label, value, color, icon, sub }: {
   label: string; value: string | number; color: string; icon: string; sub?: string;
 }) {
@@ -231,7 +222,6 @@ function StatCard({ label, value, color, icon, sub }: {
   );
 }
 
-/** Card wrapper tipis */
 function ChartCard({ title, subtitle, children }: {
   title: string; subtitle?: string; children: React.ReactNode;
 }) {
@@ -251,7 +241,6 @@ function ChartCard({ title, subtitle, children }: {
   );
 }
 
-/** Alert / CTA banner */
 function AlertBanner({ color, icon, title, desc, href, linkLabel }: {
   color: string; icon: string; title: string; desc: string; href: string; linkLabel: string;
 }) {
@@ -278,8 +267,6 @@ function AlertBanner({ color, icon, title, desc, href, linkLabel }: {
   );
 }
 
-// ─── Helper data ──────────────────────────────────────────────────────────────
-
 function byMonth(items: { targetSelesai: string }[]) {
   const counts = new Array(12).fill(0);
   items.forEach((x) => {
@@ -305,9 +292,7 @@ function countByStatus(items: (Pekerjaan | Proyek)[]) {
   return m;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD OPERATOR
-// ─────────────────────────────────────────────────────────────────────────────
 
 function DashboardOperator({ pk, pr }: { pk: Pekerjaan[]; pr: Proyek[] }) {
   const all = [...pk, ...pr];
@@ -422,9 +407,7 @@ function DashboardOperator({ pk, pr }: { pk: Pekerjaan[]; pr: Proyek[] }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD KADIV
-// ─────────────────────────────────────────────────────────────────────────────
 
 function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user: any }) {
   const divisi = user?.divisi || "";
@@ -563,9 +546,7 @@ function DashboardKadiv({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user:
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD STAF
-// ─────────────────────────────────────────────────────────────────────────────
 
 function DashboardStaf({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user: any }) {
   const uid = user?.id;
@@ -674,9 +655,7 @@ function DashboardStaf({ pk, pr, user }: { pk: Pekerjaan[]; pr: Proyek[]; user: 
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD KEPALA UPA
-// ─────────────────────────────────────────────────────────────────────────────
 
 function DashboardKepalaUPA({ pk, pr, surveys }: { pk: Pekerjaan[]; pr: Proyek[]; surveys: HasilSurvey[] }) {
   const all = [...pk, ...pr];
@@ -805,9 +784,7 @@ function DashboardKepalaUPA({ pk, pr, surveys }: { pk: Pekerjaan[]; pr: Proyek[]
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // ROOT
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const { role, user } = useRole();
@@ -833,7 +810,7 @@ export default function DashboardPage() {
         setPk(extractList(pkRes).map(mapPekerjaan));
         setPr(extractList(prRes).map(mapProyek));
       })
-      .catch(() => { setPk([]); setPr([]); })
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, [role, user?.id]);
 

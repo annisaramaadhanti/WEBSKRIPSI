@@ -15,8 +15,6 @@ export interface LaporanData {
   surveyList: HasilSurvey[];
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
 function isImageFile(name: string): boolean {
   return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(name);
 }
@@ -42,8 +40,6 @@ function avgSurvey(surveyList: HasilSurvey[]): number {
   return count > 0 ? total / count : 0;
 }
 
-// ── Generator utama ───────────────────────────────────────────────────────────
-
 export function generateLaporanHTML(d: LaporanData): string {
   const { item, jenis, progressList = [], dokumentasiList, surveyList } = d;
 
@@ -53,7 +49,6 @@ export function generateLaporanHTML(d: LaporanData): string {
 
   const assignees = item.assignees ?? [];
 
-  // ── CSS ──
   const css = `
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -119,7 +114,6 @@ export function generateLaporanHTML(d: LaporanData): string {
     @media print { body { padding: 1.5cm 2cm; } }
   `;
 
-  // ── 1. Identitas ──
   const sec1 = `
     <div class="sec">1. IDENTITAS LAYANAN</div>
     <hr class="sec-line"/>
@@ -132,7 +126,6 @@ export function generateLaporanHTML(d: LaporanData): string {
       <tr><td class="lbl">Status Akhir</td><td class="sep">:</td><td>Selesai</td></tr>
     </tbody></table>`;
 
-  // ── 2. Administrasi ──
   const sd = item.suratDetail;
   const sec2 = `
     <div class="sec">2. ADMINISTRASI</div>
@@ -146,7 +139,6 @@ export function generateLaporanHTML(d: LaporanData): string {
       <tr><td class="lbl">Lokasi Pelaksanaan</td><td class="sep">:</td><td>${sd?.lokasiPembuatan || "-"}</td></tr>
     </tbody></table>`;
 
-  // ── 3. Tim Pelaksana ──
   const timRows = assignees.length > 0
     ? assignees.map((a, i) => `
         <tr>
@@ -171,7 +163,6 @@ export function generateLaporanHTML(d: LaporanData): string {
       <tbody>${timRows}</tbody>
     </table>`;
 
-  // ── 4. Progress (khusus proyek) ──
   let sec4 = "";
   if (jenis === "PROYEK") {
     const progRows = progressList.length > 0
@@ -197,7 +188,6 @@ export function generateLaporanHTML(d: LaporanData): string {
       </table>`;
   }
 
-  // ── 5. Dokumentasi Akhir ──
   const secNumDok = jenis === "PROYEK" ? 5 : 4;
   let dokHtml = "";
   const dokFinal = dokumentasiList.filter(d => !d.judul.startsWith("Surat Masuk:"));
@@ -227,7 +217,6 @@ export function generateLaporanHTML(d: LaporanData): string {
     <hr class="sec-line"/>
     ${dokHtml}`;
 
-  // ── 6. Survei Klien ──
   const secNumSurvei = secNumDok + 1;
   let surveiHtml = "";
 
@@ -285,7 +274,6 @@ export function generateLaporanHTML(d: LaporanData): string {
     <hr class="sec-line"/>
     ${surveiHtml}`;
 
-  // ── 7. Tinjauan Kadiv ──
   const secNumTinjauan = secNumSurvei + 1;
   const accBy = item.accBy;
   const secTinjauan = `
@@ -298,7 +286,6 @@ export function generateLaporanHTML(d: LaporanData): string {
       <tr><td class="lbl">Tanggal ACC</td><td class="sep">:</td><td>${item.accAt || "-"}</td></tr>
     </tbody></table>`;
 
-  // ── 8. Kesimpulan ──
   const secNumKes = secNumTinjauan + 1;
   const secKesimpulan = `
     <div class="sec">${secNumKes}. KESIMPULAN</div>
@@ -308,7 +295,6 @@ export function generateLaporanHTML(d: LaporanData): string {
       Laporan ini dapat digunakan sebagai bukti penyelesaian layanan UPA TIK.
     </p>`;
 
-  // ── Tanda Tangan ──
   const lokasiTtd = item.suratDetail?.lokasiPembuatan || "Bandar Lampung";
   const tanggalTtd = item.accAt || new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
 

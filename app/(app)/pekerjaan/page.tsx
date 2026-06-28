@@ -12,6 +12,7 @@ import {
   getMasterUnitKerja, getMasterStaf, getMasterDivisi, getMasterPengguna,
 } from "@/lib/api";
 import { mapPekerjaan, extractList } from "@/lib/api-mapper";
+
 import type { Pekerjaan, Assignee, SuratDetail } from "@/types";
 
 
@@ -40,7 +41,7 @@ const STATUS_LABEL: Record<string, string> = {
   "done": "Selesai",
 };
 
-// ─── Ringkasan Modal ───
+
 function RingkasanModal({ item, onClose }: { item: Pekerjaan; onClose: () => void }) {
   const openSurat = () => {
     if (item.id_surat_tugas) window.open(urlPdfSuratTugas(item.id_surat_tugas), "_blank");
@@ -166,6 +167,8 @@ function RingkasanModal({ item, onClose }: { item: Pekerjaan; onClose: () => voi
           <button type="button" className="inline-flex items-center justify-center cursor-pointer font-semibold gap-[6px] px-[14px] py-[7px] border border-[1.5px] border-[#CBD5E1] rounded-[var(--r-sm)] bg-white text-[#475569] text-[12px] transition-all hover:bg-[#F1F5F9] hover:border-[#94A3B8] hover:text-[#1E293B]" onClick={onClose}>Tutup</button>
         </div>
       </div>
+
+
     </div>
   );
 }
@@ -236,7 +239,11 @@ export default function PekerjaanPage() {
       .catch(console.error);
     getMasterDivisi()
       .then((res: any) => {
-        const list = extractList(res);
+        const list = Array.isArray(res) ? res
+          : Array.isArray(res?.data) ? res.data
+          : Array.isArray(res?.divisi) ? res.divisi
+          : Array.isArray(res?.data?.divisi) ? res.data.divisi
+          : [];
         setDivisiList(list);
       })
       .catch(console.error);
@@ -461,7 +468,7 @@ export default function PekerjaanPage() {
     window.open(urlLaporanPdf(item.id_tinjauan), "_blank");
   };
 
-  // ─── Hitung kolom header & colspan berdasarkan role ───
+
   const renderHeader = () => {
     if (role === "operator") {
       return (
@@ -999,7 +1006,7 @@ export default function PekerjaanPage() {
   );
 }
 
-// ─── Disposisi Modal ───
+
 function DisposisiModal({
   pekerjaan, onClose, onSave, isReassign,
 }: {
@@ -1015,13 +1022,13 @@ function DisposisiModal({
       .catch(console.error);
   }, []);
 
-  // ── Initial disposisi: dropdown + table ──
+
   const [selectedMap, setSelectedMap] = useState<Record<string, { masukSurat: boolean }>>({});
   const [search, setSearch] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [pendingStafId, setPendingStafId] = useState("");
 
-  // ── Reassign mode state ──
+
   type ExistingAction = {
     action: "keep" | "remove" | "replace";
     replacementId: string;

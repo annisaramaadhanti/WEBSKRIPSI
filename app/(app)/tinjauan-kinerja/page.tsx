@@ -7,6 +7,7 @@ import { extractList } from "@/lib/api-mapper";
 import { PERTANYAAN_SURVEY } from "@/lib/data";
 import type { StatusPekerjaan, Dokumentasi, HasilSurvey } from "@/types";
 
+
 type TinjauanItem = {
   id: string;
   jenis: "PEKERJAAN" | "PROYEK";

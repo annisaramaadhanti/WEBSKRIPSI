@@ -11,6 +11,7 @@ import {
   getProgressProyek, tambahProgressProyek,
 } from "@/lib/api";
 import { mapProyek, mapProgress, extractList } from "@/lib/api-mapper";
+
 import type { Assignee, Proyek, Progress, SuratDetail } from "@/types";
 
 
@@ -38,7 +39,7 @@ const STATUS_LABEL: Record<string, string> = {
   "done": "Selesai",
 };
 
-// ─── Lihat Progress Modal ───
+
 function ProgressModal({
   proyek, role, userId, userName, onClose,
 }: {
@@ -167,7 +168,7 @@ function ProgressModal({
   );
 }
 
-// ─── Ringkasan Modal ───
+
 function RingkasanModal({ item, onClose }: { item: Proyek; onClose: () => void }) {
   const openSurat = () => {
     if (!item.id_surat_tugas) { alert("Surat tugas belum tersedia."); return; }
@@ -526,7 +527,7 @@ export default function ProyekPage() {
     window.open(urlDokumen(item.id_dokumen_surat), "_blank");
   };
 
-  // ─── Render header berdasarkan role ───
+
   const renderHeader = () => {
     if (role === "operator") {
       return (

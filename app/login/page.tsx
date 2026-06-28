@@ -196,7 +196,14 @@ export default function LoginPage() {
             )}
           </div>
 
-          <div className="mt-[20px] text-center text-[11px] text-[#B0BCCE]">
+          <div className="mt-[16px]">
+            <a href="/" className="w-full flex items-center justify-center gap-[6px] py-[9px] rounded-[10px] border border-[#DDE3EF] bg-[#F7F9FC] text-[12px] font-semibold text-[#475569] no-underline transition-all hover:bg-[#EEF5FF] hover:border-[#C9DEFF] hover:text-[#0B1E4B]">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 2.5 3.5 7l5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Lihat Dashboard Publik
+            </a>
+          </div>
+
+          <div className="mt-[14px] text-center text-[11px] text-[#B0BCCE]">
             <div>© 2025 UPA TIK Universitas Lampung</div>
             <button
               className="bg-transparent border-none cursor-pointer text-[10px] text-[#D4DCEC] font-medium transition-colors px-[6px] py-[3px] rounded-[4px] inline-block mt-[6px] hover:text-[#8A95A3]"

@@ -154,7 +154,6 @@ export function mapProyek(p: any): Proyek {
   };
 }
 
-/** Ekstrak array dari respons API yang mungkin dibungkus { data: [...] } */
 export function extractList(res: any): any[] {
   if (Array.isArray(res)) return res;
   if (res && Array.isArray(res.data)) return res.data;

@@ -114,7 +114,6 @@ export const PERTANYAAN_SURVEY: PertanyaanSurvey[] = [
 ];
 
 export const USERS: User[] = [
-  // ─── Operator ───────────────────────────────────────────────────────────────
   {
     id: "fb24cdeb-78de-49f8-a28d-81648d51f9f4",
     nama: "Yeni Farida, A.M.",
@@ -125,7 +124,6 @@ export const USERS: User[] = [
     divisi: "-",
   },
 
-  // ─── Kepala UPA ─────────────────────────────────────────────────────────────
   {
     id: "d4a4a2ed-979c-4b8c-82c4-60c0cc88b5f2",
     nama: "Dr. Eng. Ir. Mardiana, S.T., M.T., IPM",
@@ -136,7 +134,6 @@ export const USERS: User[] = [
     divisi: "-",
   },
 
-  // ─── Divisi 1: Pengembangan dan Inovasi TI ──────────────────────────────────
   {
     id: "dd43e19d-a5b3-48b5-908f-e062dbe46b7c",
     nama: "Rico Andrian, S.Si., M.Kom.",
@@ -147,7 +144,6 @@ export const USERS: User[] = [
     divisi: "Pengembangan dan Inovasi Teknologi Informasi",
   },
 
-  // ─── Divisi 2: Layanan Sistem dan TI ────────────────────────────────────────
   {
     id: "7825e32a-c648-4668-992e-0b2666e542a1",
     nama: "Hadianto Cahyadi, S.Kom.",
@@ -185,7 +181,6 @@ export const USERS: User[] = [
     divisi: "Layanan Sistem dan Teknologi Informasi",
   },
 
-  // ─── Divisi 3: Manajemen dan Integrasi Sistem TI ────────────────────────────
   {
     id: "e148fe0f-a148-43b3-a4e3-3af240194cb0",
     nama: "Mahendra Pratama, S.T., M.Eng.",
@@ -214,7 +209,6 @@ export const USERS: User[] = [
     divisi: "Manajemen dan Integrasi Sistem Teknologi Informasi",
   },
 
-  // ─── Divisi 4: Infrastruktur Jaringan ───────────────────────────────────────
   {
     id: "79a87138-854b-4539-aa43-b11dc8b07a0a",
     nama: "Hendri Susanto, S.T.",
@@ -243,7 +237,6 @@ export const USERS: User[] = [
     divisi: "Infrastruktur Jaringan",
   },
 
-  // ─── Divisi 5: Sumber Daya Sistem Informasi ─────────────────────────────────
   {
     id: "7414182a-6b90-4b4b-b776-85abebb66280",
     nama: "Muhammad Ikhsan, S.Kom., M.Cs.",
@@ -281,7 +274,6 @@ export const USERS: User[] = [
     divisi: "Sumber Daya Sistem Informasi",
   },
 
-  // ─── Divisi 6: Pusat Data dan Keamanan Informasi ────────────────────────────
   {
     id: "c2d2fbdd-4408-4f50-92c2-e71d76d08778",
     nama: "M. Iqbal Parabi, S.Si., M.T.",

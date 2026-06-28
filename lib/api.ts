@@ -1,12 +1,3 @@
-/**
- * API layer — semua request ke backend Laravel.
- * Base URL: http://127.0.0.1:8000/api
- *
- * - Upload file  → form-data
- * - Request biasa → raw JSON
- * - Edit pekerjaan/proyek → POST /edit (bukan PUT)
- */
-
 const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000/api";
 
 const baseHeaders = {
@@ -52,10 +43,6 @@ async function postForm<T>(path: string, form: FormData): Promise<T> {
   return res.json();
 }
 
-// ─────────────────────────────────────────────
-// AUTH
-// ─────────────────────────────────────────────
-
 export interface LoginResponse {
   data: {
     uuid: string;
@@ -77,10 +64,6 @@ export async function loginUser(nip: string, password: string): Promise<LoginRes
   return json as LoginResponse;
 }
 
-// ─────────────────────────────────────────────
-// MASTER DATA
-// ─────────────────────────────────────────────
-
 export const getMasterPengguna = () => get("/master/pengguna");
 export const getMasterUnitKerja = () => get("/master/unit-kerja");
 export const getMasterDivisi = () => get("/master/divisi");
@@ -88,7 +71,6 @@ export const getMasterStatusKinerja = () => get("/master/status-kinerja");
 export const getMasterStatusKonfirmasi = () => get("/master/status-konfirmasi");
 export const getMasterPertanyaanSurvei = () => get("/master/pertanyaan-survei");
 
-/** Daftar staf. Opsional: search nama atau filter id_divisi */
 export const getMasterStaf = (params?: { search?: string; id_divisi?: string }) => {
   const q = new URLSearchParams();
   if (params?.search) q.set("search", params.search);
@@ -96,10 +78,6 @@ export const getMasterStaf = (params?: { search?: string; id_divisi?: string }) 
   const qs = q.toString();
   return get(`/master/pengguna/staf${qs ? `?${qs}` : ""}`);
 };
-
-// ─────────────────────────────────────────────
-// PEKERJAAN
-// ─────────────────────────────────────────────
 
 export interface FilterPekerjaan {
   search?: string;
@@ -124,10 +102,6 @@ export const getPekerjaanList = (filter?: FilterPekerjaan) => {
 
 export const getPekerjaanDetail = (id: string) => get(`/pekerjaan/${id}`);
 
-/**
- * Tambah pekerjaan — semua field wajib, termasuk dokumen_surat (File).
- * id_pengguna = uuid operator yang sedang login.
- */
 export const tambahPekerjaan = (payload: {
   id_pengguna: string;
   id_unit: string;
@@ -152,10 +126,6 @@ export const tambahPekerjaan = (payload: {
   return postForm("/pekerjaan", form);
 };
 
-/**
- * Edit pekerjaan — dokumen_surat opsional (kosong = pakai file lama).
- * Hanya saat status Ditugaskan dan surat tugas belum published.
- */
 export const editPekerjaan = (
   id: string,
   payload: {
@@ -179,10 +149,6 @@ export const editPekerjaan = (
   return postForm(`/pekerjaan/${id}/edit`, form);
 };
 
-/**
- * Disposisi pekerjaan ke staf.
- * sertakan_dalam_surat = true → staf masuk PDF surat tugas.
- */
 export const disposisiPekerjaan = (
   id: string,
   staf: { id_pengguna: string; sertakan_dalam_surat: boolean }[]
@@ -196,10 +162,6 @@ export const tolakPekerjaan = (id_pekerjaan_staf: string, alasan_penolakan: stri
 
 export const mulaiPekerjaan = (id: string, id_pengguna: string) =>
   post(`/pekerjaan/${id}/mulai`, { id_pengguna });
-
-// ─────────────────────────────────────────────
-// PROYEK
-// ─────────────────────────────────────────────
 
 export interface FilterProyek {
   search?: string;
@@ -283,10 +245,6 @@ export const tolakProyek = (id_proyek_staf: string, alasan_penolakan: string) =>
 export const mulaiProyek = (id: string, id_pengguna: string) =>
   post(`/proyek/${id}/mulai`, { id_pengguna });
 
-// ─────────────────────────────────────────────
-// PROGRESS PROYEK
-// ─────────────────────────────────────────────
-
 export const getProgressProyek = (id_proyek: string, id_pengguna?: string) => {
   const qs = id_pengguna ? `?id_pengguna=${id_pengguna}` : "";
   return get(`/proyek/${id_proyek}/progress${qs}`);
@@ -306,10 +264,6 @@ export const tambahProgressProyek = (payload: {
   }
   return postForm(`/proyek/${payload.id_proyek}/progress`, form);
 };
-
-// ─────────────────────────────────────────────
-// SURAT TUGAS
-// ─────────────────────────────────────────────
 
 export const getSuratTugasPekerjaan = (id_pekerjaan: string) =>
   get(`/pekerjaan/${id_pekerjaan}/surat-tugas`);
@@ -333,23 +287,13 @@ export const buatSuratTugasPekerjaan = (id_pekerjaan: string, payload: SuratTuga
 export const buatSuratTugasProyek = (id_proyek: string, payload: SuratTugasPayload) =>
   post(`/proyek/${id_proyek}/surat-tugas`, payload);
 
-/** Buka PDF surat tugas — kembalikan URL langsung untuk dibuka di tab baru */
 export const urlPdfSuratTugas = (id_surat_tugas: string) =>
   `${BASE}/surat-tugas/${id_surat_tugas}/pdf`;
 
 export const publishSuratTugas = (id_surat_tugas: string) =>
   post(`/surat-tugas/${id_surat_tugas}/publish`, {});
 
-// ─────────────────────────────────────────────
-// DOKUMEN / FILE
-// ─────────────────────────────────────────────
-
-/** URL langsung untuk membuka file dokumen (surat masuk, lampiran, dll) */
 export const urlDokumen = (id_dokumen: string) => `${BASE}/dokumen/${id_dokumen}/file`;
-
-// ─────────────────────────────────────────────
-// TINJAUAN KINERJA
-// ─────────────────────────────────────────────
 
 export const getTinjauanList = (params?: {
   hasil_tinjauan?: "menunggu" | "disetujui";
@@ -367,12 +311,7 @@ export const getTinjauanDetail = (id: string) => get(`/tinjauan-kinerja/${id}`);
 export const accTinjauan = (id: string, payload: { id_ditinjau_oleh: string; catatan: string }) =>
   post(`/tinjauan-kinerja/${id}/acc`, payload);
 
-/** URL langsung PDF laporan hasil — hanya tersedia setelah ACC */
 export const urlLaporanPdf = (id: string) => `${BASE}/tinjauan-kinerja/${id}/laporan-pdf`;
-
-// ─────────────────────────────────────────────
-// DASHBOARD
-// ─────────────────────────────────────────────
 
 export interface DashboardParams {
   tahun?: number;
