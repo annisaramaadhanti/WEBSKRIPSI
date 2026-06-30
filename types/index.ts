@@ -35,6 +35,8 @@ export type User = {
   password: string;
   role: Role;
   divisi: string;
+  isAdmin?: boolean;
+  statusAkun?: "pending" | "aktif" | "ditolak" | "nonaktif";
 };
 
 export type UnitPeminta = string; // lihat unitPemintaList di lib/data.ts

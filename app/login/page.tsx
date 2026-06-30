@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRole } from "@/components/providers/RoleProvider";
-import { getMasterPengguna, ssoLoginUrl } from "@/lib/api";
+import { getMasterPengguna, loginUser as apiLoginUser, ssoLoginUrl } from "@/lib/api";
 import { USERS } from "@/lib/data";
 import type { Role } from "@/types";
 
@@ -34,6 +34,7 @@ export default function LoginPage() {
   const [showDummy, setShowDummy] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [nipInput, setNipInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
   const [manualLoading, setManualLoading] = useState(false);
   const [manualError, setManualError] = useState("");
 
@@ -41,9 +42,21 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search);
     const ssoError = params.get("sso_error");
     const ssoUser = params.get("sso_user");
+    const ssoPending = params.get("sso_pending");
 
     if (ssoError) {
       alert(`Login SSO gagal: ${ssoError}`);
+      window.history.replaceState(null, "", "/login");
+      return;
+    }
+
+    if (ssoPending) {
+      try {
+        const pendingUser = decodeBase64UrlJson(ssoPending);
+        alert(`Login SSO berhasil. Akun ${pendingUser.nama_lengkap ?? pendingUser.username_sso ?? "Anda"} sudah masuk daftar pending dan menunggu aktivasi Admin Akses.`);
+      } catch {
+        alert("Login SSO berhasil. Akun Anda menunggu aktivasi Admin Akses.");
+      }
       window.history.replaceState(null, "", "/login");
       return;
     }
@@ -70,26 +83,50 @@ export default function LoginPage() {
     }
   }, [router, setUser]);
 
-  const loginByNip = async (nip: string) => {
+  const loginByNip = async (nip: string, password: string) => {
+    try {
+      const response = await apiLoginUser(nip, password);
+      const found = response.data;
+      const role = PERAN_TO_ROLE[found.peran] ?? "staf";
+      setUser({
+        id: found.uuid,
+        nama: found.nama_lengkap,
+        nip: found.NIP,
+        jabatan: found.peran,
+        password: "",
+        role,
+        divisi: found.divisi?.nama_divisi ?? "-",
+      });
+      router.push("/dashboard");
+      return;
+    } catch {}
+
+    const local = USERS.find((u) => u.nip === nip && u.password === password);
+    if (local) {
+      if (local.statusAkun && local.statusAkun !== "aktif") {
+        throw new Error("Akun belum aktif atau tidak memiliki akses.");
+      }
+      setUser(local);
+      router.push("/dashboard");
+      return;
+    }
+
     try {
       const res: any = await getMasterPengguna();
       const list: any[] = res?.data ?? [];
-      const found = list.find((u: any) => u.NIP === nip);
-      if (found) {
-        const role = PERAN_TO_ROLE[found.peran] ?? "staf";
-        setUser({ id: found.uuid, nama: found.nama_lengkap, nip: found.NIP, jabatan: found.peran, password: "", role, divisi: found.divisi?.nama_divisi ?? "-" });
-        router.push("/dashboard");
-        return;
+      if (list.some((u: any) => u.NIP === nip)) {
+        throw new Error("Password salah atau akun manual belum disiapkan.");
       }
-    } catch {}
-    const local = USERS.find((u) => u.nip === nip);
-    if (!local) throw new Error("User tidak ditemukan.");
-    setUser(local);
-    router.push("/dashboard");
+    } catch (err: any) {
+      if (err?.message?.includes("Password")) throw err;
+    }
+
+    throw new Error("NIP tidak terdaftar di SIMPROTIK.");
   };
 
   const quickLogin = async (nip: string) => {
-    try { await loginByNip(nip); } catch (e: any) { alert("Login gagal: " + e.message); }
+    const local = USERS.find((u) => u.nip === nip);
+    try { await loginByNip(nip, local?.password ?? ""); } catch (e: any) { alert("Login gagal: " + e.message); }
   };
 
   const handleSSOLogin = async () => {
@@ -99,11 +136,11 @@ export default function LoginPage() {
 
   const handleManualLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nipInput.trim()) return;
+    if (!nipInput.trim() || !passwordInput.trim()) return;
     setManualLoading(true);
     setManualError("");
     try {
-      await loginByNip(nipInput.trim());
+      await loginByNip(nipInput.trim(), passwordInput.trim());
     } catch (err: any) {
       setManualError(err.message ?? "NIP tidak ditemukan.");
     } finally {
@@ -205,9 +242,9 @@ export default function LoginPage() {
             <button
               type="button"
               className="w-full text-[11.5px] text-[#8A95A3] bg-transparent border-none cursor-pointer py-[6px] transition-colors hover:text-[#0B1E4B]"
-              onClick={() => { setShowManual(!showManual); setManualError(""); setNipInput(""); }}
+              onClick={() => { setShowManual(!showManual); setManualError(""); setNipInput(""); setPasswordInput(""); }}
             >
-              {showManual ? "↑ Tutup login manual" : "SSO dalam maintenance? Masuk dengan NIP"}
+              {showManual ? "Tutup login manual" : "SSO dalam maintenance? Masuk manual"}
             </button>
             {showManual && (
               <form onSubmit={handleManualLogin} className="mt-[8px] flex flex-col gap-[8px]">
@@ -218,10 +255,17 @@ export default function LoginPage() {
                   onChange={(e) => setNipInput(e.target.value)}
                   className="w-full px-[14px] py-[10px] rounded-[10px] border border-[#DDE3EF] text-[13px] text-[#0B1E4B] bg-[#F7F9FC] outline-none focus:border-[#0B1E4B] focus:shadow-[0_0_0_3px_rgba(11,30,75,0.08)] transition-all"
                 />
+                <input
+                  type="password"
+                  placeholder="Masukkan password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="w-full px-[14px] py-[10px] rounded-[10px] border border-[#DDE3EF] text-[13px] text-[#0B1E4B] bg-[#F7F9FC] outline-none focus:border-[#0B1E4B] focus:shadow-[0_0_0_3px_rgba(11,30,75,0.08)] transition-all"
+                />
                 {manualError && <p className="text-[11px] text-red-500 m-0">{manualError}</p>}
                 <button
                   type="submit"
-                  disabled={manualLoading || !nipInput.trim()}
+                  disabled={manualLoading || !nipInput.trim() || !passwordInput.trim()}
                   className="w-full py-[10px] rounded-[10px] bg-[#0B1E4B] text-white text-[13px] font-semibold border-none cursor-pointer transition-all hover:enabled:bg-[#0F2150] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {manualLoading ? "Memproses…" : "Masuk"}

@@ -1,5 +1,6 @@
 const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000/api";
 const BACKEND_ORIGIN = BASE.replace(/\/api\/?$/, "");
+const SSO_LOGOUT_URL = process.env.NEXT_PUBLIC_SSO_LOGOUT_URL ?? "";
 
 const baseHeaders = {
   Accept: "application/json",
@@ -44,6 +45,7 @@ async function post<T>(path: string, body: object): Promise<T> {
       : json.message ?? "";
     throw new Error(`POST ${path} gagal: ${res.status}${detail ? " - " + detail : ""}`);
   }
+  getCache.clear();
   return res.json();
 }
 
@@ -60,6 +62,7 @@ async function postForm<T>(path: string, form: FormData): Promise<T> {
       : json.message ?? "";
     throw new Error(`POST ${path} gagal: ${res.status}${detail ? " - " + detail : ""}`);
   }
+  getCache.clear();
   return res.json();
 }
 
@@ -84,9 +87,18 @@ export async function loginUser(nip: string, password: string): Promise<LoginRes
   return json as LoginResponse;
 }
 
-export const ssoLoginUrl = () => `${BACKEND_ORIGIN}/auth/sso`;
+export const ssoLoginUrl = () => `${BACKEND_ORIGIN}/login/sso`;
+export const ssoLogoutUrl = () => SSO_LOGOUT_URL;
 
 export const getMasterPengguna = () => get("/master/pengguna");
+export const aturAksesPengguna = (payload: {
+  id_pengguna: string;
+  id_pengguna_lokal?: string;
+  status_akun: "pending" | "aktif" | "ditolak" | "nonaktif";
+  peran: "Operator" | "Staf" | "Kepala Divisi" | "Kepala UPA";
+  nama_divisi: string;
+  is_admin: boolean;
+}) => post("/master/pengguna/atur-akses", payload);
 export const getMasterUnitKerja = () => get("/master/unit-kerja");
 export const getMasterDivisi = () => get("/master/divisi");
 export const getMasterStatusKinerja = () => get("/master/status-kinerja");

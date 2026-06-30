@@ -72,6 +72,7 @@ const TINJAUAN_STATUSES: StatusPekerjaan[] = ["review", "done"];
 export default function TinjauanKinerjaPage() {
   const { role, user } = useRole();
   const [items, setItems] = useState<TinjauanItem[]>([]);
+  const [loadingItems, setLoadingItems] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("semua");
   const [filterJenis, setFilterJenis] = useState<string>("semua");
 
@@ -84,6 +85,7 @@ export default function TinjauanKinerjaPage() {
   const [showRingkasan, setShowRingkasan] = useState<TinjauanItem | null>(null);
 
   const load = () => {
+    setLoadingItems(true);
     getTinjauanList()
       .then((res: any) => {
         const list = extractList(res);
@@ -113,7 +115,8 @@ export default function TinjauanKinerjaPage() {
           };
         }));
       })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setLoadingItems(false));
   };
 
   useEffect(() => { load(); }, []);
@@ -293,7 +296,9 @@ export default function TinjauanKinerjaPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length > 0 ? filtered.map((item) => (
+              {loadingItems ? (
+                <tr><td colSpan={10} className="text-center py-8 text-[var(--text-muted)] text-[13px]">Mengambil data tinjauan...</td></tr>
+              ) : filtered.length > 0 ? filtered.map((item) => (
                 <tr key={`${item.jenis}-${item.id}`}>
                   <td className="!whitespace-normal max-w-[280px]"><div className="line-clamp-2"><strong>{item.judul}</strong></div></td>
                   <td className="text-center">

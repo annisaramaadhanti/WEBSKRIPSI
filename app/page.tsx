@@ -41,11 +41,31 @@ export default function PublicDashboard() {
   const [filterUnit, setFilterUnit] = useState("semua");
   const [sortBy, setSortBy] = useState("terbaru");
   const [unitKerjaList, setUnitKerjaList] = useState<string[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
-    getPekerjaanList({}).then((res: any) => setPk(extractList(res).map(mapPekerjaan))).catch(console.error);
-    getProyekList({}).then((res: any) => setPr(extractList(res).map(mapProyek))).catch(console.error);
-    getMasterUnitKerja().then((res: any) => setUnitKerjaList(extractList(res).map((u: any) => u.nama_unit))).catch(console.error);
+    let active = true;
+    setLoadingData(true);
+
+    Promise.all([
+      getPekerjaanList({}),
+      getProyekList({}),
+      getMasterUnitKerja(),
+    ])
+      .then(([pkRes, prRes, unitRes]: any[]) => {
+        if (!active) return;
+        setPk(extractList(pkRes).map(mapPekerjaan));
+        setPr(extractList(prRes).map(mapProyek));
+        setUnitKerjaList(extractList(unitRes).map((u: any) => u.nama_unit));
+      })
+      .catch(console.error)
+      .finally(() => {
+        if (active) setLoadingData(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const tahunList = Array.from(new Set(
@@ -196,12 +216,12 @@ export default function PublicDashboard() {
         {/* STAT CARDS */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-[16px] mb-[22px]">
           {[
-            { label:"Total Layanan", val:total, cls:"c-navy" },
-            { label:"Total Pekerjaan", val:totalPk, cls:"c-blue" },
-            { label:"Total Proyek", val:totalPr, cls:"c-purple" },
-            { label:"Sedang Berlangsung", val:berjalan, cls:"c-orange" },
-            { label:"Dalam Tinjauan", val:tinjauan, cls:"c-amber" },
-            { label:"Selesai", val:selesai, cls:"c-green" },
+            { label:"Total Layanan", val:loadingData ? "..." : total, cls:"c-navy" },
+            { label:"Total Pekerjaan", val:loadingData ? "..." : totalPk, cls:"c-blue" },
+            { label:"Total Proyek", val:loadingData ? "..." : totalPr, cls:"c-purple" },
+            { label:"Sedang Berlangsung", val:loadingData ? "..." : berjalan, cls:"c-orange" },
+            { label:"Dalam Tinjauan", val:loadingData ? "..." : tinjauan, cls:"c-amber" },
+            { label:"Selesai", val:loadingData ? "..." : selesai, cls:"c-green" },
           ].map(s=>(
             <div key={s.label} className={`relative overflow-hidden rounded-[14px] px-[20px] pt-[18px] pb-[16px] bg-white border border-[#D4E3FF] shadow-[0_2px_12px_rgba(11,30,75,0.07)] transition-[transform,box-shadow] hover:-translate-y-[2px] hover:shadow-[0_6px_20px_rgba(11,30,75,0.12)] ${STAT_BORDER[s.cls]}`}>
               <div className="font-bold uppercase text-[10px] tracking-[0.6px] text-[#7A90B0] mb-[8px]">{s.label}</div>
@@ -259,7 +279,7 @@ export default function PublicDashboard() {
           <div className={CHART_CARD}>
             <div className="font-bold text-[14px] text-[#0B1E4B] mb-[3px]">Top Unit Kerja Peminta</div>
             <div className="text-[12px] text-[#94A3B8] pb-[12px] border-b-[1.5px] border-[#EEF2FA] mb-[16px]">Unit yang paling banyak mengajukan layanan</div>
-            {topUnit.length > 0 ? topUnit.map(([label,val],i)=>(
+            {loadingData ? <p style={{ fontSize:12, color:"#8A95A3", margin:0 }}>Mengambil data terbaru...</p> : topUnit.length > 0 ? topUnit.map(([label,val],i)=>(
               <div key={label} className="flex items-center gap-[10px] mb-[10px]">
                 <span className="overflow-hidden whitespace-nowrap shrink-0 text-[11px] text-[#475569] w-[170px]" style={{ textOverflow:"ellipsis" }} title={label}>{label}</span>
                 <div className="flex-1 overflow-hidden h-[8px] bg-[#F1F5F9] rounded-full">
@@ -272,7 +292,7 @@ export default function PublicDashboard() {
           <div className={CHART_CARD}>
             <div className="font-bold text-[14px] text-[#0B1E4B] mb-[3px]">Top Divisi Pelaksana</div>
             <div className="text-[12px] text-[#94A3B8] pb-[12px] border-b-[1.5px] border-[#EEF2FA] mb-[16px]">Divisi yang paling banyak menangani layanan</div>
-            {topDivisi.length > 0 ? topDivisi.map(([label,val],i)=>(
+            {loadingData ? <p style={{ fontSize:12, color:"#8A95A3", margin:0 }}>Mengambil data terbaru...</p> : topDivisi.length > 0 ? topDivisi.map(([label,val],i)=>(
               <div key={label} className="flex items-center gap-[10px] mb-[10px]">
                 <span className="overflow-hidden whitespace-nowrap shrink-0 text-[11px] text-[#475569] w-[170px]" style={{ textOverflow:"ellipsis" }} title={label}>{label}</span>
                 <div className="flex-1 overflow-hidden h-[8px] bg-[#F1F5F9] rounded-full">
@@ -303,7 +323,9 @@ export default function PublicDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length > 0 ? filtered.map(item=>(
+                {loadingData ? (
+                  <tr><td colSpan={6} className="text-center px-[32px] py-[32px] text-[#8A95A3] text-[13px]">Mengambil data terbaru...</td></tr>
+                ) : filtered.length > 0 ? filtered.map(item=>(
                   <tr key={item.id}>
                     <td>
                       <div className="font-semibold text-[#0B1E4B]">{item.nama}</div>

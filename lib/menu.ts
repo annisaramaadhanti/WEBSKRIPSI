@@ -27,6 +27,14 @@ export const mainMenu = [
   },
 ];
 
+export const adminMenu = [
+  {
+    label: "Manajemen Akses",
+    href: "/admin/akses",
+    icon: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.4"/><path d="M2 13c.4-2.4 2-4 4-4s3.6 1.6 4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><path d="M11.5 5.5v4M9.5 7.5h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>`,
+  },
+];
+
 export function getRoleLabel(role: Role) {
   if (role === "kepala-divisi") return "Kepala Divisi";
   if (role === "kepala-upa") return "Kepala UPA";

@@ -291,6 +291,7 @@ function RingkasanModal({ item, onClose }: { item: Proyek; onClose: () => void }
 export default function ProyekPage() {
   const { role, user } = useRole();
   const [data, setData] = useState<Proyek[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [showTambah, setShowTambah] = useState(false);
@@ -325,10 +326,12 @@ export default function ProyekPage() {
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
   const load = () => {
+    setLoadingData(true);
     const filter = role === "staf" ? { id_pengguna_staf: user?.id } : {};
     getProyekList(filter)
       .then((res: any) => setData(extractList(res).map(mapProyek)))
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setLoadingData(false));
   };
   useEffect(() => { load(); }, [role, user?.id]);
   useEffect(() => {
@@ -630,7 +633,9 @@ export default function ProyekPage() {
           <table className="w-full border-collapse min-w-[1100px] [&_th]:uppercase [&_th]:whitespace-nowrap [&_th]:px-[14px] [&_th]:py-[12px] [&_th]:bg-[var(--surface-alt)] [&_th]:text-[var(--text-muted)] [&_th]:text-[10px] [&_th]:font-bold [&_th]:tracking-[0.5px] [&_th]:border-b [&_th]:border-[var(--border-soft)] [&_td]:whitespace-nowrap [&_td]:align-middle [&_td]:px-[14px] [&_td]:py-[12px] [&_td]:border-b [&_td]:border-[rgba(221,227,239,0.6)] [&_td]:text-[13px] [&_td]:text-[var(--text)] [&_tbody_tr:last-child_td]:border-b-0 [&_tbody_tr:hover_td]:bg-[rgba(41,80,168,0.03)]">
             <thead>{renderHeader()}</thead>
             <tbody>
-              {filteredData.length > 0 ? filteredData.map((item) => {
+              {loadingData ? (
+                <tr><td colSpan={getColspan()} className="text-center py-8 text-[var(--text-muted)] text-[13px]">Mengambil data proyek...</td></tr>
+              ) : filteredData.length > 0 ? filteredData.map((item) => {
                 const isDone = item.status === "done";
                 const isAssigned = item.status === "assigned";
                 const isInProgress = item.status === "in_progress";

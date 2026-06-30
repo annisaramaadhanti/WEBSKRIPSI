@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRole } from "@/components/providers/RoleProvider";
 import { getRoleLabel } from "@/lib/menu";
+import { ssoLogoutUrl } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 export default function Navbar() {
@@ -32,6 +33,11 @@ export default function Navbar() {
   const handleLogout = () => {
     setDropOpen(false);
     logout();
+    const logoutUrl = ssoLogoutUrl();
+    if (logoutUrl) {
+      window.location.href = logoutUrl;
+      return;
+    }
     router.push("/login");
   };
 

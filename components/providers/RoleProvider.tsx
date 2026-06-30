@@ -7,8 +7,10 @@ import { getMasterPengguna } from "@/lib/api";
 type RoleContextType = {
   role: Role;
   user: User | null;
+  accessMode: "role" | "admin";
   setRole: (role: Role) => void;
   setUser: (user: User) => void;
+  setAccessMode: (mode: "role" | "admin") => void;
   logout: () => void;
   isHydrated: boolean;
 };
@@ -33,6 +35,12 @@ function mapBackendUser(user: any, fallback: User): User {
   };
 }
 
+function withAdminAccess(user: User): User {
+  const key = `${user.nama} ${user.nip}`.toLowerCase();
+  const isHarry = key.includes("harry bonardo") || key.includes("2215061089");
+  return { ...user, isAdmin: user.isAdmin || isHarry, statusAkun: user.statusAkun ?? "aktif" };
+}
+
 async function syncBackendUser(saved: User): Promise<User> {
   const response: any = await getMasterPengguna();
   const users = Array.isArray(response?.data) ? response.data : [];
@@ -46,6 +54,7 @@ async function syncBackendUser(saved: User): Promise<User> {
 export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [role, setRoleState] = useState<Role>("operator");
   const [user, setUserState] = useState<User | null>(null);
+  const [accessModeState, setAccessModeState] = useState<"role" | "admin">("role");
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -54,18 +63,21 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     if (savedRole) setRoleState(savedRole);
     if (savedUser) {
       try {
-        const parsed = JSON.parse(savedUser) as User;
+        const parsed = withAdminAccess(JSON.parse(savedUser) as User);
         setUserState(parsed);
         syncBackendUser(parsed)
           .then((synced) => {
-            window.localStorage.setItem("simprotik-user", JSON.stringify(synced));
-            window.localStorage.setItem("simprotik-role", synced.role);
-            setUserState(synced);
+            const hydrated = withAdminAccess(synced);
+            window.localStorage.setItem("simprotik-user", JSON.stringify(hydrated));
+            window.localStorage.setItem("simprotik-role", hydrated.role);
+            setUserState(hydrated);
             setRoleState(synced.role);
           })
           .catch(() => {});
       } catch {}
     }
+    window.localStorage.removeItem("simprotik-access-mode");
+    setAccessModeState("role");
     setIsHydrated(true);
   }, []);
 
@@ -75,20 +87,34 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   };
 
   const setUser = (nextUser: User) => {
-    window.localStorage.setItem("simprotik-user", JSON.stringify(nextUser));
-    window.localStorage.setItem("simprotik-role", nextUser.role);
-    setUserState(nextUser);
-    setRoleState(nextUser.role);
+    const hydrated = withAdminAccess(nextUser);
+    window.localStorage.setItem("simprotik-user", JSON.stringify(hydrated));
+    window.localStorage.setItem("simprotik-role", hydrated.role);
+    window.localStorage.removeItem("simprotik-access-mode");
+    setUserState(hydrated);
+    setRoleState(hydrated.role);
+    setAccessModeState("role");
+  };
+
+  const setAccessMode = (mode: "role" | "admin") => {
+    const nextMode = mode === "admin" && user?.isAdmin ? "admin" : "role";
+    setAccessModeState(nextMode);
   };
 
   const logout = () => {
     window.localStorage.removeItem("simprotik-role");
     window.localStorage.removeItem("simprotik-user");
+    window.localStorage.removeItem("simprotik-access-mode");
     setUserState(null);
     setRoleState("operator");
+    setAccessModeState("role");
   };
 
-  const value = useMemo(() => ({ role, user, setRole, setUser, logout, isHydrated }), [role, user, isHydrated]);
+  const accessMode = user?.isAdmin ? accessModeState : "role";
+  const value = useMemo(
+    () => ({ role, user, accessMode, setRole, setUser, setAccessMode, logout, isHydrated }),
+    [role, user, accessMode, isHydrated]
+  );
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 }

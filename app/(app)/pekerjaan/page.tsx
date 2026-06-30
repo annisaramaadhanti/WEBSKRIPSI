@@ -176,6 +176,7 @@ function RingkasanModal({ item, onClose }: { item: Pekerjaan; onClose: () => voi
 export default function PekerjaanPage() {
   const { role, user } = useRole();
   const [data, setData] = useState<Pekerjaan[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [unitKerjaList, setUnitKerjaList] = useState<{ id_unit: string; nama_unit: string }[]>([]);
   const [divisiList, setDivisiList] = useState<{ uuid: string; nama_divisi: string }[]>([]);
@@ -220,6 +221,7 @@ export default function PekerjaanPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = (dl?: typeof divisiList) => {
+    setLoadingData(true);
     const effectiveDivisiList = dl ?? divisiList;
     const filter: any = {};
     if (role === "staf") filter.id_pengguna_staf = user?.id;
@@ -229,7 +231,8 @@ export default function PekerjaanPage() {
     }
     getPekerjaanList(filter)
       .then((res: any) => setData(extractList(res).map(mapPekerjaan)))
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setLoadingData(false));
   };
 
   useEffect(() => { if (divisiList.length > 0 || role !== "kepala-divisi") load(); }, [role, user?.id, divisiList]);
@@ -571,7 +574,9 @@ export default function PekerjaanPage() {
           <table className="w-full border-collapse min-w-[1100px] [&_th]:uppercase [&_th]:whitespace-nowrap [&_th]:px-[14px] [&_th]:py-[12px] [&_th]:bg-[var(--surface-alt)] [&_th]:text-[var(--text-muted)] [&_th]:text-[10px] [&_th]:font-bold [&_th]:tracking-[0.5px] [&_th]:border-b [&_th]:border-[var(--border-soft)] [&_td]:whitespace-nowrap [&_td]:align-middle [&_td]:px-[14px] [&_td]:py-[12px] [&_td]:border-b [&_td]:border-[rgba(221,227,239,0.6)] [&_td]:text-[13px] [&_td]:text-[var(--text)] [&_tbody_tr:last-child_td]:border-b-0 [&_tbody_tr:hover_td]:bg-[rgba(41,80,168,0.03)]">
             <thead>{renderHeader()}</thead>
             <tbody>
-              {filteredData.length > 0 ? filteredData.map((item) => {
+              {loadingData ? (
+                <tr><td colSpan={getColspan()} className="text-center py-8 text-[var(--text-muted)] text-[13px]">Mengambil data pekerjaan...</td></tr>
+              ) : filteredData.length > 0 ? filteredData.map((item) => {
                 const assignee = myAssignee(item);
                 const isAssigned = item.status === "assigned";
                 const isInProgress = item.status === "in_progress";

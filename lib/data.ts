@@ -24,9 +24,10 @@ export const dashboardStats: Record<Role, DashboardStat[]> = {
 };
 
 export const divisiList = [
+  "Pusat UPA TIK",
   "Pengembangan dan Inovasi Teknologi Informasi",
   "Layanan Sistem dan Teknologi Informasi",
-  "Manajemen dan Integrasi Sistem Informasi",
+  "Manajemen dan Integrasi Sistem Teknologi Informasi",
   "Infrastruktur Jaringan",
   "Sumber Daya Sistem Informasi",
   "Pusat Data dan Keamanan Informasi",
@@ -115,13 +116,25 @@ export const PERTANYAAN_SURVEY: PertanyaanSurvey[] = [
 
 export const USERS: User[] = [
   {
+    id: "harry-bonardo-admin",
+    nama: "Harry Bonardo Situmorang",
+    nip: "2215061089",
+    jabatan: "Operator",
+    password: "simprotik123",
+    role: "operator",
+    divisi: "Pusat UPA TIK",
+    isAdmin: true,
+    statusAkun: "aktif",
+  },
+
+  {
     id: "fb24cdeb-78de-49f8-a28d-81648d51f9f4",
     nama: "Yeni Farida, A.M.",
     nip: "198610032025212042",
     jabatan: "Operator",
-    password: "upatik123",
+    password: "simprotik123",
     role: "operator",
-    divisi: "-",
+    divisi: "Pusat UPA TIK",
   },
 
   {
@@ -129,9 +142,9 @@ export const USERS: User[] = [
     nama: "Dr. Eng. Ir. Mardiana, S.T., M.T., IPM",
     nip: "197203161999032002",
     jabatan: "Kepala UPA",
-    password: "upatik123",
+    password: "simprotik123",
     role: "kepala-upa",
-    divisi: "-",
+    divisi: "Pusat UPA TIK",
   },
 
   {
@@ -139,7 +152,7 @@ export const USERS: User[] = [
     nama: "Rico Andrian, S.Si., M.Kom.",
     nip: "197506272005011001",
     jabatan: "Kepala Divisi",
-    password: "upatik123",
+    password: "simprotik123",
     role: "kepala-divisi",
     divisi: "Pengembangan dan Inovasi Teknologi Informasi",
   },
@@ -149,7 +162,7 @@ export const USERS: User[] = [
     nama: "Hadianto Cahyadi, S.Kom.",
     nip: "197908052001121002",
     jabatan: "Kepala Divisi",
-    password: "upatik123",
+    password: "simprotik123",
     role: "kepala-divisi",
     divisi: "Layanan Sistem dan Teknologi Informasi",
   },
@@ -158,7 +171,7 @@ export const USERS: User[] = [
     nama: "Aditya Dwi Abrianto, S.E.",
     nip: "198710052025211077",
     jabatan: "Staf",
-    password: "upatik123",
+    password: "simprotik123",
     role: "staf",
     divisi: "Layanan Sistem dan Teknologi Informasi",
   },
@@ -167,7 +180,7 @@ export const USERS: User[] = [
     nama: "Boby Mardani, S.Kom., S.E.",
     nip: "198804052025211066",
     jabatan: "Staf",
-    password: "upatik123",
+    password: "simprotik123",
     role: "staf",
     divisi: "Layanan Sistem dan Teknologi Informasi",
   },
@@ -176,7 +189,7 @@ export const USERS: User[] = [
     nama: "Alifan Akbar Ikhsansah, A.Md.Kom.",
     nip: "122302000714101",
     jabatan: "Staf",
-    password: "upatik123",
+    password: "simprotik123",
     role: "staf",
     divisi: "Layanan Sistem dan Teknologi Informasi",
   },
@@ -186,7 +199,7 @@ export const USERS: User[] = [
     nama: "Mahendra Pratama, S.T., M.Eng.",
     nip: "199112152019031013",
     jabatan: "Kepala Divisi",
-    password: "upatik123",
+    password: "simprotik123",
     role: "kepala-divisi",
     divisi: "Manajemen dan Integrasi Sistem Teknologi Informasi",
   },
@@ -195,7 +208,7 @@ export const USERS: User[] = [
     nama: "Aprily Ayu Anbar, S.T.",
     nip: "122111970422201",
     jabatan: "Staf",
-    password: "upatik123",
+    password: "simprotik123",
     role: "staf",
     divisi: "Manajemen dan Integrasi Sistem Teknologi Informasi",
   },
@@ -204,7 +217,7 @@ export const USERS: User[] = [
     nama: "Mizar Zulmi Ramadhan, S.Kom",
     nip: "199812272025211021",
     jabatan: "Staf",
-    password: "upatik123",
+    password: "simprotik123",
     role: "staf",
     divisi: "Manajemen dan Integrasi Sistem Teknologi Informasi",
   },
@@ -214,7 +227,7 @@ export const USERS: User[] = [
     nama: "Hendri Susanto, S.T.",
     nip: "198105112005011001",
     jabatan: "Kepala Divisi",
-    password: "upatik123",
+    password: "simprotik123",
     role: "kepala-divisi",
     divisi: "Infrastruktur Jaringan",
   },
@@ -223,7 +236,7 @@ export const USERS: User[] = [
     nama: "Nyoman Herman Ardike, S.T.",
     nip: "199402152025211048",
     jabatan: "Staf",
-    password: "upatik123",
+    password: "simprotik123",
     role: "staf",
     divisi: "Infrastruktur Jaringan",
   },
@@ -232,7 +245,7 @@ export const USERS: User[] = [
     nama: "Kasdi Pratama, A.Md",
     nip: "198506022025211055",
     jabatan: "Staf",
-    password: "upatik123",
+    password: "simprotik123",
     role: "staf",
     divisi: "Infrastruktur Jaringan",
   },
@@ -242,7 +255,7 @@ export const USERS: User[] = [
     nama: "Muhammad Ikhsan, S.Kom., M.Cs.",
     nip: "199411012024061002",
     jabatan: "Kepala Divisi",
-    password: "upatik123",
+    password: "simprotik123",
     role: "kepala-divisi",
     divisi: "Sumber Daya Sistem Informasi",
   },
@@ -251,7 +264,7 @@ export const USERS: User[] = [
     nama: "Kholik Farijal, S.Kom",
     nip: "198504222014041003",
     jabatan: "Staf",
-    password: "upatik123",
+    password: "simprotik123",
     role: "staf",
     divisi: "Sumber Daya Sistem Informasi",
   },
@@ -260,7 +273,7 @@ export const USERS: User[] = [
     nama: "Rika Ningtias Azhari",
     nip: "200003222025062000",
     jabatan: "Staf",
-    password: "upatik123",
+    password: "simprotik123",
     role: "staf",
     divisi: "Sumber Daya Sistem Informasi",
   },
@@ -269,7 +282,7 @@ export const USERS: User[] = [
     nama: "Zuliana Nurfadlillah, S.Kom",
     nip: "122111980223201",
     jabatan: "Staf",
-    password: "upatik123",
+    password: "simprotik123",
     role: "staf",
     divisi: "Sumber Daya Sistem Informasi",
   },
@@ -279,7 +292,7 @@ export const USERS: User[] = [
     nama: "M. Iqbal Parabi, S.Si., M.T.",
     nip: "199011302015041002",
     jabatan: "Kepala Divisi",
-    password: "upatik123",
+    password: "simprotik123",
     role: "kepala-divisi",
     divisi: "Pusat Data dan Keamanan Informasi",
   },
@@ -288,7 +301,7 @@ export const USERS: User[] = [
     nama: "Harno, S.I.Kom.",
     nip: "198204132025211037",
     jabatan: "Staf",
-    password: "upatik123",
+    password: "simprotik123",
     role: "staf",
     divisi: "Pusat Data dan Keamanan Informasi",
   },
@@ -297,15 +310,15 @@ export const USERS: User[] = [
     nama: "Ikhwan Catur Nugroho, S.Pi.",
     nip: "198711292025211039",
     jabatan: "Staf",
-    password: "upatik123",
+    password: "simprotik123",
     role: "staf",
     divisi: "Pusat Data dan Keamanan Informasi",
   },
 ];
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // STATUS MAPPINGS - Pekerjaan dan Konfirmasi Staf
-// ═══════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 export const STATUS_PEKERJAAN_LABELS: Record<StatusPekerjaan, string> = {
   "assigned": "Ditugaskan",
@@ -352,3 +365,4 @@ export function getKepalaUPA(): User | null {
 export function loginUser(nip: string, password: string): User | null {
   return USERS.find((u) => u.nip === nip && u.password === password) || null;
 }
+
