@@ -57,9 +57,13 @@ export default function Navbar() {
   return (
     <>
       <header className="flex justify-between items-center sticky top-0 z-40 gap-4 px-9 py-4 border-b border-[#E8ECF4] bg-white/95 backdrop-blur-md shadow-[0_1px_0_#E8ECF4]">
-        <div>
-          <div className="font-bold text-[15px] text-[#0B1E4B]">SIMPROTIK</div>
-          <div className="text-[11px] text-[#8A95A3] mt-0.5">Sistem Informasi Manajemen Proyek UPA TIK</div>
+        <div className="flex items-center gap-[12px]">
+          <img src="/logo-upa.png" alt="UPA TIK" className="w-[92px] h-[92px] object-contain shrink-0" />
+          <div className="w-[1px] h-[28px] bg-[#E8ECF4] shrink-0" />
+          <div>
+            <div className="font-bold text-[15px] text-[#0B1E4B]">SIMPROTIK</div>
+            <div className="text-[11px] text-[#8A95A3] mt-0.5">Sistem Informasi Manajemen Proyek UPA TIK</div>
+          </div>
         </div>
 
         {/* Akun dropdown */}
