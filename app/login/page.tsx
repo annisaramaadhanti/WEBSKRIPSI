@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRole } from "@/components/providers/RoleProvider";
-import { getMasterPengguna } from "@/lib/api";
+import { getMasterPengguna, ssoLoginUrl } from "@/lib/api";
 import { USERS } from "@/lib/data";
 import type { Role } from "@/types";
 
@@ -21,6 +21,12 @@ const PERAN_TO_ROLE: Record<string, Role> = {
   "Staf": "staf",
 };
 
+const decodeBase64UrlJson = (value: string) => {
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+  return JSON.parse(window.atob(padded));
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const { setUser } = useRole();
@@ -30,6 +36,39 @@ export default function LoginPage() {
   const [nipInput, setNipInput] = useState("");
   const [manualLoading, setManualLoading] = useState(false);
   const [manualError, setManualError] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ssoError = params.get("sso_error");
+    const ssoUser = params.get("sso_user");
+
+    if (ssoError) {
+      alert(`Login SSO gagal: ${ssoError}`);
+      window.history.replaceState(null, "", "/login");
+      return;
+    }
+
+    if (!ssoUser) return;
+
+    try {
+      const user = decodeBase64UrlJson(ssoUser);
+      const role = PERAN_TO_ROLE[user.peran] ?? "staf";
+      setUser({
+        id: user.uuid,
+        nama: user.nama_lengkap ?? user.NIP ?? "Pengguna SSO",
+        nip: user.NIP ?? "",
+        jabatan: user.peran ?? "Staf",
+        password: "",
+        role,
+        divisi: user.divisi?.nama_divisi ?? "-",
+      });
+      window.history.replaceState(null, "", "/login");
+      router.push("/dashboard");
+    } catch {
+      alert("Login SSO gagal: data pengguna dari server tidak bisa dibaca.");
+      window.history.replaceState(null, "", "/login");
+    }
+  }, [router, setUser]);
 
   const loginByNip = async (nip: string) => {
     try {
@@ -55,12 +94,7 @@ export default function LoginPage() {
 
   const handleSSOLogin = async () => {
     setLoading(true);
-    try {
-      // Placeholder: arahkan ke SSO Unila
-      alert("Integrasi SSO Unila belum tersedia. Gunakan login manual dengan NIP.");
-    } finally {
-      setLoading(false);
-    }
+    window.location.href = ssoLoginUrl();
   };
 
   const handleManualLogin = async (e: React.FormEvent) => {

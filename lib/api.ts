@@ -1,14 +1,34 @@
 const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000/api";
+const BACKEND_ORIGIN = BASE.replace(/\/api\/?$/, "");
 
 const baseHeaders = {
   Accept: "application/json",
   "ngrok-skip-browser-warning": "true",
 };
 
+const GET_CACHE_MS = 15_000;
+const getCache = new Map<string, { expires: number; data: unknown }>();
+const pendingGet = new Map<string, Promise<unknown>>();
+
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, { headers: baseHeaders });
-  if (!res.ok) throw new Error(`GET ${path} gagal: ${res.status}`);
-  return res.json();
+  const url = `${BASE}${path}`;
+  const cached = getCache.get(url);
+  if (cached && cached.expires > Date.now()) return cached.data as T;
+
+  const pending = pendingGet.get(url);
+  if (pending) return pending as Promise<T>;
+
+  const request = fetch(url, { headers: baseHeaders })
+    .then(async (res) => {
+      if (!res.ok) throw new Error(`GET ${path} gagal: ${res.status}`);
+      const data = await res.json();
+      getCache.set(url, { expires: Date.now() + GET_CACHE_MS, data });
+      return data as T;
+    })
+    .finally(() => pendingGet.delete(url));
+
+  pendingGet.set(url, request);
+  return request;
 }
 
 async function post<T>(path: string, body: object): Promise<T> {
@@ -22,7 +42,7 @@ async function post<T>(path: string, body: object): Promise<T> {
     const detail = json.errors
       ? Object.entries(json.errors).map(([k, v]) => `${k}: ${(v as string[]).join(", ")}`).join(" | ")
       : json.message ?? "";
-    throw new Error(`POST ${path} gagal: ${res.status}${detail ? " — " + detail : ""}`);
+    throw new Error(`POST ${path} gagal: ${res.status}${detail ? " - " + detail : ""}`);
   }
   return res.json();
 }
@@ -38,7 +58,7 @@ async function postForm<T>(path: string, form: FormData): Promise<T> {
     const detail = json.errors
       ? Object.entries(json.errors).map(([k, v]) => `${k}: ${(v as string[]).join(", ")}`).join(" | ")
       : json.message ?? "";
-    throw new Error(`POST ${path} gagal: ${res.status}${detail ? " — " + detail : ""}`);
+    throw new Error(`POST ${path} gagal: ${res.status}${detail ? " - " + detail : ""}`);
   }
   return res.json();
 }
@@ -63,6 +83,8 @@ export async function loginUser(nip: string, password: string): Promise<LoginRes
   if (!res.ok) throw new Error(json.message ?? `Login gagal: ${res.status}`);
   return json as LoginResponse;
 }
+
+export const ssoLoginUrl = () => `${BACKEND_ORIGIN}/auth/sso`;
 
 export const getMasterPengguna = () => get("/master/pengguna");
 export const getMasterUnitKerja = () => get("/master/unit-kerja");
@@ -351,3 +373,4 @@ export const getDashboardKepalaUPA = (params?: DashboardParams) => {
   const qs = dashboardQuery(params);
   return get(`/dashboard/kepala-upa${qs ? `?${qs}` : ""}`);
 };
+
