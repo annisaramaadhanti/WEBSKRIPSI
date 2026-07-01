@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRole } from "@/components/providers/RoleProvider";
 import { getRoleLabel } from "@/lib/menu";
-import { ssoLogoutUrl } from "@/lib/api";
+import { ssoLogoutUrl, logoutUser } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 export default function Navbar() {
@@ -30,8 +30,9 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setDropOpen(false);
+    await logoutUser();
     logout();
     const logoutUrl = ssoLogoutUrl();
     if (logoutUrl) {

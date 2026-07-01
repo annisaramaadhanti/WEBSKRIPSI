@@ -1,11 +1,26 @@
+import { getToken, clearToken } from "@/lib/auth-token";
+
 const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000/api";
 const BACKEND_ORIGIN = BASE.replace(/\/api\/?$/, "");
 const SSO_LOGOUT_URL = process.env.NEXT_PUBLIC_SSO_LOGOUT_URL ?? "";
 
-const baseHeaders = {
-  Accept: "application/json",
-  "ngrok-skip-browser-warning": "true",
-};
+function buildHeaders(extra?: Record<string, string>): Record<string, string> {
+  const token = getToken();
+  return {
+    Accept: "application/json",
+    "ngrok-skip-browser-warning": "true",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extra,
+  };
+}
+
+// Token invalid/expired: bersihkan sesi dan lempar balik ke halaman login.
+function handleUnauthorized() {
+  clearToken();
+  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+    window.location.href = "/login";
+  }
+}
 
 const GET_CACHE_MS = 15_000;
 const getCache = new Map<string, { expires: number; data: unknown }>();
@@ -19,8 +34,9 @@ async function get<T>(path: string): Promise<T> {
   const pending = pendingGet.get(url);
   if (pending) return pending as Promise<T>;
 
-  const request = fetch(url, { headers: baseHeaders })
+  const request = fetch(url, { headers: buildHeaders() })
     .then(async (res) => {
+      if (res.status === 401) handleUnauthorized();
       if (!res.ok) throw new Error(`GET ${path} gagal: ${res.status}`);
       const data = await res.json();
       getCache.set(url, { expires: Date.now() + GET_CACHE_MS, data });
@@ -35,9 +51,10 @@ async function get<T>(path: string): Promise<T> {
 async function post<T>(path: string, body: object): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
-    headers: { ...baseHeaders, "Content-Type": "application/json" },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
   });
+  if (res.status === 401) handleUnauthorized();
   if (!res.ok) {
     const json = await res.json().catch(() => ({}));
     const detail = json.errors
@@ -52,9 +69,10 @@ async function post<T>(path: string, body: object): Promise<T> {
 async function postForm<T>(path: string, form: FormData): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
-    headers: baseHeaders,
+    headers: buildHeaders(),
     body: form,
   });
+  if (res.status === 401) handleUnauthorized();
   if (!res.ok) {
     const json = await res.json().catch(() => ({}));
     const detail = json.errors
@@ -74,17 +92,26 @@ export interface LoginResponse {
     peran: string;
     divisi: { uuid: string; nama_divisi: string } | null;
   };
+  // Belum dikirim backend saat ini (belum ada Sanctum) — sudah disiapkan di sisi frontend.
+  token?: string;
 }
 
 export async function loginUser(nip: string, password: string): Promise<LoginResponse> {
   const res = await fetch(`${BASE}/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ nip, password }),
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.message ?? `Login gagal: ${res.status}`);
   return json as LoginResponse;
+}
+
+// Best-effort: revoke token di backend (butuh endpoint POST /logout + Sanctum aktif).
+export async function logoutUser(): Promise<void> {
+  try {
+    await fetch(`${BASE}/logout`, { method: "POST", headers: buildHeaders() });
+  } catch {}
 }
 
 export const ssoLoginUrl = () => `${BACKEND_ORIGIN}/login/sso`;

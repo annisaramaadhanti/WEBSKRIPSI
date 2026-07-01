@@ -32,7 +32,6 @@ export type User = {
   nama: string;
   nip: string;
   jabatan: string;
-  password: string;
   role: Role;
   divisi: string;
   isAdmin?: boolean;

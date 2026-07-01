@@ -3,16 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRole } from "@/components/providers/RoleProvider";
-import { getMasterPengguna, loginUser as apiLoginUser, ssoLoginUrl } from "@/lib/api";
-import { USERS } from "@/lib/data";
+import { loginUser as apiLoginUser, ssoLoginUrl } from "@/lib/api";
+import { setToken } from "@/lib/auth-token";
 import type { Role } from "@/types";
-
-const AV_CLS: Record<string, string> = {
-  upa:   "bg-[#EEF5FF] text-[#0B1E4B]",
-  kadiv: "bg-[#F0EAFB] text-[#5A28AA]",
-  op:    "bg-[#FEF9E7] text-[#8A6010]",
-  staf:  "bg-[#E8F5EE] text-[#145D30]",
-};
 
 const PERAN_TO_ROLE: Record<string, Role> = {
   "Kepala UPA": "kepala-upa",
@@ -31,7 +24,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { setUser } = useRole();
   const [loading, setLoading] = useState(false);
-  const [showDummy, setShowDummy] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [nipInput, setNipInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
@@ -66,12 +58,12 @@ export default function LoginPage() {
     try {
       const user = decodeBase64UrlJson(ssoUser);
       const role = PERAN_TO_ROLE[user.peran] ?? "staf";
+      if (user.token) setToken(user.token);
       setUser({
         id: user.uuid,
         nama: user.nama_lengkap ?? user.NIP ?? "Pengguna SSO",
         nip: user.NIP ?? "",
         jabatan: user.peran ?? "Staf",
-        password: "",
         role,
         divisi: user.divisi?.nama_divisi ?? "-",
       });
@@ -83,50 +75,22 @@ export default function LoginPage() {
     }
   }, [router, setUser]);
 
+  // Login manual selalu diverifikasi backend (Hash::check + token) — tidak ada fallback
+  // pencocokan password di client, karena itu bisa dibaca siapa saja lewat JS bundle.
   const loginByNip = async (nip: string, password: string) => {
-    try {
-      const response = await apiLoginUser(nip, password);
-      const found = response.data;
-      const role = PERAN_TO_ROLE[found.peran] ?? "staf";
-      setUser({
-        id: found.uuid,
-        nama: found.nama_lengkap,
-        nip: found.NIP,
-        jabatan: found.peran,
-        password: "",
-        role,
-        divisi: found.divisi?.nama_divisi ?? "-",
-      });
-      router.push("/dashboard");
-      return;
-    } catch {}
-
-    const local = USERS.find((u) => u.nip === nip && u.password === password);
-    if (local) {
-      if (local.statusAkun && local.statusAkun !== "aktif") {
-        throw new Error("Akun belum aktif atau tidak memiliki akses.");
-      }
-      setUser(local);
-      router.push("/dashboard");
-      return;
-    }
-
-    try {
-      const res: any = await getMasterPengguna();
-      const list: any[] = res?.data ?? [];
-      if (list.some((u: any) => u.NIP === nip)) {
-        throw new Error("Password salah atau akun manual belum disiapkan.");
-      }
-    } catch (err: any) {
-      if (err?.message?.includes("Password")) throw err;
-    }
-
-    throw new Error("NIP tidak terdaftar di SIMPROTIK.");
-  };
-
-  const quickLogin = async (nip: string) => {
-    const local = USERS.find((u) => u.nip === nip);
-    try { await loginByNip(nip, local?.password ?? ""); } catch (e: any) { alert("Login gagal: " + e.message); }
+    const response = await apiLoginUser(nip, password);
+    const found = response.data;
+    const role = PERAN_TO_ROLE[found.peran] ?? "staf";
+    if (response.token) setToken(response.token);
+    setUser({
+      id: found.uuid,
+      nama: found.nama_lengkap,
+      nip: found.NIP,
+      jabatan: found.peran,
+      role,
+      divisi: found.divisi?.nama_divisi ?? "-",
+    });
+    router.push("/dashboard");
   };
 
   const handleSSOLogin = async () => {
@@ -283,50 +247,9 @@ export default function LoginPage() {
 
           <div className="mt-[14px] text-center text-[11px] text-[#B0BCCE]">
             <div>© 2025 UPA TIK Universitas Lampung</div>
-            <button
-              className="bg-transparent border-none cursor-pointer text-[10px] text-[#D4DCEC] font-medium transition-colors px-[6px] py-[3px] rounded-[4px] inline-block mt-[6px] hover:text-[#8A95A3]"
-              type="button"
-              onClick={() => setShowDummy(!showDummy)}
-            >
-              {showDummy ? "tutup akses demo" : "akses demo"}
-            </button>
           </div>
         </div>
       </div>
-
-      {/* ── Demo login panel ── */}
-      {showDummy && (
-        <div className="fixed bottom-[20px] right-[20px] z-50 bg-white border border-[#DDE3EF] rounded-[14px] w-[292px] max-h-[70vh] flex flex-col shadow-[0_8px_28px_rgba(11,30,75,0.14)] overflow-hidden">
-          <div className="flex items-center justify-between px-[14px] pt-[12px] pb-[10px] border-b border-[#F3F5F9] shrink-0">
-            <span className="text-[10px] font-bold text-[#8A95A3] tracking-[1px] uppercase">Akses Demo</span>
-            <button className="bg-transparent border-none cursor-pointer text-[#B0BCCE] text-[16px] leading-none px-[4px] py-[2px] rounded-[4px] transition-colors hover:text-[#4A5568] hover:bg-[#F3F5F9]" type="button" onClick={() => setShowDummy(false)}>×</button>
-          </div>
-          <div className="overflow-y-auto flex-1 p-[10px] flex flex-col gap-[8px] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#DDE3EF] [&::-webkit-scrollbar-thumb]:rounded-[3px]">
-            {(["kepala-upa", "operator", "kepala-divisi", "staf"] as const).map((role) => {
-              const group = USERS.filter((u) => u.role === role);
-              if (!group.length) return null;
-              const groupLabel: Record<string, string> = { "kepala-upa": "Kepala UPA", "operator": "Operator", "kepala-divisi": "Kepala Divisi", "staf": "Staf" };
-              const avKey: Record<string, string> = { "kepala-upa": "upa", "operator": "op", "kepala-divisi": "kadiv", "staf": "staf" };
-              return (
-                <div key={role}>
-                  <div className="text-[9px] font-bold tracking-[1px] uppercase text-[#B0BCCE] px-[4px] pt-[4px] pb-[2px]">{groupLabel[role]}</div>
-                  <div className="flex flex-col gap-[4px]">
-                    {group.map((u) => (
-                      <button key={u.id} className="w-full flex items-center gap-[9px] px-[10px] py-[8px] border border-[#F3F5F9] rounded-[9px] bg-[#F7F9FC] cursor-pointer transition-all text-left hover:bg-[#EEF5FF] hover:border-[#C9DEFF]" type="button" onClick={() => quickLogin(u.nip)}>
-                        <div className={`w-[28px] h-[28px] rounded-[7px] text-[11px] font-extrabold flex items-center justify-center shrink-0 ${AV_CLS[avKey[role]]}`}>{u.nama.charAt(0)}</div>
-                        <div>
-                          <div className="text-[11px] font-bold text-[#0B1E4B] leading-[1.3]">{u.nama}</div>
-                          <div className="text-[10px] text-[#B0BCCE] mt-[1px]">{u.divisi !== "-" ? u.divisi : groupLabel[role]}</div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

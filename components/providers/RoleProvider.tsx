@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Role, User } from "@/types";
 import { getMasterPengguna } from "@/lib/api";
+import { clearToken, clearSessionCookie, markSessionCookie } from "@/lib/auth-token";
 
 type RoleContextType = {
   role: Role;
@@ -65,6 +66,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       try {
         const parsed = withAdminAccess(JSON.parse(savedUser) as User);
         setUserState(parsed);
+        markSessionCookie();
         syncBackendUser(parsed)
           .then((synced) => {
             const hydrated = withAdminAccess(synced);
@@ -91,6 +93,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem("simprotik-user", JSON.stringify(hydrated));
     window.localStorage.setItem("simprotik-role", hydrated.role);
     window.localStorage.removeItem("simprotik-access-mode");
+    markSessionCookie();
     setUserState(hydrated);
     setRoleState(hydrated.role);
     setAccessModeState("role");
@@ -105,6 +108,8 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.removeItem("simprotik-role");
     window.localStorage.removeItem("simprotik-user");
     window.localStorage.removeItem("simprotik-access-mode");
+    clearToken();
+    clearSessionCookie();
     setUserState(null);
     setRoleState("operator");
     setAccessModeState("role");

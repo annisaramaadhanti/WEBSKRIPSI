@@ -73,7 +73,6 @@ export default function ManajemenAksesPage() {
             usernameSso: item.username_sso ?? "",
             email: item.email ?? "",
             jabatan: item.peran ?? getRoleLabel(role),
-            password: "",
             role,
             divisi: item.divisi?.nama_divisi ?? "-",
             isAdmin: Boolean(item.is_admin),
