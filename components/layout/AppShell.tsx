@@ -16,7 +16,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex overflow-hidden h-screen w-screen bg-white">
+    <div className="flex overflow-hidden h-screen w-screen bg-[#F0F4FA]">
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0 overflow-y-auto">
         <Navbar />
