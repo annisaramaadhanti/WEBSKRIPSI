@@ -20,12 +20,12 @@ Buka [http://localhost:3000](http://localhost:3000)
 
 | Role | NIP | Password |
 |---|---|---|
-| Operator | 198610032025212042 | upatik123 |
-| Kepala UPA | 197203161999032002 | upatik123 |
-| Kepala Divisi (Infrastruktur Jaringan) | 198105112005011001 | upatik123 |
-| Staf (Infrastruktur Jaringan) | 199402152025211048 | upatik123 |
-| Kepala Divisi (Pengembangan & Inovasi TI) | 197506272005011001 | upatik123 |
-| Staf (Layanan Sistem dan Teknologi Informasi) | 198710052025211077 | upatik123 |
+| Operator | 198610032025212042 | simprotik123 |
+| Kepala UPA | 197203161999032002 | simprotik123 |
+| Kepala Divisi (Infrastruktur Jaringan) | 198105112005011001 | simprotik123 |
+| Staf (Infrastruktur Jaringan) | 199402152025211048 | simprotik123 |
+| Kepala Divisi (Pengembangan & Inovasi TI) | 197506272005011001 | simprotik123 |
+| Staf (Layanan Sistem dan Teknologi Informasi) | 198710052025211077 | simprotik123 |
 
 ---
 
