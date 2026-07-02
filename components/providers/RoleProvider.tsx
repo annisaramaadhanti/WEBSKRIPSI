@@ -66,12 +66,13 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       try {
         const parsed = withAdminAccess(JSON.parse(savedUser) as User);
         setUserState(parsed);
-        markSessionCookie();
+        markSessionCookie(parsed.role, Boolean(parsed.isAdmin));
         syncBackendUser(parsed)
           .then((synced) => {
             const hydrated = withAdminAccess(synced);
             window.localStorage.setItem("simprotik-user", JSON.stringify(hydrated));
             window.localStorage.setItem("simprotik-role", hydrated.role);
+            markSessionCookie(hydrated.role, Boolean(hydrated.isAdmin));
             setUserState(hydrated);
             setRoleState(synced.role);
           })
@@ -93,7 +94,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem("simprotik-user", JSON.stringify(hydrated));
     window.localStorage.setItem("simprotik-role", hydrated.role);
     window.localStorage.removeItem("simprotik-access-mode");
-    markSessionCookie();
+    markSessionCookie(hydrated.role, Boolean(hydrated.isAdmin));
     setUserState(hydrated);
     setRoleState(hydrated.role);
     setAccessModeState("role");

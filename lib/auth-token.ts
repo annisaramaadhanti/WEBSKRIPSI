@@ -1,6 +1,8 @@
 const TOKEN_KEY = "simprotik-token";
 const TOKEN_COOKIE = "simprotik_token";
 const SESSION_COOKIE = "simprotik_session";
+const ROLE_COOKIE = "simprotik_role";
+const ADMIN_COOKIE = "simprotik_admin";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 hari
 
 function setCookie(name: string, value: string, maxAge: number) {
@@ -29,15 +31,21 @@ export function clearToken() {
   clearCookie(TOKEN_COOKIE);
 }
 
-// Penanda "ada user login" untuk middleware.ts, sebelum backend mengeluarkan token asli.
-// CATATAN: ini bukan kontrol keamanan sungguhan (bisa dipalsukan lewat DevTools) —
-// baru aman setelah backend Sanctum aktif dan middleware.ts memakai setToken/getToken di atas.
-export function markSessionCookie() {
+// Penanda "ada user login" + role untuk proxy.ts, sebelum backend mengeluarkan token asli.
+// CATATAN: ini bukan kontrol keamanan sungguhan (bisa dipalsukan lewat DevTools) — cuma
+// mencegah navigasi biasa (klik link, ketik URL) nyasar ke halaman yang bukan haknya.
+// Baru benar-benar aman setelah backend Sanctum aktif dan setiap endpoint mengunci akses
+// berdasarkan token asli, bukan cookie yang diset dari client seperti ini.
+export function markSessionCookie(role: string, isAdmin: boolean) {
   if (typeof window === "undefined") return;
   setCookie(SESSION_COOKIE, "1", COOKIE_MAX_AGE);
+  setCookie(ROLE_COOKIE, role, COOKIE_MAX_AGE);
+  setCookie(ADMIN_COOKIE, isAdmin ? "1" : "0", COOKIE_MAX_AGE);
 }
 
 export function clearSessionCookie() {
   if (typeof window === "undefined") return;
   clearCookie(SESSION_COOKIE);
+  clearCookie(ROLE_COOKIE);
+  clearCookie(ADMIN_COOKIE);
 }
