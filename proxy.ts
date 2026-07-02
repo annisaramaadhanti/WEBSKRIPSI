@@ -10,7 +10,7 @@ const PUBLIC_PATHS = ["/", "/login"];
 // buka /dashboard dkk langsung lewat URL tanpa login sama sekali). Baru benar-benar aman
 // setelah backend Sanctum aktif dan middleware ini diganti memvalidasi token asli
 // (simprotik_token) ke backend, sekaligus role-check per endpoint dikunci di server.
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (PUBLIC_PATHS.includes(pathname)) {
