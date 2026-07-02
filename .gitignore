@@ -3,3 +3,5 @@ node_modules
 .next
 .settings
 tsconfig.tsbuildinfo
+.vercel
+.env*
