@@ -66,6 +66,8 @@ export default function LoginPage() {
         jabatan: user.peran ?? "Staf",
         role,
         divisi: user.divisi?.nama_divisi ?? "-",
+        isAdmin: Boolean(user.is_admin),
+        statusAkun: user.status_akun ?? "aktif",
       });
       window.history.replaceState(null, "", "/login");
       router.push("/dashboard");
@@ -89,6 +91,8 @@ export default function LoginPage() {
       jabatan: found.peran,
       role,
       divisi: found.divisi?.nama_divisi ?? "-",
+      isAdmin: Boolean(found.is_admin),
+      statusAkun: found.status_akun ?? "aktif",
     });
     router.push("/dashboard");
   };

@@ -26,13 +26,18 @@ const roleToPeran: Record<Role, string> = {
 };
 
 function mapBackendUser(user: any, fallback: User): User {
+  const backendRole = Object.entries(roleToPeran).find(([, peran]) => peran === user.peran)?.[0] as Role | undefined;
+
   return {
     ...fallback,
     id: user.uuid,
     nama: user.nama_lengkap ?? fallback.nama,
     nip: user.NIP ?? fallback.nip,
     jabatan: user.peran ?? fallback.jabatan,
+    role: backendRole ?? fallback.role,
     divisi: user.divisi?.nama_divisi ?? fallback.divisi,
+    isAdmin: Boolean(user.is_admin),
+    statusAkun: user.status_akun ?? fallback.statusAkun ?? "aktif",
   };
 }
 
@@ -46,7 +51,8 @@ async function syncBackendUser(saved: User): Promise<User> {
   const response: any = await getMasterPengguna();
   const users = Array.isArray(response?.data) ? response.data : [];
   const expectedPeran = roleToPeran[saved.role];
-  const matched = users.find((item: any) => item.NIP === saved.nip)
+  const matched = users.find((item: any) => item.uuid === saved.id)
+    ?? users.find((item: any) => item.NIP === saved.nip)
     ?? users.find((item: any) => item.peran === expectedPeran);
 
   return matched?.uuid ? mapBackendUser(matched, saved) : saved;

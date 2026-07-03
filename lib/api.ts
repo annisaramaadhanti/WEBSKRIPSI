@@ -90,6 +90,8 @@ export interface LoginResponse {
     nama_lengkap: string;
     NIP: string;
     peran: string;
+    status_akun?: "pending" | "aktif" | "ditolak" | "nonaktif";
+    is_admin?: boolean;
     divisi: { uuid: string; nama_divisi: string } | null;
   };
   // Belum dikirim backend saat ini (belum ada Sanctum) — sudah disiapkan di sisi frontend.
