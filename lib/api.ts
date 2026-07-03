@@ -109,6 +109,12 @@ export async function loginUser(nip: string, password: string): Promise<LoginRes
   return json as LoginResponse;
 }
 
+export const ubahPassword = (payload: {
+  id_pengguna: string;
+  password_lama: string;
+  password_baru: string;
+}) => post("/ubah-password", payload);
+
 // Best-effort: revoke token di backend (butuh endpoint POST /logout + Sanctum aktif).
 export async function logoutUser(): Promise<void> {
   try {
