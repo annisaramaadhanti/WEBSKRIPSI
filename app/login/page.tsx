@@ -27,6 +27,7 @@ export default function LoginPage() {
   const [showManual, setShowManual] = useState(false);
   const [nipInput, setNipInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [manualLoading, setManualLoading] = useState(false);
   const [manualError, setManualError] = useState("");
 
@@ -210,7 +211,7 @@ export default function LoginPage() {
             <button
               type="button"
               className="w-full text-[11.5px] text-[#8A95A3] bg-transparent border-none cursor-pointer py-[6px] transition-colors hover:text-[#0B1E4B]"
-              onClick={() => { setShowManual(!showManual); setManualError(""); setNipInput(""); setPasswordInput(""); }}
+              onClick={() => { setShowManual(!showManual); setManualError(""); setNipInput(""); setPasswordInput(""); setShowPassword(false); }}
             >
               {showManual ? "Tutup login manual" : "SSO dalam maintenance? Masuk manual"}
             </button>
@@ -218,18 +219,38 @@ export default function LoginPage() {
               <form onSubmit={handleManualLogin} className="mt-[8px] flex flex-col gap-[8px]">
                 <input
                   type="text"
-                  placeholder="Masukkan NIP"
+                  placeholder="Masukkan username SSO / NIP"
                   value={nipInput}
                   onChange={(e) => setNipInput(e.target.value)}
                   className="w-full px-[14px] py-[10px] rounded-[10px] border border-[#DDE3EF] text-[13px] text-[#0B1E4B] bg-[#F7F9FC] outline-none focus:border-[#0B1E4B] focus:shadow-[0_0_0_3px_rgba(11,30,75,0.08)] transition-all"
                 />
-                <input
-                  type="password"
-                  placeholder="Masukkan password"
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  className="w-full px-[14px] py-[10px] rounded-[10px] border border-[#DDE3EF] text-[13px] text-[#0B1E4B] bg-[#F7F9FC] outline-none focus:border-[#0B1E4B] focus:shadow-[0_0_0_3px_rgba(11,30,75,0.08)] transition-all"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Masukkan password"
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    className="w-full px-[14px] py-[10px] pr-[42px] rounded-[10px] border border-[#DDE3EF] text-[13px] text-[#0B1E4B] bg-[#F7F9FC] outline-none focus:border-[#0B1E4B] focus:shadow-[0_0_0_3px_rgba(11,30,75,0.08)] transition-all"
+                  />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="absolute right-[10px] top-1/2 -translate-y-1/2 h-[26px] w-[26px] rounded-[7px] border-none bg-transparent text-[#8A95A3] cursor-pointer flex items-center justify-center transition-colors hover:bg-[#EAF0F8] hover:text-[#0B1E4B]"
+                  >
+                    {showPassword ? (
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                        <path d="M3 3l18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        <path d="M10.6 10.6A2 2 0 0012 14a2 2 0 001.4-.6M7.4 7.7C5.4 8.8 3.9 10.4 3 12c1.8 3.1 5.2 5 9 5 1.5 0 2.9-.3 4.1-.9M12 7c3.8 0 7.2 1.9 9 5-.5.9-1.2 1.8-2.1 2.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : (
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                        <path d="M3 12c1.8-3.1 5.2-5 9-5s7.2 1.9 9 5c-1.8 3.1-5.2 5-9 5s-7.2-1.9-9-5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                        <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="2" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {manualError && <p className="text-[11px] text-red-500 m-0">{manualError}</p>}
                 <button
                   type="submit"
