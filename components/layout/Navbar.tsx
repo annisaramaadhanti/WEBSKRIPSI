@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRole } from "@/components/providers/RoleProvider";
 import { getRoleLabel } from "@/lib/menu";
-import { ssoLogoutUrl, logoutUser } from "@/lib/api";
+import { ssoLogoutUrl, logoutUser, ubahPassword } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 export default function Navbar() {
@@ -17,6 +17,7 @@ export default function Navbar() {
   const [confirmPw, setConfirmPw] = useState("");
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
 
   const dropRef = useRef<HTMLDivElement>(null);
 
@@ -46,17 +47,31 @@ export default function Navbar() {
     setDropOpen(false);
     setOldPw(""); setNewPw(""); setConfirmPw("");
     setPwError(""); setPwSuccess(false);
+    setPwLoading(false);
     setShowModal(true);
   };
 
-  const handleSimpan = (e: React.FormEvent) => {
+  const handleSimpan = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwError("");
+    if (!user?.id) { setPwError("Data pengguna belum lengkap. Silakan login ulang."); return; }
     if (!oldPw || !newPw || !confirmPw) { setPwError("Semua field wajib diisi."); return; }
     if (newPw.length < 6) { setPwError("Password baru minimal 6 karakter."); return; }
     if (newPw !== confirmPw) { setPwError("Konfirmasi password tidak cocok."); return; }
-    setPwSuccess(true);
-    setTimeout(() => setShowModal(false), 1200);
+    setPwLoading(true);
+    try {
+      await ubahPassword({
+        id_pengguna: user.id,
+        password_lama: oldPw,
+        password_baru: newPw,
+      });
+      setPwSuccess(true);
+      setTimeout(() => setShowModal(false), 1200);
+    } catch (error) {
+      setPwError(error instanceof Error ? error.message.replace(/^POST \/ubah-password gagal: \d+\s-\s?/, "") : "Password gagal diubah.");
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   const initials = user?.nama?.split(" ").slice(0, 2).map((w) => w[0]).join("") ?? "?";
@@ -174,12 +189,14 @@ export default function Navbar() {
                     <button
                       type="button"
                       onClick={() => setShowModal(false)}
+                      disabled={pwLoading}
                       className="flex-1 py-[9px] rounded-[8px] border border-[#DDE3EF] bg-white text-[13px] font-semibold text-[#4A5568] cursor-pointer transition-all hover:bg-[#F7F9FC]"
                     >Batal</button>
                     <button
                       type="submit"
-                      className="flex-1 py-[9px] rounded-[8px] border-none bg-[#0B1E4B] text-white text-[13px] font-semibold cursor-pointer transition-all hover:bg-[#0F2150]"
-                    >Simpan</button>
+                      disabled={pwLoading}
+                      className="flex-1 py-[9px] rounded-[8px] border-none bg-[#0B1E4B] text-white text-[13px] font-semibold cursor-pointer transition-all hover:bg-[#0F2150] disabled:opacity-60 disabled:cursor-not-allowed"
+                    >{pwLoading ? "Menyimpan..." : "Simpan"}</button>
                   </div>
                 </>
               )}

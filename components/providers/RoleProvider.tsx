@@ -50,10 +50,9 @@ function withAdminAccess(user: User): User {
 async function syncBackendUser(saved: User): Promise<User> {
   const response: any = await getMasterPengguna();
   const users = Array.isArray(response?.data) ? response.data : [];
-  const expectedPeran = roleToPeran[saved.role];
   const matched = users.find((item: any) => item.uuid === saved.id)
     ?? users.find((item: any) => item.NIP === saved.nip)
-    ?? users.find((item: any) => item.peran === expectedPeran);
+    ?? users.find((item: any) => item.username_sso === saved.nip);
 
   return matched?.uuid ? mapBackendUser(matched, saved) : saved;
 }
