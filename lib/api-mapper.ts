@@ -167,7 +167,7 @@ export function mapProgress(p: any): Progress {
     keteranganProgress: p.keterangan ?? p.keteranganProgress ?? "",
     stafPelapor: p.pengguna?.nama_lengkap ?? p.stafPelapor ?? "",
     tanggalProgress: p.created_at?.split("T")[0] ?? p.tanggalProgress ?? "",
-    lampiran: p.lampiran?.[0]?.nama_file ?? p.lampiran ?? null,
+    lampiran: p.lampiran?.[0]?.dokumen?.nama_dokumen ?? (typeof p.lampiran === "string" ? p.lampiran : null),
     catatan: p.catatan ?? null,
   };
 }
