@@ -122,7 +122,12 @@ export async function logoutUser(): Promise<void> {
   } catch {}
 }
 
-export const ssoLoginUrl = () => `${BACKEND_ORIGIN}/login/sso`;
+export const ssoLoginUrl = () => {
+  const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/login` : "";
+  const query = redirectTo ? `?redirect_to=${encodeURIComponent(redirectTo)}` : "";
+
+  return `${BACKEND_ORIGIN}/login/sso${query}`;
+};
 export const ssoLogoutUrl = () => SSO_LOGOUT_URL;
 
 export const getMasterPengguna = () => get("/master/pengguna");
