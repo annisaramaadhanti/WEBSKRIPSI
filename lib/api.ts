@@ -123,13 +123,19 @@ export async function logoutUser(): Promise<void> {
   } catch {}
 }
 
-export const ssoLoginUrl = () => `${BACKEND_ORIGIN}/login/sso`;
+export const ssoLoginUrl = () => {
+  const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/login` : "";
+  const query = redirectTo ? `?redirect_to=${encodeURIComponent(redirectTo)}` : "";
+
+  return `${BACKEND_ORIGIN}/login/sso${query}`;
+};
 export const ssoLogoutUrl = () => SSO_LOGOUT_URL;
 
 export const getMasterPengguna = () => get("/master/pengguna");
 export const aturAksesPengguna = (payload: {
   id_pengguna: string;
   id_pengguna_lokal?: string;
+  NIP?: string;
   status_akun: "pending" | "aktif" | "ditolak" | "nonaktif";
   peran: "Operator" | "Staf" | "Kepala Divisi" | "Kepala UPA";
   nama_divisi: string;

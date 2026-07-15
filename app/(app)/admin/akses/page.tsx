@@ -172,9 +172,15 @@ export default function ManajemenAksesPage() {
     const nextDivisi = String(form.get("divisi"));
     const nextIsAdmin = form.get("isAdmin") === "on";
     const linkToUserId = linkedUserId;
+    const nextNip = linkToUserId ? (linkedUser?.nip ?? "") : String(form.get("nip") ?? "").trim();
 
     if (nextStatus === "aktif" && (!nextRole || !nextDivisi || nextDivisi === "-")) {
       alert("Role dan divisi wajib diisi sebelum akun diaktifkan.");
+      return;
+    }
+
+    if (nextStatus === "aktif" && !linkToUserId && !nextNip) {
+      alert("NIP wajib diisi jika akun baru diaktifkan tanpa dihubungkan ke pegawai lokal.");
       return;
     }
 
@@ -183,6 +189,7 @@ export default function ManajemenAksesPage() {
       await aturAksesPengguna({
         id_pengguna: selected.id,
         id_pengguna_lokal: linkToUserId || undefined,
+        NIP: nextNip || undefined,
         status_akun: nextStatus,
         peran: roleToPeran[nextRole],
         nama_divisi: nextDivisi,
@@ -407,6 +414,16 @@ export default function ManajemenAksesPage() {
                 <select name="statusAkun" defaultValue={linkedUser ? "aktif" : selected.statusAkun ?? "aktif"} className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 font-normal outline-none focus:border-[#0B1E4B]">
                   {statusOptions.map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
+              </label>
+              <label className="md:col-span-2 text-[12px] font-bold text-slate-600">
+                NIP
+                <input
+                  name="nip"
+                  defaultValue={linkedUser?.nip ?? selected.nip ?? ""}
+                  readOnly={Boolean(linkedUser)}
+                  placeholder="Isi NIP jika akun ini pegawai baru"
+                  className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 font-normal outline-none focus:border-[#0B1E4B] read-only:bg-slate-50 read-only:text-slate-500"
+                />
               </label>
               <label className="md:col-span-2 text-[12px] font-bold text-slate-600">
                 Divisi
