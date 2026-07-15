@@ -1,7 +1,8 @@
 import { getToken, clearToken } from "@/lib/auth-token";
 
-const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000/api";
-const BACKEND_ORIGIN = BASE.replace(/\/api\/?$/, "");
+const configuredApiBase = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+const BASE = configuredApiBase ? configuredApiBase.replace(/\/$/, "") : "/api";
+const BACKEND_ORIGIN = configuredApiBase ? configuredApiBase.replace(/\/api\/?$/, "") : "http://127.0.0.1:8000";
 const SSO_LOGOUT_URL = process.env.NEXT_PUBLIC_SSO_LOGOUT_URL ?? "";
 
 function buildHeaders(extra?: Record<string, string>): Record<string, string> {

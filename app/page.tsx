@@ -42,29 +42,58 @@ export default function PublicDashboard() {
   const [sortBy, setSortBy] = useState("terbaru");
   const [unitKerjaList, setUnitKerjaList] = useState<string[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-    setLoadingData(true);
+    const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
-    Promise.all([
-      getPekerjaanList({}),
-      getProyekList({}),
-      getMasterUnitKerja(),
-    ])
-      .then(([pkRes, prRes, unitRes]: any[]) => {
+    const loadData = async () => {
+      setLoadingData(true);
+
+      try {
+        const [pkRes, prRes, unitRes]: any[] = await Promise.all([
+          getPekerjaanList({}),
+          getProyekList({}),
+          getMasterUnitKerja(),
+        ]);
+
         if (!active) return;
+
         setPk(extractList(pkRes).map(mapPekerjaan));
         setPr(extractList(prRes).map(mapProyek));
         setUnitKerjaList(extractList(unitRes).map((u: any) => u.nama_unit));
-      })
-      .catch(console.error)
-      .finally(() => {
+        setLastUpdated(new Date().toLocaleString("id-ID", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }));
+        setErrorMessage(null);
+      } catch (error: any) {
+        console.error(error);
+        if (active) {
+          setErrorMessage(
+            error?.message?.includes("Failed to fetch")
+              ? "Tidak dapat terhubung ke API backend. Pastikan backend atau URL ngrok aktif, lalu cek konfigurasi NEXT_PUBLIC_API_BASE_URL."
+              : "Gagal memuat data dashboard. Silakan coba lagi nanti."
+          );
+        }
+      } finally {
         if (active) setLoadingData(false);
-      });
+      }
+    };
+
+    void loadData();
+    const intervalId = window.setInterval(() => {
+      void loadData();
+    }, REFRESH_INTERVAL_MS);
 
     return () => {
       active = false;
+      window.clearInterval(intervalId);
     };
   }, []);
 
@@ -174,10 +203,14 @@ export default function PublicDashboard() {
             Statistik Layanan — Universitas Lampung
           </h1>
           <p className="m-0 text-[13px] text-[rgba(255,255,255,0.55)]">Data pekerjaan dan proyek yang tercatat di sistem SIMPROTIK</p>
+          <p className="mt-[8px] text-[12px] text-[rgba(255,255,255,0.7)]">
+            {loadingData ? "Memperbarui data..." : lastUpdated ? `Terakhir diperbarui ${lastUpdated}` : ""}
+          </p>
         </div>
       </div>
 
       <div className="px-[16px] md:px-[48px] pt-[28px] pb-[48px]">
+
 
         {/* FILTER BAR */}
         <div className="flex flex-wrap items-center bg-white border border-[rgba(148,163,184,0.25)] rounded-[16px] px-[20px] py-[16px] mb-[22px] gap-[10px] shadow-[0_3px_14px_rgba(15,23,42,0.09)]">
