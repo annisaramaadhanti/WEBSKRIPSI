@@ -134,6 +134,7 @@ export const getMasterPengguna = () => get("/master/pengguna");
 export const aturAksesPengguna = (payload: {
   id_pengguna: string;
   id_pengguna_lokal?: string;
+  NIP?: string;
   status_akun: "pending" | "aktif" | "ditolak" | "nonaktif";
   peran: "Operator" | "Staf" | "Kepala Divisi" | "Kepala UPA";
   nama_divisi: string;
